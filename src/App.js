@@ -118,7 +118,7 @@ function TimelineRow({ row, index, onChange, onBlur, onDelete }) {
         value={row.event}
         onChange={(e) => onChange(index, "event", e.target.value)}
         onBlur={() => onBlur(index)}
-        style={{ width: "96%", fontSize: "14px", padding: "4px" }}
+        style={{ width: "100%", fontSize: "14px", padding: "4px" }}
       />
       <div style={{ display: "flex", alignItems: "center", padding: "4px" }}>
         <input
@@ -128,7 +128,7 @@ function TimelineRow({ row, index, onChange, onBlur, onDelete }) {
           value={row.duration}
           onChange={(e) => onChange(index, "duration", e.target.value)}
           onBlur={() => onBlur(index)}
-          style={{ width: "30px", fontSize: "14px" }}
+          style={{ width: "35px", fontSize: "14px" }}
         />
         <span style={{ marginLeft: "4px" }}>Minutes</span>
       </div>
@@ -159,34 +159,37 @@ export default function App() {
   const [startMinute, setStartMinute] = useState("00");
   const [startPeriod, setStartPeriod] = useState("AM");
 
-  const exportTXT = () => {
-    const lines = [
-      `Date: ${date}`,
-      `Start Time: ${startHour}:${startMinute} ${startPeriod}`,
-      `Bride: ${bride}`,
-      `Groom: ${groom}`,
-      "",
-      "Timeline:",
-      "",
-    ];
-    rows.forEach((r) => {
-      if (r.location) lines.push(r.location, "");
-      const ft = formatTime(r.time);
-      lines.push(
-        `${ft.hour}:${ft.minute} ${ft.period} | ${r.event || "(no event)"} | ${
-          r.duration
-        } min`,
-        ""
-      );
-    });
-    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "timeline.txt";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  // Replace your exportTXT function with this:
+const exportTXT = () => {
+  const lines = [
+    `Date: ${date}`,
+    `Start Time: ${startHour}:${startMinute} ${startPeriod}`,
+    `Bride: ${bride}`,
+    `Groom: ${groom}`,
+    "",
+    "Timeline:",
+    "",
+  ];
+  rows.forEach((r) => {
+    if (r.location) lines.push(r.location, "");
+    const ft = formatTime(r.time);
+    lines.push(
+      `${ft.hour}:${ft.minute} ${ft.period} | ${r.event || "(no event)"} | ${r.duration} min`,
+      ""
+    );
+  });
+  // Dynamic filename based on names
+  const filename = `${bride.trim().replace(/\s+/g, '_') || 'Bride'}_${groom.trim().replace(/\s+/g, '_') || 'Groom'}_Timeline.txt`;
+  const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
 
   const eventBlocks = [
     "Details: Drone & Venue Shots::20",
@@ -216,6 +219,7 @@ export default function App() {
     "Group Photos: Family (10 Groups)::45",
     "Group Photos: Wedding Party Shots::15",
     "Bride & Groom: Portraits::20",
+    "Reception: Audio/Video Setup::20",
     "Reception: Grand Entrances::10",
     "Reception: Cake Cutting::5",
     "Reception: Bride & Groom Dance::5",
