@@ -35,7 +35,7 @@ function DraggableEvent({ id, label }) {
     "Ceremony:": "#f0efeb",
     "Reception:": "#e0f7fa",
     "Group Photos:": "#fde2e4",
-    "Evening:": "#ff8100",
+    "Other:": "#ff8100",
   };
   const key = Object.keys(colors).find((k) => label.startsWith(k));
   const background = colors[key] || "#ffffff";
@@ -159,37 +159,39 @@ export default function App() {
   const [startMinute, setStartMinute] = useState("00");
   const [startPeriod, setStartPeriod] = useState("AM");
 
-  // Replace your exportTXT function with this:
-const exportTXT = () => {
-  const lines = [
-    `Date: ${date}`,
-    `Start Time: ${startHour}:${startMinute} ${startPeriod}`,
-    `Bride: ${bride}`,
-    `Groom: ${groom}`,
-    "",
-    "Timeline:",
-    "",
-  ];
-  rows.forEach((r) => {
-    if (r.location) lines.push(r.location, "");
-    const ft = formatTime(r.time);
-    lines.push(
-      `${ft.hour}:${ft.minute} ${ft.period} | ${r.event || "(no event)"} | ${r.duration} min`,
-      ""
-    );
-  });
-  // Dynamic filename based on names
-  const filename = `${bride.trim().replace(/\s+/g, '_') || 'Bride'}_${groom.trim().replace(/\s+/g, '_') || 'Groom'}_Timeline.txt`;
-  const blob = new Blob([lines.join("\n")], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
+  const exportTXT = () => {
+    const lines = [
+      `Date: ${date}`,
+      `Start Time: ${startHour}:${startMinute} ${startPeriod}`,
+      `Bride: ${bride}`,
+      `Groom: ${groom}`,
+      "",
+      "Timeline:",
+      "",
+    ];
+    rows.forEach((r) => {
+      if (r.location) lines.push(r.location, "");
+      const ft = formatTime(r.time);
+      lines.push(
+        `${ft.hour}:${ft.minute} ${ft.period} | ${r.event || "(no event)"} | ${
+          r.duration
+        } min`,
+        ""
+      );
+    });
+    const filename = `${bride.trim().replace(/\s+/g, "_") || "Bride"}_${
+      groom.trim().replace(/\s+/g, "_") || "Groom"
+    }_Timeline.txt`;
+    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const eventBlocks = [
     "Details: Drone & Venue Shots::20",
@@ -206,8 +208,8 @@ const exportTXT = () => {
     "Bride (Dress On): First Look with Parent::10",
     "Bride (Dress On): First Look with Bridemaids::10",
     "Bride (Dress On): First Look with Groom::10",
-    "Narration: Bride Record Narration::15",
-    "Narration: Groom Record Narration::15",
+    "Bride: Bride Record Narration::15",
+    "Groom: Groom Record Narration::15",
     "Groom: Assisted with Tie & Jacket::10",
     "Groom: Portraits::15",
     "Groom: Groomsmen Group Shots::10",
@@ -219,6 +221,7 @@ const exportTXT = () => {
     "Group Photos: Family (10 Groups)::45",
     "Group Photos: Wedding Party Shots::15",
     "Bride & Groom: Portraits::20",
+    "Bride & Groom: Golden Hour Portraits::20",
     "Reception: Audio/Video Setup::20",
     "Reception: Grand Entrances::10",
     "Reception: Cake Cutting::5",
@@ -228,10 +231,9 @@ const exportTXT = () => {
     "Reception: Special Dance::5",
     "Reception: Dinner::30",
     "Reception: Speeches (Per Speaker)::10",
-    "Evening: Bride & Groom Golden Hour Portraits::20",
-    "Evening: Open Dance Floor::20",
-    "Evening: Garder Belt Toss::15",
-    "Evening: Bouquet Toss::15",
+    "Reception: Open Dance Floor::20",
+    "Reception: Garder Belt Toss::15",
+    "Reception: Bouquet Toss::15",
   ].map((e) => {
     const [lab, d] = e.split("::");
     return { id: `${lab}::${d}`, label: lab, duration: parseInt(d, 10) };
@@ -395,16 +397,20 @@ const exportTXT = () => {
         </div>
         <div
           style={{
-            width: "300px",
+            width: "600px",
             padding: "1rem",
             background: "#f3f4f6",
             overflowY: "auto",
           }}
         >
-          <h3 style={{ fontWeight: "bold" }}>Event Blocks</h3>
-          {eventBlocks.map((b) => (
-            <DraggableEvent key={b.id} id={b.id} label={b.label} />
-          ))}
+          <h3 style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>
+            Event Blocks
+          </h3>
+          <div className="grid grid-cols-2 gap-2">
+            {eventBlocks.map((b) => (
+              <DraggableEvent key={b.id} id={b.id} label={b.label} />
+            ))}
+          </div>
         </div>
       </div>
     </DndContext>
