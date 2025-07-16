@@ -403,9 +403,16 @@ export default function App() {
             overflowY: "auto",
           }}
         >
-          <h3 style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>
+          <h3
+            style={{
+              fontWeight: "bold",
+              marginBottom: "0.5rem",
+              textAlign: "center",
+            }}
+          >
             Event Blocks
           </h3>
+
           <div className="grid grid-cols-2 gap-2">
             {eventBlocks.map((b) => (
               <DraggableEvent key={b.id} id={b.id} label={b.label} />
