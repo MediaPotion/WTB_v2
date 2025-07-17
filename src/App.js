@@ -35,7 +35,7 @@ function DraggableEvent({ id, label }) {
     "Ceremony:": "#f0efeb",
     "Reception:": "#e0f7fa",
     "Group Photos:": "#fde2e4",
-    "Other:": "#ff8100",
+    Other: "#ff8100",
   };
   const key = Object.keys(colors).find((k) => label.startsWith(k));
   const background = colors[key] || "#ffffff";
@@ -66,26 +66,63 @@ function DraggableEvent({ id, label }) {
   );
 }
 
-function TimelineRow({ row, index, onChange, onBlur, onDelete }) {
+function TimelineRow({
+  row,
+  index,
+  onChange,
+  onBlur,
+  onDelete,
+  id,
+  isDragging,
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragHandleRef,
+  } = useDraggable({ id });
+  const { setNodeRef: setDropRef } = useDroppable({ id });
+
   const t = formatTime(row.time);
-  const { setNodeRef } = useDroppable({ id: `row-${index}` });
   return (
     <div
-      ref={setNodeRef}
+      ref={setDropRef}
       style={{
         display: "grid",
         gridTemplateColumns: "3fr 2fr 4fr 2fr 1fr",
         alignItems: "center",
         borderBottom: "1px solid #ccc",
+        background: isDragging ? "#e6f7ff" : "transparent",
+        boxShadow: isDragging ? "0 0 6px #1890ff" : "none",
+        transition: "background 0.2s ease, box-shadow 0.2s ease",
       }}
     >
-      <textarea
-        placeholder="Location"
-        value={row.location}
-        onChange={(e) => onChange(index, "location", e.target.value)}
-        rows={2}
-        style={{ width: "100%", fontSize: "14px", padding: "4px" }}
-      />
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <div
+          ref={setDragHandleRef}
+          {...listeners}
+          {...attributes}
+          style={{
+            cursor: "grab",
+            padding: "4px",
+            fontSize: "18px",
+            userSelect: "none",
+          }}
+        >
+          ⋮
+        </div>
+        <textarea
+          placeholder="Location"
+          value={row.location}
+          onChange={(e) => onChange(index, "location", e.target.value)}
+          rows={2}
+          style={{
+            width: "100%",
+            fontSize: "14px",
+            padding: "4px",
+            resize: "none",
+          }}
+        />
+      </div>
       <div style={{ textAlign: "center", padding: "4px" }}>
         <input
           type="text"
@@ -132,18 +169,22 @@ function TimelineRow({ row, index, onChange, onBlur, onDelete }) {
         />
         <span style={{ marginLeft: "4px" }}>Minutes</span>
       </div>
-      <button
-        onClick={() => onDelete(index)}
-        style={{
-          background: "none",
-          border: "none",
-          color: "red",
-          cursor: "pointer",
-        }}
-        title="Delete"
-      >
-        ✕
-      </button>
+      {index > 0 ? (
+        <button
+          onClick={() => onDelete(index)}
+          style={{
+            background: "none",
+            border: "none",
+            color: "red",
+            cursor: "pointer",
+          }}
+          title="Delete"
+        >
+          ✕
+        </button>
+      ) : (
+        <div style={{ height: "32px" }} />
+      )}
     </div>
   );
 }
@@ -158,40 +199,7 @@ export default function App() {
   const [startHour, setStartHour] = useState("9");
   const [startMinute, setStartMinute] = useState("00");
   const [startPeriod, setStartPeriod] = useState("AM");
-
-  const exportTXT = () => {
-    const lines = [
-      `Date: ${date}`,
-      `Start Time: ${startHour}:${startMinute} ${startPeriod}`,
-      `Bride: ${bride}`,
-      `Groom: ${groom}`,
-      "",
-      "Timeline:",
-      "",
-    ];
-    rows.forEach((r) => {
-      if (r.location) lines.push(r.location, "");
-      const ft = formatTime(r.time);
-      lines.push(
-        `${ft.hour}:${ft.minute} ${ft.period} | ${r.event || "(no event)"} | ${
-          r.duration
-        } min`,
-        ""
-      );
-    });
-    const filename = `${bride.trim().replace(/\s+/g, "_") || "Bride"}_${
-      groom.trim().replace(/\s+/g, "_") || "Groom"
-    }_Timeline.txt`;
-    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
+  const [activeRowId, setActiveRowId] = useState(null);
 
   const eventBlocks = [
     "Details: Drone & Venue Shots::20",
@@ -280,24 +288,109 @@ export default function App() {
     );
 
   const handleDragEnd = ({ active, over }) => {
-    if (!over || !over.id.startsWith("row-")) return;
-    const idx = parseInt(over.id.replace("row-", ""), 10),
-      [lab, d] = active.id.split("::");
-    const a = [...rows];
-    a[idx].event = lab;
-    a[idx].duration = parseInt(d, 10);
-    if (idx === a.length - 1)
-      a.push({
-        location: "",
-        time: a[idx].time + a[idx].duration,
-        event: "",
-        duration: 30,
-      });
-    setRows(updateTimesFromIndex(idx, a));
+    if (!over) return;
+
+    const activeId = active.id;
+    const overId = over.id;
+
+    if (activeId.includes("::") && overId.startsWith("timeline-")) {
+      const idx = parseInt(overId.replace("timeline-", ""), 10);
+      const [lab, d] = activeId.split("::");
+      const a = [...rows];
+      a[idx].event = lab;
+      a[idx].duration = parseInt(d, 10);
+
+      if (idx === a.length - 1) {
+        a.push({
+          location: "",
+          time: a[idx].time + a[idx].duration,
+          event: "",
+          duration: 30,
+        });
+      }
+      setRows(updateTimesFromIndex(idx, a));
+      setActiveRowId(null);
+      return;
+    }
+
+    if (activeId.startsWith("timeline-") && overId.startsWith("timeline-")) {
+      const fromIdx = parseInt(activeId.replace("timeline-", ""), 10);
+      const toIdx = parseInt(overId.replace("timeline-", ""), 10);
+      if (fromIdx === toIdx) {
+        setActiveRowId(null);
+        return;
+      }
+
+      const newRows = [...rows];
+      const [moved] = newRows.splice(fromIdx, 1);
+
+      let insertIdx = toIdx >= newRows.length ? newRows.length : toIdx;
+
+      let referenceTime;
+      if (newRows[insertIdx]) {
+        referenceTime = newRows[insertIdx].time;
+      } else if (
+        newRows[insertIdx - 1] &&
+        typeof newRows[insertIdx - 1].time === "number" &&
+        typeof newRows[insertIdx - 1].duration === "number"
+      ) {
+        referenceTime =
+          newRows[insertIdx - 1].time + newRows[insertIdx - 1].duration;
+      } else {
+        referenceTime = moved.time;
+      }
+
+      const newRow = {
+        ...moved,
+        time: referenceTime,
+      };
+
+      newRows.splice(insertIdx, 0, newRow);
+      setRows(updateTimesFromIndex(Math.min(fromIdx, insertIdx), newRows));
+    }
+
+    setActiveRowId(null);
+  };
+
+  const exportTXT = () => {
+    const lines = [
+      `Date: ${date}`,
+      `Start Time: ${startHour}:${startMinute} ${startPeriod}`,
+      `Bride: ${bride}`,
+      `Groom: ${groom}`,
+      "",
+      "Timeline:",
+      "",
+    ];
+    rows.forEach((r) => {
+      if (r.location) lines.push(r.location, "");
+      const ft = formatTime(r.time);
+      lines.push(
+        `${ft.hour}:${ft.minute} ${ft.period} | ${r.event || "(no event)"} | ${
+          r.duration
+        } min`,
+        ""
+      );
+    });
+    const filename = `${bride.trim().replace(/\s+/g, "_") || "Bride"}_${
+      groom.trim().replace(/\s+/g, "_") || "Groom"
+    }_Timeline.txt`;
+    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext
+      onDragStart={({ active }) => setActiveRowId(active.id)}
+      onDragEnd={handleDragEnd}
+    >
       <div style={{ display: "flex", height: "100vh" }}>
         <div style={{ flex: 3, padding: "1rem", overflowY: "auto" }}>
           <button
@@ -306,17 +399,7 @@ export default function App() {
           >
             Export as TXT
           </button>
-          <h1
-            style={{
-              textAlign: "center",
-              fontFamily: "Georgia, serif",
-              fontSize: "2rem",
-              color: "#6b4c3b",
-              marginBottom: "1rem",
-            }}
-          >
-            Wedding Timeline Builder
-          </h1>
+          <h1 style={{ textAlign: "center" }}>Wedding Timeline Builder</h1>
           <div style={{ textAlign: "center", marginBottom: "1rem" }}>
             <div style={{ marginBottom: "0.5rem" }}>
               <label>Date:</label>{" "}
@@ -324,50 +407,36 @@ export default function App() {
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 placeholder="MM/DD/YYYY"
-              />{" "}
+              />
             </div>
             <div style={{ marginBottom: "0.5rem" }}>
-              <label>Start Time for Media Potion:</label>{" "}
+              <label>Start Time:</label>{" "}
               <input
                 style={{ width: "30px" }}
                 value={startHour}
                 onChange={(e) => setStartHour(e.target.value)}
-              />{" "}
-              :{" "}
+              />
+              :
               <input
                 style={{ width: "30px" }}
                 value={startMinute}
                 onChange={(e) => setStartMinute(e.target.value)}
-              />{" "}
+              />
               <select
                 value={startPeriod}
                 onChange={(e) => setStartPeriod(e.target.value)}
               >
                 <option>AM</option>
                 <option>PM</option>
-              </select>{" "}
+              </select>
             </div>
             <div>
-              <label>Bride's Full Name:</label>{" "}
-              <input
-                style={{ marginRight: "16px" }}
-                value={bride}
-                onChange={(e) => setBride(e.target.value)}
-              />{" "}
-              <label>Groom's Full Name:</label>{" "}
+              <label>Bride:</label>{" "}
+              <input value={bride} onChange={(e) => setBride(e.target.value)} />{" "}
+              <label>Groom:</label>{" "}
               <input value={groom} onChange={(e) => setGroom(e.target.value)} />
             </div>
           </div>
-          <h2
-            style={{
-              textAlign: "center",
-              fontSize: "18px",
-              fontWeight: "bold",
-              marginBottom: "1rem",
-            }}
-          >
-            Timeline
-          </h2>
           <div
             style={{
               display: "grid",
@@ -387,11 +456,13 @@ export default function App() {
           {rows.map((r, i) => (
             <TimelineRow
               key={i}
+              id={`timeline-${i}`}
               row={r}
               index={i}
               onChange={handleChange}
               onBlur={handleBlur}
               onDelete={handleDelete}
+              isDragging={activeRowId === `timeline-${i}`}
             />
           ))}
         </div>
@@ -412,7 +483,6 @@ export default function App() {
           >
             Event Blocks
           </h3>
-
           <div className="grid grid-cols-2 gap-2">
             {eventBlocks.map((b) => (
               <DraggableEvent key={b.id} id={b.id} label={b.label} />
