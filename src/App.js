@@ -1,6 +1,4 @@
-// App.js
 import React, { useState, useEffect } from "react";
-import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 
 function formatTime(totalMinutes) {
   const hours = Math.floor(totalMinutes / 60);
@@ -22,46 +20,51 @@ function parseTimeInput(hourStr, minuteStr, period) {
   return total;
 }
 
-function DraggableEvent({ id, label }) {
+function DraggableEvent({ id, label, onDragStart }) {
   const duration = parseInt(id.split("::")[1], 10);
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id });
+
+  // More differentiated colors for event blocks
   const colors = {
-    Details: "#fff1e6",
-    "Bride (Pre-Dress)": "#ffe4e1",
-    "Bride (Dress On)": "#ffccd5",
-    "Bride & Groom:": "#f5e1ff",
-    "Bride:": "#fcd5ce",
-    "Groom:": "#d0f4de",
-    "Ceremony:": "#f0efeb",
-    "Reception:": "#e0f7fa",
-    "Group Photos:": "#fde2e4",
-    Other: "#ff8100",
+    Details: "#FFE5B4", // Peach
+    "Bride (Pre-Dress)": "#FFB6C1", // Light Pink
+    "Bride (Dress On)": "#FF69B4", // Hot Pink
+    "Bride & Groom:": "#DA70D6", // Orchid
+    "Narration:": "#FFA07A", // Light Salmon
+    "Groom:": "#98FB98", // Pale Green
+    "Ceremony:": "#F0E68C", // Khaki
+    "Reception:": "#87CEEB", // Sky Blue
+    "Group Photos:": "#DDA0DD", // Plum
+    Other: "#FF8C00", // Dark Orange
   };
+
   const key = Object.keys(colors).find((k) => label.startsWith(k));
-  const background = colors[key] || "#ffffff";
+  const background = colors[key] || "#E6E6FA"; // Lavender default
 
   return (
     <div
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/plain", id);
+        onDragStart(id);
+      }}
       style={{
-        transform: transform
-          ? `translate(${transform.x}px,${transform.y}px)`
-          : undefined,
         padding: "8px",
         margin: "4px 0",
         background,
-        border: "1px solid #ccc",
+        border: "2px solid #999",
         borderRadius: "8px",
         cursor: "grab",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
+        fontWeight: "500",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
       }}
     >
       <span>{label}</span>
-      <span style={{ fontSize: "12px", color: "#555" }}>{duration} min</span>
+      <span style={{ fontSize: "12px", color: "#555", fontWeight: "bold" }}>
+        {duration} min
+      </span>
     </div>
   );
 }
@@ -74,27 +77,23 @@ function TimelineRow({
   onDelete,
   id,
   isDragging,
-  activeId,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  dragOverIndex,
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef: setDragHandleRef,
-  } = useDraggable({ id });
-  const { setNodeRef: setDropRef, isOver } = useDroppable({ id });
-
-  // Color mapping for event blocks
+  // More differentiated colors for event fields
   const colors = {
-    Details: "#fff1e6",
-    "Bride (Pre-Dress)": "#ffe4e1",
-    "Bride (Dress On)": "#ffccd5",
-    "Bride & Groom:": "#f5e1ff",
-    "Bride:": "#fcd5ce",
-    "Groom:": "#d0f4de",
-    "Ceremony:": "#f0efeb",
-    "Reception:": "#e0f7fa",
-    "Group Photos:": "#fde2e4",
-    Other: "#ff8100",
+    Details: "#FFE5B4", // Peach
+    "Bride (Pre-Dress)": "#FFB6C1", // Light Pink
+    "Bride (Dress On)": "#FF69B4", // Hot Pink
+    "Bride & Groom:": "#DA70D6", // Orchid
+    "Bride:": "#FFA07A", // Light Salmon
+    "Groom:": "#98FB98", // Pale Green
+    "Ceremony:": "#F0E68C", // Khaki
+    "Reception:": "#87CEEB", // Sky Blue
+    "Group Photos:": "#DDA0DD", // Plum
+    Other: "#FF8C00", // Dark Orange
   };
 
   // Get the background color for the event field
@@ -105,32 +104,50 @@ function TimelineRow({
   };
 
   const t = formatTime(row.time);
+
   return (
     <div
-      ref={setDropRef}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/plain", `timeline-${index}`);
+        onDragStart(`timeline-${index}`);
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        onDragOver(index);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        const draggedId = e.dataTransfer.getData("text/plain");
+        onDrop(draggedId, index);
+      }}
       style={{
         display: "grid",
-        gridTemplateColumns: "3fr 2fr 4fr 2fr 1fr",
+        gridTemplateColumns: "4fr 2fr 4fr 2fr 1fr",
         alignItems: "center",
         borderBottom: "1px solid #ccc",
-        background: isDragging ? "#e6f7ff" : isOver ? "#fff7d6" : "transparent",
+        background: isDragging
+          ? "#e6f7ff"
+          : dragOverIndex === index
+          ? "#fff7d6"
+          : "transparent",
         boxShadow: isDragging ? "0 0 6px #1890ff" : "none",
         transition: "background 0.2s ease, box-shadow 0.2s ease",
+        opacity: 1,
       }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>
         <div
-          ref={setDragHandleRef}
-          {...listeners}
-          {...attributes}
           style={{
             cursor: "grab",
-            padding: "4px",
-            fontSize: "18px",
+            padding: "8px",
+            fontSize: "16px",
             userSelect: "none",
+            color: "#666",
+            marginRight: "8px",
           }}
         >
-          ⋮
+          ↕️
         </div>
         <textarea
           placeholder="Location"
@@ -142,6 +159,9 @@ function TimelineRow({
             fontSize: "14px",
             padding: "4px",
             resize: "none",
+            backgroundColor: "white",
+            color: "black",
+            cursor: "text",
           }}
         />
       </div>
@@ -151,7 +171,14 @@ function TimelineRow({
           value={t.hour}
           onChange={(e) => onChange(index, "time", e.target.value, "hour")}
           onBlur={() => onBlur(index)}
-          style={{ width: "30px", fontSize: "14px", textAlign: "center" }}
+          style={{
+            width: "30px",
+            fontSize: "14px",
+            textAlign: "center",
+            backgroundColor: "white",
+            color: "black",
+            cursor: "text",
+          }}
         />
         :
         <input
@@ -159,13 +186,26 @@ function TimelineRow({
           value={t.minute}
           onChange={(e) => onChange(index, "time", e.target.value, "minute")}
           onBlur={() => onBlur(index)}
-          style={{ width: "30px", fontSize: "14px", textAlign: "center" }}
+          style={{
+            width: "30px",
+            fontSize: "14px",
+            textAlign: "center",
+            backgroundColor: "white",
+            color: "black",
+            cursor: "text",
+          }}
         />
         <select
           value={t.period}
           onChange={(e) => onChange(index, "time", e.target.value, "period")}
           onBlur={() => onBlur(index)}
-          style={{ fontSize: "14px", marginLeft: "4px" }}
+          style={{
+            fontSize: "14px",
+            marginLeft: "4px",
+            backgroundColor: "white",
+            color: "black",
+            cursor: "pointer",
+          }}
         >
           <option value="AM">AM</option>
           <option value="PM">PM</option>
@@ -184,6 +224,8 @@ function TimelineRow({
           backgroundColor: getEventColor(row.event),
           border: "1px solid #ccc",
           borderRadius: "4px",
+          color: "black",
+          cursor: "text",
         }}
       />
       <div style={{ display: "flex", alignItems: "center", padding: "4px" }}>
@@ -194,67 +236,69 @@ function TimelineRow({
           value={row.duration}
           onChange={(e) => onChange(index, "duration", e.target.value)}
           onBlur={() => onBlur(index)}
-          style={{ width: "35px", fontSize: "14px" }}
+          style={{
+            width: "35px",
+            fontSize: "14px",
+            backgroundColor: "white",
+            color: "black",
+            cursor: "text",
+          }}
         />
         <span style={{ marginLeft: "4px" }}>Minutes</span>
       </div>
-      {index > 0 ? (
-        <button
-          onClick={() => onDelete(index)}
-          style={{
-            background: "none",
-            border: "none",
-            color: "red",
-            cursor: "pointer",
-          }}
-          title="Delete"
-        >
-          ✕
-        </button>
-      ) : (
-        <div style={{ height: "32px" }} />
-      )}
+      <button
+        onClick={() => onDelete(index)}
+        style={{
+          background: "none",
+          border: "none",
+          color: "red",
+          cursor: "pointer",
+        }}
+        title="Delete"
+      >
+        ✕
+      </button>
     </div>
   );
 }
 
 export default function App() {
-  const defaultRow = { location: "", time: 9 * 60, event: "", duration: 30 };
+  const [date, setDate] = useState("");
+  const [bride, setBride] = useState("");
+  const [groom, setGroom] = useState("");
+  const [photoStartHour, setPhotoStartHour] = useState("9");
+  const [photoStartMinute, setPhotoStartMinute] = useState("00");
+  const [photoStartPeriod, setPhotoStartPeriod] = useState("AM");
+  const [photoEndHour, setPhotoEndHour] = useState("5");
+  const [photoEndMinute, setPhotoEndMinute] = useState("00");
+  const [photoEndPeriod, setPhotoEndPeriod] = useState("PM");
+  const [videoStartHour, setVideoStartHour] = useState("9");
+  const [videoStartMinute, setVideoStartMinute] = useState("00");
+  const [videoStartPeriod, setVideoStartPeriod] = useState("AM");
+  const [videoEndHour, setVideoEndHour] = useState("5");
+  const [videoEndMinute, setVideoEndMinute] = useState("00");
+  const [videoEndPeriod, setVideoEndPeriod] = useState("PM");
 
-  const [rows, setRows] = useState(() => {
-    const saved = localStorage.getItem("timelineRows");
-    return saved ? JSON.parse(saved) : [defaultRow];
-  });
+  const [userRows, setUserRows] = useState([
+    { location: "", time: 9 * 60 + 30, event: "", duration: 30 },
+  ]);
   const [history, setHistory] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
-  const [date, setDate] = useState(() => {
-    return localStorage.getItem("timelineDate") || "";
-  });
-  const [bride, setBride] = useState(() => {
-    return localStorage.getItem("timelineBride") || "";
-  });
-  const [groom, setGroom] = useState(() => {
-    return localStorage.getItem("timelineGroom") || "";
-  });
-  const [startHour, setStartHour] = useState(() => {
-    return localStorage.getItem("timelineStartHour") || "9";
-  });
-  const [startMinute, setStartMinute] = useState(() => {
-    return localStorage.getItem("timelineStartMinute") || "00";
-  });
-  const [startPeriod, setStartPeriod] = useState(() => {
-    return localStorage.getItem("timelineStartPeriod") || "AM";
-  });
-  const [videoStartHour, setVideoStartHour] = useState(() => {
-    return localStorage.getItem("timelineVideoStartHour") || "9";
-  });
-  const [videoStartMinute, setVideoStartMinute] = useState(() => {
-    return localStorage.getItem("timelineVideoStartMinute") || "00";
-  });
-  const [videoStartPeriod, setVideoStartPeriod] = useState(() => {
-    return localStorage.getItem("timelineVideoStartPeriod") || "AM";
-  });
   const [activeRowId, setActiveRowId] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+
+  // Function to recalculate times based on duration changes
+  const recalculateTimes = (rows, startIndex = 0) => {
+    const newRows = [...rows];
+    for (let i = startIndex + 1; i < newRows.length; i++) {
+      const prevRow = newRows[i - 1];
+      newRows[i].time = prevRow.time + prevRow.duration;
+    }
+    return newRows;
+  };
+
+  // All rows are now just user rows, sorted by time
+  const rows = [...userRows].sort((a, b) => a.time - b.time);
 
   const eventBlocks = [
     "Details: Drone & Venue Shots::20",
@@ -271,8 +315,8 @@ export default function App() {
     "Bride (Dress On): First Look with Parent::10",
     "Bride (Dress On): First Look with Bridemaids::10",
     "Bride (Dress On): First Look with Groom::10",
-    "Bride: Bride Record Narration::15",
-    "Groom: Groom Record Narration::15",
+    "Narration: Bride Record Narration::15",
+    "Narration: Groom Record Narration::15",
     "Groom: Assisted with Tie & Jacket::10",
     "Groom: Portraits::15",
     "Groom: Groomsmen Group Shots::10",
@@ -302,118 +346,250 @@ export default function App() {
     return { id: `${lab}::${d}`, label: lab, duration: parseInt(d, 10) };
   });
 
-  const updateTimesFromIndex = (startIdx, arr) => {
-    arr.forEach((r, i) => {
-      if (i > startIdx) r.time = arr[i - 1].time + arr[i - 1].duration;
-    });
-    return arr;
-  };
-
-  const saveToHistory = (newRows) => {
-    setHistory((prev) => [...prev.slice(-11), rows]);
+  const saveToHistory = (newUserRows) => {
+    if (JSON.stringify(newUserRows) === JSON.stringify(userRows)) {
+      return; // Don't save if nothing changed
+    }
+    setHistory((prev) => [...prev.slice(-11), userRows]);
     setRedoStack([]);
-    setRows(newRows);
+    setUserRows(newUserRows);
   };
 
   const handleUndo = () => {
     if (history.length === 0) return;
     const last = history[history.length - 1];
-    setRedoStack((r) => [...r, rows]);
-    setRows(last);
+    setRedoStack((r) => [...r, userRows]);
+    setUserRows(last);
     setHistory((h) => h.slice(0, -1));
   };
 
   const handleRedo = () => {
     if (redoStack.length === 0) return;
     const next = redoStack[redoStack.length - 1];
-    setHistory((h) => [...h, rows]);
-    setRows(next);
+    setHistory((h) => [...h, userRows]);
+    setUserRows(next);
     setRedoStack((r) => r.slice(0, -1));
   };
 
-  const handleChange = (i, f, v, sub) => {
-    const a = [...rows];
-    if (f === "duration") a[i][f] = parseInt(v, 10);
-    else if (f === "time")
-      a[i].time = parseTimeInput(
-        sub === "hour" ? v : formatTime(a[i].time).hour,
-        sub === "minute" ? v : formatTime(a[i].time).minute,
-        sub === "period" ? v : formatTime(a[i].time).period
+  const handleChange = (displayIndex, field, value, sub) => {
+    const row = rows[displayIndex];
+    const userRowIndex = userRows.findIndex((userRow) => userRow === row);
+    if (userRowIndex === -1) return;
+
+    const newUserRows = [...userRows];
+
+    if (field === "duration") {
+      const newDuration = parseInt(value, 10) || 0;
+      newUserRows[userRowIndex][field] = newDuration;
+
+      // Sort rows by time and find the index of the changed row
+      const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
+      const sortedIndex = sortedRows.findIndex(
+        (r) => r === newUserRows[userRowIndex]
       );
-    else a[i][f] = v;
-    saveToHistory(updateTimesFromIndex(i, a));
+
+      // Recalculate times for all subsequent rows
+      const recalculated = recalculateTimes(sortedRows, sortedIndex);
+
+      // Update userRows with recalculated times
+      recalculated.forEach((recalcRow, i) => {
+        const originalIndex = newUserRows.findIndex((r) => r === sortedRows[i]);
+        if (originalIndex !== -1) {
+          newUserRows[originalIndex] = recalcRow;
+        }
+      });
+    } else if (field === "time") {
+      const currentTime = formatTime(newUserRows[userRowIndex].time);
+      const newTime = parseTimeInput(
+        sub === "hour" ? value : currentTime.hour,
+        sub === "minute" ? value : currentTime.minute,
+        sub === "period" ? value : currentTime.period
+      );
+      newUserRows[userRowIndex].time = newTime;
+
+      // Sort rows by time and find the index of the changed row
+      const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
+      const sortedIndex = sortedRows.findIndex(
+        (r) => r === newUserRows[userRowIndex]
+      );
+
+      // Recalculate times for all subsequent rows
+      const recalculated = recalculateTimes(sortedRows, sortedIndex);
+
+      // Update userRows with recalculated times
+      recalculated.forEach((recalcRow, i) => {
+        const originalIndex = newUserRows.findIndex((r) => r === sortedRows[i]);
+        if (originalIndex !== -1) {
+          newUserRows[originalIndex] = recalcRow;
+        }
+      });
+    } else {
+      newUserRows[userRowIndex][field] = value;
+    }
+
+    setUserRows(newUserRows);
   };
 
-  const handleBlur = (i) => {
-    const a = [...rows];
-    saveToHistory(updateTimesFromIndex(i, a));
+  const handleBlur = (displayIndex) => {
+    // Save to history when user finishes editing a field
+    saveToHistory(userRows);
   };
 
-  const handleDelete = (i) =>
-    saveToHistory(
-      updateTimesFromIndex(
-        Math.max(0, i - 1),
-        rows.filter((_, idx) => idx !== i)
-      )
-    );
+  const handleDelete = (displayIndex) => {
+    const row = rows[displayIndex];
+    const userRowIndex = userRows.findIndex((userRow) => userRow === row);
+    if (userRowIndex === -1) return;
 
-  const handleDragEnd = ({ active, over }) => {
-    if (!over) return;
+    let newUserRows = userRows.filter((_, idx) => idx !== userRowIndex);
 
-    const activeId = active.id;
-    const overId = over.id;
+    // If we deleted a row that wasn't the last one, recalculate times
+    if (newUserRows.length > 0) {
+      const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
+      const deletedSortedIndex = Math.min(userRowIndex, sortedRows.length - 1);
+      newUserRows = recalculateTimes(
+        sortedRows,
+        Math.max(0, deletedSortedIndex - 1)
+      );
+    }
 
-    if (activeId.includes("::") && overId.startsWith("timeline-")) {
-      const idx = parseInt(overId.replace("timeline-", ""), 10);
-      const [lab, d] = activeId.split("::");
-      const a = [...rows];
-      a[idx].event = lab;
-      a[idx].duration = parseInt(d, 10);
+    saveToHistory(newUserRows);
+  };
 
-      saveToHistory(updateTimesFromIndex(idx, a));
-      setActiveRowId(null);
+  const handleDragStart = (id) => {
+    setActiveRowId(id);
+  };
+
+  const handleDragOver = (index) => {
+    setDragOverIndex(index);
+  };
+
+  const handleDrop = (draggedId, dropIndex) => {
+    setActiveRowId(null);
+    setDragOverIndex(null);
+
+    const dropRow = rows[dropIndex];
+
+    if (draggedId.includes("::")) {
+      // Dropping event block on timeline row - keep the time but replace event and duration
+      const userRowIndex = userRows.findIndex((userRow) => userRow === dropRow);
+      if (userRowIndex === -1) return;
+
+      const [lab, d] = draggedId.split("::");
+      const newUserRows = [...userRows];
+      const newDuration = parseInt(d, 10);
+
+      // Keep the existing time and location, only change event and duration
+      newUserRows[userRowIndex] = {
+        ...newUserRows[userRowIndex],
+        event: lab,
+        duration: newDuration,
+      };
+
+      // Sort rows by time and find the index of the changed row
+      const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
+      const sortedIndex = sortedRows.findIndex(
+        (r) => r === newUserRows[userRowIndex]
+      );
+
+      // Recalculate times for all subsequent rows
+      const recalculated = recalculateTimes(sortedRows, sortedIndex);
+
+      // Update userRows with recalculated times
+      recalculated.forEach((recalcRow, i) => {
+        const originalIndex = newUserRows.findIndex((r) => r === sortedRows[i]);
+        if (originalIndex !== -1) {
+          newUserRows[originalIndex] = recalcRow;
+        }
+      });
+
+      saveToHistory(newUserRows);
       return;
     }
 
-    if (activeId.startsWith("timeline-") && overId.startsWith("timeline-")) {
-      const fromIdx = parseInt(activeId.replace("timeline-", ""), 10);
-      const toIdx = parseInt(overId.replace("timeline-", ""), 10);
-      if (fromIdx === toIdx) {
-        setActiveRowId(null);
-        return;
+    if (draggedId.startsWith("timeline-")) {
+      // Reordering timeline rows
+      const fromDisplayIndex = parseInt(draggedId.replace("timeline-", ""), 10);
+      const toDisplayIndex = dropIndex;
+
+      if (fromDisplayIndex === toDisplayIndex) return;
+
+      const fromRow = rows[fromDisplayIndex];
+      const toRow = rows[toDisplayIndex];
+
+      const fromUserIndex = userRows.findIndex(
+        (userRow) => userRow === fromRow
+      );
+      const toUserIndex = userRows.findIndex((userRow) => userRow === toRow);
+
+      if (fromUserIndex === -1 || toUserIndex === -1) return;
+
+      const newUserRows = [...userRows];
+
+      // The dragged row takes the target row's time, but keeps its own event, location, and duration
+      const draggedRow = { ...newUserRows[fromUserIndex] };
+      const targetTime = toRow.time;
+
+      // Update the dragged row's time to the target time
+      draggedRow.time = targetTime;
+
+      // Remove the dragged row from its original position
+      newUserRows.splice(fromUserIndex, 1);
+
+      // Find the correct insertion index after removal
+      // If we're moving down, we need to find the target row in the new array
+      let insertionIndex;
+      if (fromUserIndex < toUserIndex) {
+        // Moving down - find the target row after removal
+        const targetRowAfterRemoval = newUserRows.find((row) => row === toRow);
+        insertionIndex = newUserRows.indexOf(targetRowAfterRemoval);
+      } else {
+        // Moving up - find the target row after removal
+        const targetRowAfterRemoval = newUserRows.find((row) => row === toRow);
+        insertionIndex = newUserRows.indexOf(targetRowAfterRemoval);
       }
 
-      const newRows = [...rows];
-      const [moved] = newRows.splice(fromIdx, 1);
-      const insertIdx = toIdx >= newRows.length ? newRows.length : toIdx;
+      // Insert the dragged row at the target position
+      newUserRows.splice(insertionIndex, 0, draggedRow);
 
-      const referenceTime =
-        newRows[insertIdx]?.time ??
-        (newRows[insertIdx - 1]?.time ?? 0) +
-          (newRows[insertIdx - 1]?.duration ?? 0);
-
-      newRows.splice(insertIdx, 0, { ...moved, time: referenceTime });
-      saveToHistory(
-        updateTimesFromIndex(Math.min(fromIdx, insertIdx), newRows)
+      // Now recalculate all times starting from the inserted position
+      const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
+      const insertedRowSortedIndex = sortedRows.findIndex(
+        (r) => r === draggedRow
       );
-    }
 
-    setActiveRowId(null);
+      // Recalculate times for all rows after the inserted row
+      const recalculated = recalculateTimes(sortedRows, insertedRowSortedIndex);
+
+      saveToHistory(recalculated);
+    }
+  };
+
+  const addNewRow = () => {
+    const lastRow = rows[rows.length - 1];
+    const newTime = lastRow ? lastRow.time + lastRow.duration : 9 * 60 + 30; // 9:30 AM default
+    const newRow = { location: "", time: newTime, event: "", duration: 30 };
+    saveToHistory([...userRows, newRow]);
   };
 
   // Save/Load functionality
   const saveProject = () => {
     const projectData = {
-      rows,
+      userRows,
       date,
       bride,
       groom,
-      startHour,
-      startMinute,
-      startPeriod,
+      photoStartHour,
+      photoStartMinute,
+      photoStartPeriod,
+      photoEndHour,
+      photoEndMinute,
+      photoEndPeriod,
       videoStartHour,
       videoStartMinute,
       videoStartPeriod,
+      videoEndHour,
+      videoEndMinute,
+      videoEndPeriod,
       savedAt: new Date().toISOString(),
     };
 
@@ -447,25 +623,28 @@ export default function App() {
         try {
           const projectData = JSON.parse(e.target.result);
 
-          // Validate the structure
-          if (!projectData.rows || !Array.isArray(projectData.rows)) {
+          if (!projectData.userRows || !Array.isArray(projectData.userRows)) {
             alert("Invalid project file format");
             return;
           }
 
-          // Load all the data
-          setRows(projectData.rows);
+          setUserRows(projectData.userRows);
           setDate(projectData.date || "");
           setBride(projectData.bride || "");
           setGroom(projectData.groom || "");
-          setStartHour(projectData.startHour || "9");
-          setStartMinute(projectData.startMinute || "00");
-          setStartPeriod(projectData.startPeriod || "AM");
+          setPhotoStartHour(projectData.photoStartHour || "9");
+          setPhotoStartMinute(projectData.photoStartMinute || "00");
+          setPhotoStartPeriod(projectData.photoStartPeriod || "AM");
+          setPhotoEndHour(projectData.photoEndHour || "5");
+          setPhotoEndMinute(projectData.photoEndMinute || "00");
+          setPhotoEndPeriod(projectData.photoEndPeriod || "PM");
           setVideoStartHour(projectData.videoStartHour || "9");
           setVideoStartMinute(projectData.videoStartMinute || "00");
           setVideoStartPeriod(projectData.videoStartPeriod || "AM");
+          setVideoEndHour(projectData.videoEndHour || "5");
+          setVideoEndMinute(projectData.videoEndMinute || "00");
+          setVideoEndPeriod(projectData.videoEndPeriod || "PM");
 
-          // Clear history when loading
           setHistory([]);
           setRedoStack([]);
 
@@ -482,8 +661,8 @@ export default function App() {
   const exportTXT = () => {
     const lines = [
       `Date: ${date}`,
-      `Start Time for Photographers: ${startHour}:${startMinute} ${startPeriod}`,
-      `Start Time for Videographers: ${videoStartHour}:${videoStartMinute} ${videoStartPeriod}`,
+      `Photographers: ${photoStartHour}:${photoStartMinute} ${photoStartPeriod} - ${photoEndHour}:${photoEndMinute} ${photoEndPeriod}`,
+      `Videographers: ${videoStartHour}:${videoStartMinute} ${videoStartPeriod} - ${videoEndHour}:${videoEndMinute} ${videoEndPeriod}`,
       `Bride: ${bride}`,
       `Groom: ${groom}`,
       "",
@@ -514,269 +693,296 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  // Save to localStorage whenever state changes
-  useEffect(() => {
-    localStorage.setItem("timelineRows", JSON.stringify(rows));
-  }, [rows]);
-
-  useEffect(() => {
-    localStorage.setItem("timelineDate", date);
-  }, [date]);
-
-  useEffect(() => {
-    localStorage.setItem("timelineBride", bride);
-  }, [bride]);
-
-  useEffect(() => {
-    localStorage.setItem("timelineGroom", groom);
-  }, [groom]);
-
-  useEffect(() => {
-    localStorage.setItem("timelineStartHour", startHour);
-  }, [startHour]);
-
-  useEffect(() => {
-    localStorage.setItem("timelineStartMinute", startMinute);
-  }, [startMinute]);
-
-  useEffect(() => {
-    localStorage.setItem("timelineStartPeriod", startPeriod);
-  }, [startPeriod]);
-
-  useEffect(() => {
-    localStorage.setItem("timelineVideoStartHour", videoStartHour);
-  }, [videoStartHour]);
-
-  useEffect(() => {
-    localStorage.setItem("timelineVideoStartMinute", videoStartMinute);
-  }, [videoStartMinute]);
-
-  useEffect(() => {
-    localStorage.setItem("timelineVideoStartPeriod", videoStartPeriod);
-  }, [videoStartPeriod]);
-
   return (
-    <DndContext
-      onDragStart={({ active }) => setActiveRowId(active.id)}
-      onDragEnd={handleDragEnd}
-    >
-      <div style={{ display: "flex", height: "100vh" }}>
-        <div style={{ flex: 3, padding: "1rem", overflowY: "auto" }}>
-          <div
+    <div style={{ display: "flex", height: "100vh" }}>
+      <div style={{ flex: 3, padding: "1rem", overflowY: "auto" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "1rem",
+            marginBottom: "0.5rem",
+            flexWrap: "wrap",
+          }}
+        >
+          <button
+            onClick={saveProject}
             style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: "1rem",
-              marginBottom: "0.5rem",
-              flexWrap: "wrap",
+              background: "#2196F3",
+              color: "white",
+              padding: "8px 16px",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
             }}
           >
-            <button
-              onClick={saveProject}
-              style={{
-                background: "#2196F3",
-                color: "white",
-                padding: "8px 16px",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              💾 Save Project
-            </button>
-            <button
-              onClick={loadProject}
-              style={{
-                background: "#FF9800",
-                color: "white",
-                padding: "8px 16px",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              📂 Load Project
-            </button>
-            <button
-              onClick={exportTXT}
-              style={{
-                background: "#FFEB3B",
-                color: "black",
-                padding: "8px 16px",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              📄 Export as TXT
-            </button>
-          </div>
-
-          <div
+            💾 Save Project
+          </button>
+          <button
+            onClick={loadProject}
             style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: "1rem",
-              marginBottom: "1rem",
-              flexWrap: "wrap",
+              background: "#FF9800",
+              color: "white",
+              padding: "8px 16px",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
             }}
           >
-            <button onClick={handleUndo} disabled={history.length === 0}>
-              ⬅️ Undo
-            </button>
-            <button onClick={handleRedo} disabled={redoStack.length === 0}>
-              ➡️ Redo
-            </button>
-          </div>
-
-          <h1 style={{ textAlign: "center", fontSize: "2.5rem", marginBottom: "0.5rem" }}>Wedding Timeline Builder</h1>
-          <h2 style={{ textAlign: "center", fontSize: "1.2rem", marginBottom: "1rem" }}>
-            by <a href="mailto:info@mediapotion.net" style={{ color: "#2196F3", textDecoration: "none" }}>Media Potion</a>
-          </h2>
-
-          <div style={{ textAlign: "center", marginBottom: "1rem" }}>
-            <div style={{ marginBottom: "0.5rem" }}>
-              <label>Date:</label>{" "}
-              <input
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                placeholder="MM/DD/YYYY"
-              />
-            </div>
-            <div style={{ marginBottom: "0.5rem" }}>
-              <label>Start Time for Photographers:</label>{" "}
-              <input
-                style={{ width: "30px" }}
-                value={startHour}
-                onChange={(e) => setStartHour(e.target.value)}
-              />{" "}
-              :
-              <input
-                style={{ width: "30px" }}
-                value={startMinute}
-                onChange={(e) => setStartMinute(e.target.value)}
-              />
-              <select
-                value={startPeriod}
-                onChange={(e) => setStartPeriod(e.target.value)}
-              >
-                <option>AM</option>
-                <option>PM</option>
-              </select>
-            </div>
-            <div style={{ marginBottom: "0.5rem" }}>
-              <label>Start Time for Videographers:</label>{" "}
-              <input
-                style={{ width: "30px" }}
-                value={videoStartHour}
-                onChange={(e) => setVideoStartHour(e.target.value)}
-              />{" "}
-              :
-              <input
-                style={{ width: "30px" }}
-                value={videoStartMinute}
-                onChange={(e) => setVideoStartMinute(e.target.value)}
-              />
-              <select
-                value={videoStartPeriod}
-                onChange={(e) => setVideoStartPeriod(e.target.value)}
-              >
-                <option>AM</option>
-                <option>PM</option>
-              </select>
-            </div>
-            <div>
-              <label>Bride:</label>{" "}
-              <input value={bride} onChange={(e) => setBride(e.target.value)} />{" "}
-              <label>Groom:</label>{" "}
-              <input value={groom} onChange={(e) => setGroom(e.target.value)} />
-            </div>
-          </div>
-
-          <div
+            📂 Load Project
+          </button>
+          <button
+            onClick={exportTXT}
             style={{
-              display: "grid",
-              gridTemplateColumns: "3fr 2fr 4fr 2fr 1fr",
-              fontWeight: "bold",
-              borderBottom: "1px solid #ccc",
-              paddingBottom: "8px",
-              marginBottom: "8px",
+              background: "#FFEB3B",
+              color: "black",
+              padding: "8px 16px",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
             }}
           >
-            <div>Location</div>
-            <div style={{ textAlign: "center" }}>Time</div>
-            <div>Event</div>
-            <div>Duration</div>
-            <div></div>
-          </div>
+            📄 Export as TXT
+          </button>
+        </div>
 
-          {rows.map((r, i) => (
-            <TimelineRow
-              key={i}
-              id={`timeline-${i}`}
-              row={r}
-              index={i}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              onDelete={handleDelete}
-              isDragging={activeRowId === `timeline-${i}`}
-              activeId={activeRowId}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "1rem",
+            marginBottom: "1rem",
+            flexWrap: "wrap",
+          }}
+        >
+          <button onClick={handleUndo} disabled={history.length === 0}>
+            ⬅️ Undo
+          </button>
+          <button onClick={handleRedo} disabled={redoStack.length === 0}>
+            ➡️ Redo
+          </button>
+        </div>
+
+        <h1
+          style={{
+            textAlign: "center",
+            fontSize: "2.5rem",
+            marginBottom: "0.5rem",
+          }}
+        >
+          Wedding Timeline Builder
+        </h1>
+        <h2
+          style={{
+            textAlign: "center",
+            fontSize: "1.2rem",
+            marginBottom: "1rem",
+          }}
+        >
+          by{" "}
+          <a
+            href="mailto:info@mediapotion.net"
+            style={{ color: "#2196F3", textDecoration: "none" }}
+          >
+            Media Potion
+          </a>
+        </h2>
+
+        <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+          <div style={{ marginBottom: "0.5rem" }}>
+            <label>Date:</label>{" "}
+            <input
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              placeholder="MM/DD/YYYY"
             />
-          ))}
-
-          <div style={{ textAlign: "center", marginTop: "1rem" }}>
-            <button
-              onClick={() => {
-                const last = rows[rows.length - 1];
-                saveToHistory([
-                  ...rows,
-                  {
-                    location: "",
-                    time: last.time + last.duration,
-                    event: "",
-                    duration: 30,
-                  },
-                ]);
-              }}
-              style={{
-                background: "#4CAF50",
-                color: "white",
-                padding: "10px 20px",
-                fontSize: "14px",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
+          </div>
+          <div style={{ marginBottom: "0.5rem" }}>
+            <label>Photographers - Start Time:</label>{" "}
+            <input
+              style={{ width: "30px" }}
+              value={photoStartHour}
+              onChange={(e) => setPhotoStartHour(e.target.value)}
+            />{" "}
+            :
+            <input
+              style={{ width: "30px" }}
+              value={photoStartMinute}
+              onChange={(e) => setPhotoStartMinute(e.target.value)}
+            />
+            <select
+              value={photoStartPeriod}
+              onChange={(e) => setPhotoStartPeriod(e.target.value)}
             >
-              ➕ Add New Row
-            </button>
+              <option>AM</option>
+              <option>PM</option>
+            </select>{" "}
+            <label>End Time:</label>{" "}
+            <input
+              style={{ width: "30px" }}
+              value={photoEndHour}
+              onChange={(e) => setPhotoEndHour(e.target.value)}
+            />{" "}
+            :
+            <input
+              style={{ width: "30px" }}
+              value={photoEndMinute}
+              onChange={(e) => setPhotoEndMinute(e.target.value)}
+            />
+            <select
+              value={photoEndPeriod}
+              onChange={(e) => setPhotoEndPeriod(e.target.value)}
+            >
+              <option>AM</option>
+              <option>PM</option>
+            </select>
+          </div>
+          <div style={{ marginBottom: "0.5rem" }}>
+            <label>Videographers - Start Time:</label>{" "}
+            <input
+              style={{ width: "30px" }}
+              value={videoStartHour}
+              onChange={(e) => setVideoStartHour(e.target.value)}
+            />{" "}
+            :
+            <input
+              style={{ width: "30px" }}
+              value={videoStartMinute}
+              onChange={(e) => setVideoStartMinute(e.target.value)}
+            />
+            <select
+              value={videoStartPeriod}
+              onChange={(e) => setVideoStartPeriod(e.target.value)}
+            >
+              <option>AM</option>
+              <option>PM</option>
+            </select>{" "}
+            <label>End Time:</label>{" "}
+            <input
+              style={{ width: "30px" }}
+              value={videoEndHour}
+              onChange={(e) => setVideoEndHour(e.target.value)}
+            />{" "}
+            :
+            <input
+              style={{ width: "30px" }}
+              value={videoEndMinute}
+              onChange={(e) => setVideoEndMinute(e.target.value)}
+            />
+            <select
+              value={videoEndPeriod}
+              onChange={(e) => setVideoEndPeriod(e.target.value)}
+            >
+              <option>AM</option>
+              <option>PM</option>
+            </select>
+          </div>
+          <div style={{ marginBottom: "0.5rem" }}>
+            <label>Bride:</label>{" "}
+            <input
+              value={bride}
+              onChange={(e) => setBride(e.target.value)}
+              placeholder="Bride's Name"
+            />
+          </div>
+          <div style={{ marginBottom: "0.5rem" }}>
+            <label>Groom:</label>{" "}
+            <input
+              value={groom}
+              onChange={(e) => setGroom(e.target.value)}
+              placeholder="Groom's Name"
+            />
           </div>
         </div>
 
         <div
           style={{
-            width: "600px",
-            padding: "1rem",
-            background: "#f3f4f6",
-            overflowY: "auto",
+            display: "grid",
+            gridTemplateColumns: "4fr 2fr 4fr 2fr 1fr",
+            fontWeight: "bold",
+            borderBottom: "2px solid #333",
+            marginBottom: "0.5rem",
+            padding: "8px 0",
           }}
         >
-          <h3
+          <div>Location</div>
+          <div style={{ textAlign: "center" }}>Time</div>
+          <div>Event</div>
+          <div>Duration</div>
+          <div></div>
+        </div>
+
+        <div>
+          {rows.map((row, index) => (
+            <TimelineRow
+              key={`${row.time}-${row.event}-${index}`}
+              row={row}
+              index={index}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              onDelete={handleDelete}
+              id={`timeline-${index}`}
+              isDragging={activeRowId === `timeline-${index}`}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              dragOverIndex={dragOverIndex}
+            />
+          ))}
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginTop: "1rem",
+          }}
+        >
+          <button
+            onClick={addNewRow}
             style={{
-              fontWeight: "bold",
-              textAlign: "center",
-              marginBottom: "0.5rem",
+              background: "#4CAF50",
+              color: "white",
+              padding: "8px 16px",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
             }}
           >
-            Event Blocks
-          </h3>
-          <div className="grid grid-cols-2 gap-2">
-            {eventBlocks.map((b) => (
-              <DraggableEvent key={b.id} id={b.id} label={b.label} />
-            ))}
-          </div>
+            ➕ Add Row
+          </button>
         </div>
       </div>
-    </DndContext>
+
+      <div
+        style={{
+          flex: 1,
+          padding: "1rem",
+          borderLeft: "1px solid #ccc",
+          overflowY: "auto",
+        }}
+      >
+        <h3
+          style={{
+            marginBottom: "1rem",
+            textAlign: "center",
+            fontWeight: "bold",
+          }}
+        >
+          Event Blocks
+        </h3>
+
+        <div>
+          {eventBlocks.map((block) => (
+            <DraggableEvent
+              key={block.id}
+              id={block.id}
+              label={block.label}
+              onDragStart={handleDragStart}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
