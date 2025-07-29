@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 function formatTime(totalMinutes) {
   const hours = Math.floor(totalMinutes / 60);
@@ -88,7 +88,7 @@ function TimelineRow({
     "Bride (Pre-Dress)": "#FFB6C1", // Light Pink
     "Bride (Dress On)": "#FF69B4", // Hot Pink
     "Bride & Groom:": "#DA70D6", // Orchid
-    "Bride:": "#FFA07A", // Light Salmon
+    "Narration:": "#FFA07A", // Light Salmon
     "Groom:": "#98FB98", // Pale Green
     "Ceremony:": "#F0E68C", // Khaki
     "Reception:": "#87CEEB", // Sky Blue
@@ -153,6 +153,7 @@ function TimelineRow({
           placeholder="Location"
           value={row.location}
           onChange={(e) => onChange(index, "location", e.target.value)}
+          onBlur={() => onBlur(index)}
           rows={2}
           style={{
             width: "100%",
@@ -166,50 +167,199 @@ function TimelineRow({
         />
       </div>
       <div style={{ textAlign: "center", padding: "4px" }}>
-        <input
-          type="text"
-          value={t.hour}
-          onChange={(e) => onChange(index, "time", e.target.value, "hour")}
-          onBlur={() => onBlur(index)}
+        <div
           style={{
-            width: "30px",
-            fontSize: "14px",
-            textAlign: "center",
-            backgroundColor: "white",
-            color: "black",
-            cursor: "text",
-          }}
-        />
-        :
-        <input
-          type="text"
-          value={t.minute}
-          onChange={(e) => onChange(index, "time", e.target.value, "minute")}
-          onBlur={() => onBlur(index)}
-          style={{
-            width: "30px",
-            fontSize: "14px",
-            textAlign: "center",
-            backgroundColor: "white",
-            color: "black",
-            cursor: "text",
-          }}
-        />
-        <select
-          value={t.period}
-          onChange={(e) => onChange(index, "time", e.target.value, "period")}
-          onBlur={() => onBlur(index)}
-          style={{
-            fontSize: "14px",
-            marginLeft: "4px",
-            backgroundColor: "white",
-            color: "black",
-            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "2px",
           }}
         >
-          <option value="AM">AM</option>
-          <option value="PM">PM</option>
-        </select>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <button
+              onClick={() => {
+                const currentTime = formatTime(row.time);
+                let newHour = parseInt(currentTime.hour) + 1;
+                if (newHour > 12) newHour = 1;
+                onChange(index, "time", newHour.toString(), "hour");
+                onBlur(index);
+              }}
+              style={{
+                width: "20px",
+                height: "15px",
+                fontSize: "10px",
+                border: "1px solid #ccc",
+                background: "#f5f5f5",
+                cursor: "pointer",
+                padding: "0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              ▲
+            </button>
+            <input
+              type="text"
+              value={t.hour}
+              onChange={(e) => onChange(index, "time", e.target.value, "hour")}
+              onBlur={() => onBlur(index)}
+              style={{
+                width: "30px",
+                fontSize: "14px",
+                textAlign: "center",
+                backgroundColor: "white",
+                color: "black",
+                cursor: "text",
+                border: "1px solid #ccc",
+                margin: "1px 0",
+              }}
+            />
+            <button
+              onClick={() => {
+                const currentTime = formatTime(row.time);
+                let newHour = parseInt(currentTime.hour) - 1;
+                if (newHour < 1) newHour = 12;
+                onChange(index, "time", newHour.toString(), "hour");
+                onBlur(index);
+              }}
+              style={{
+                width: "20px",
+                height: "15px",
+                fontSize: "10px",
+                border: "1px solid #ccc",
+                background: "#f5f5f5",
+                cursor: "pointer",
+                padding: "0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              ▼
+            </button>
+          </div>
+          <span style={{ margin: "0 2px" }}>:</span>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <button
+              onClick={() => {
+                const currentTime = formatTime(row.time);
+                let newMinute = parseInt(currentTime.minute) + 5;
+                if (newMinute >= 60) newMinute = 0;
+                onChange(
+                  index,
+                  "time",
+                  newMinute.toString().padStart(2, "0"),
+                  "minute"
+                );
+                onBlur(index);
+              }}
+              style={{
+                width: "20px",
+                height: "15px",
+                fontSize: "10px",
+                border: "1px solid #ccc",
+                background: "#f5f5f5",
+                cursor: "pointer",
+                padding: "0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              ▲
+            </button>
+            <input
+              type="text"
+              value={t.minute}
+              onChange={(e) =>
+                onChange(index, "time", e.target.value, "minute")
+              }
+              onBlur={() => onBlur(index)}
+              style={{
+                width: "30px",
+                fontSize: "14px",
+                textAlign: "center",
+                backgroundColor: "white",
+                color: "black",
+                cursor: "text",
+                border: "1px solid #ccc",
+                margin: "1px 0",
+              }}
+            />
+            <button
+              onClick={() => {
+                const currentTime = formatTime(row.time);
+                let newMinute = parseInt(currentTime.minute) - 15;
+                if (newMinute < 0) newMinute = 45;
+                onChange(
+                  index,
+                  "time",
+                  newMinute.toString().padStart(2, "0"),
+                  "minute"
+                );
+                onBlur(index);
+              }}
+              style={{
+                width: "20px",
+                height: "15px",
+                fontSize: "10px",
+                border: "1px solid #ccc",
+                background: "#f5f5f5",
+                cursor: "pointer",
+                padding: "0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              ▼
+            </button>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              marginLeft: "4px",
+            }}
+          >
+            <button
+              onClick={() => {
+                const currentTime = formatTime(row.time);
+                const newPeriod = currentTime.period === "AM" ? "PM" : "AM";
+                onChange(index, "time", newPeriod, "period");
+                onBlur(index);
+              }}
+              style={{
+                width: "30px",
+                height: "32px",
+                fontSize: "10px",
+                border: "1px solid #ccc",
+                background: "#f5f5f5",
+                cursor: "pointer",
+                padding: "0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {t.period}
+            </button>
+          </div>
+        </div>
       </div>
       <input
         type="text"
@@ -280,12 +430,18 @@ export default function App() {
   const [videoEndPeriod, setVideoEndPeriod] = useState("PM");
 
   const [userRows, setUserRows] = useState([
-    { location: "", time: 9 * 60 + 30, event: "", duration: 30 },
+    { id: 1, location: "", time: 9 * 60 + 30, event: "", duration: 30 },
   ]);
+  const [nextId, setNextId] = useState(2);
   const [history, setHistory] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
   const [activeRowId, setActiveRowId] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
+
+  // Memoize the sorted rows to prevent unnecessary re-renders
+  const rows = useMemo(() => {
+    return [...userRows].sort((a, b) => a.time - b.time);
+  }, [userRows]);
 
   // Function to recalculate times based on duration changes
   const recalculateTimes = (rows, startIndex = 0) => {
@@ -296,9 +452,6 @@ export default function App() {
     }
     return newRows;
   };
-
-  // All rows are now just user rows, sorted by time
-  const rows = [...userRows].sort((a, b) => a.time - b.time);
 
   const eventBlocks = [
     "Details: Drone & Venue Shots::20",
@@ -400,11 +553,27 @@ export default function App() {
       });
     } else if (field === "time") {
       const currentTime = formatTime(newUserRows[userRowIndex].time);
-      const newTime = parseTimeInput(
-        sub === "hour" ? value : currentTime.hour,
-        sub === "minute" ? value : currentTime.minute,
-        sub === "period" ? value : currentTime.period
-      );
+
+      // Validate input values and provide defaults
+      let hourValue = sub === "hour" ? value : currentTime.hour;
+      let minuteValue = sub === "minute" ? value : currentTime.minute;
+      let periodValue = sub === "period" ? value : currentTime.period;
+
+      // Handle empty or invalid values
+      if (!hourValue || isNaN(parseInt(hourValue))) hourValue = "12";
+      if (!minuteValue || isNaN(parseInt(minuteValue))) minuteValue = "00";
+      if (!periodValue || (periodValue !== "AM" && periodValue !== "PM"))
+        periodValue = "AM";
+
+      // Ensure hour is between 1-12
+      const hourNum = parseInt(hourValue);
+      if (hourNum < 1 || hourNum > 12) hourValue = "12";
+
+      // Ensure minute is between 0-59
+      const minuteNum = parseInt(minuteValue);
+      if (minuteNum < 0 || minuteNum > 59) minuteValue = "00";
+
+      const newTime = parseTimeInput(hourValue, minuteValue, periodValue);
       newUserRows[userRowIndex].time = newTime;
 
       // Sort rows by time and find the index of the changed row
@@ -567,7 +736,14 @@ export default function App() {
   const addNewRow = () => {
     const lastRow = rows[rows.length - 1];
     const newTime = lastRow ? lastRow.time + lastRow.duration : 9 * 60 + 30; // 9:30 AM default
-    const newRow = { location: "", time: newTime, event: "", duration: 30 };
+    const newRow = {
+      id: nextId,
+      location: "",
+      time: newTime,
+      event: "",
+      duration: 30,
+    };
+    setNextId(nextId + 1);
     saveToHistory([...userRows, newRow]);
   };
 
@@ -628,7 +804,17 @@ export default function App() {
             return;
           }
 
-          setUserRows(projectData.userRows);
+          setUserRows(
+            projectData.userRows.map((row, index) => ({
+              ...row,
+              id: row.id || index + 1,
+            }))
+          );
+          setNextId(
+            Math.max(
+              ...projectData.userRows.map((row, index) => row.id || index + 1)
+            ) + 1
+          );
           setDate(projectData.date || "");
           setBride(projectData.bride || "");
           setGroom(projectData.groom || "");
@@ -915,7 +1101,7 @@ export default function App() {
         <div>
           {rows.map((row, index) => (
             <TimelineRow
-              key={`${row.time}-${row.event}-${index}`}
+              key={row.id}
               row={row}
               index={index}
               onChange={handleChange}
