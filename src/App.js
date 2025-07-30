@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 
 function formatTime(totalMinutes) {
   const hours = Math.floor(totalMinutes / 60);
@@ -75,7 +75,7 @@ function DropIndicator({ show, position }) {
   return (
     <div
       style={{
-        position: "absolute",
+        position: "fixed",
         left: "0",
         right: "0",
         top: `${position}px`,
@@ -471,6 +471,9 @@ export default function App() {
   const [showDropIndicator, setShowDropIndicator] = useState(false);
   const [draggedFromIndex, setDraggedFromIndex] = useState(null);
 
+  // Ref for the timeline container
+  const timelineContainerRef = useRef(null);
+
   // Memoize the sorted rows to prevent unnecessary re-renders
   const rows = useMemo(() => {
     return [...userRows].sort((a, b) => a.time - b.time);
@@ -704,7 +707,7 @@ export default function App() {
     }
 
     setDragOverIndex(adjustedDropPosition);
-    setDropIndicatorPosition(indicatorY - window.scrollY);
+    setDropIndicatorPosition(indicatorY);
     setShowDropIndicator(true);
   };
 
@@ -1003,73 +1006,6 @@ export default function App() {
           position={dropIndicatorPosition}
         />
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: "1rem",
-            marginBottom: "0.5rem",
-            flexWrap: "wrap",
-          }}
-        >
-          <button
-            onClick={saveProject}
-            style={{
-              background: "#2196F3",
-              color: "white",
-              padding: "8px 16px",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            💾 Save Project
-          </button>
-          <button
-            onClick={loadProject}
-            style={{
-              background: "#FF9800",
-              color: "white",
-              padding: "8px 16px",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            📂 Load Project
-          </button>
-          <button
-            onClick={exportTXT}
-            style={{
-              background: "#FFEB3B",
-              color: "black",
-              padding: "8px 16px",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            📄 Export as TXT
-          </button>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: "1rem",
-            marginBottom: "1rem",
-            flexWrap: "wrap",
-          }}
-        >
-          <button onClick={handleUndo} disabled={history.length === 0}>
-            ⬅️ Undo
-          </button>
-          <button onClick={handleRedo} disabled={redoStack.length === 0}>
-            ➡️ Redo
-          </button>
-        </div>
-
         <h1
           style={{
             textAlign: "center",
@@ -1192,7 +1128,7 @@ export default function App() {
               placeholder="Bride's Name"
             />
           </div>
-          <div style={{ marginBottom: "0.5rem" }}>
+          <div style={{ marginBottom: "1rem" }}>
             <label>Groom:</label>{" "}
             <input
               value={groom}
@@ -1200,6 +1136,57 @@ export default function App() {
               placeholder="Groom's Name"
             />
           </div>
+        </div>
+
+        {/* Control buttons moved here - right below the form inputs and above the timeline */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "1rem",
+            marginBottom: "1rem",
+            flexWrap: "wrap",
+          }}
+        >
+          <button
+            onClick={saveProject}
+            style={{
+              background: "#2196F3",
+              color: "white",
+              padding: "8px 16px",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            💾 Save Project
+          </button>
+          <button
+            onClick={loadProject}
+            style={{
+              background: "#FF9800",
+              color: "white",
+              padding: "8px 16px",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            📂 Load Project
+          </button>
+          <button
+            onClick={exportTXT}
+            style={{
+              background: "#FFEB3B",
+              color: "black",
+              padding: "8px 16px",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            📄 Export as TXT
+          </button>
         </div>
 
         <div
