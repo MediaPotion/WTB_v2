@@ -69,6 +69,28 @@ function DraggableEvent({ id, label, onDragStart }) {
   );
 }
 
+function DropIndicator({ show, position }) {
+  if (!show) return null;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: "0",
+        right: "0",
+        top: `${position}px`,
+        height: "3px",
+        backgroundColor: "#1890ff",
+        borderRadius: "2px",
+        boxShadow: "0 0 6px rgba(24, 144, 255, 0.6)",
+        zIndex: 1000,
+        pointerEvents: "none",
+        transition: "top 0.1s ease",
+      }}
+    />
+  );
+}
+
 function TimelineRow({
   row,
   index,
@@ -80,7 +102,8 @@ function TimelineRow({
   onDragStart,
   onDragOver,
   onDrop,
-  dragOverIndex,
+  onDragLeave,
+  isBeingDraggedOver,
 }) {
   // More differentiated colors for event fields
   const colors = {
@@ -114,7 +137,13 @@ function TimelineRow({
       }}
       onDragOver={(e) => {
         e.preventDefault();
-        onDragOver(index);
+        onDragOver(e, index);
+      }}
+      onDragLeave={(e) => {
+        // Only trigger drag leave if we're actually leaving this element
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          onDragLeave();
+        }
       }}
       onDrop={(e) => {
         e.preventDefault();
@@ -126,14 +155,13 @@ function TimelineRow({
         gridTemplateColumns: "4fr 2fr 4fr 2fr 1fr",
         alignItems: "center",
         borderBottom: "1px solid #ccc",
-        background: isDragging
-          ? "#e6f7ff"
-          : dragOverIndex === index
-          ? "#fff7d6"
-          : "transparent",
-        boxShadow: isDragging ? "0 0 6px #1890ff" : "none",
-        transition: "background 0.2s ease, box-shadow 0.2s ease",
-        opacity: 1,
+        background: isDragging ? "#e6f7ff" : "transparent",
+        boxShadow: isDragging ? "0 4px 12px rgba(24, 144, 255, 0.3)" : "none",
+        transition: "all 0.2s ease",
+        opacity: isDragging ? 0.7 : 1,
+        transform: isDragging ? "scale(1.02)" : "scale(1)",
+        position: "relative",
+        zIndex: isDragging ? 999 : 1,
       }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>
@@ -436,7 +464,12 @@ export default function App() {
   const [history, setHistory] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
   const [activeRowId, setActiveRowId] = useState(null);
+
+  // Enhanced drag state management
   const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [dropIndicatorPosition, setDropIndicatorPosition] = useState(null);
+  const [showDropIndicator, setShowDropIndicator] = useState(false);
+  const [draggedFromIndex, setDraggedFromIndex] = useState(null);
 
   // Memoize the sorted rows to prevent unnecessary re-renders
   const rows = useMemo(() => {
@@ -626,15 +659,69 @@ export default function App() {
 
   const handleDragStart = (id) => {
     setActiveRowId(id);
+    if (id.startsWith("timeline-")) {
+      setDraggedFromIndex(parseInt(id.replace("timeline-", ""), 10));
+    }
   };
 
-  const handleDragOver = (index) => {
-    setDragOverIndex(index);
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+
+    // Don't show drop indicator for event blocks or when dragging over the same position
+    if (
+      !activeRowId ||
+      !activeRowId.startsWith("timeline-") ||
+      draggedFromIndex === index
+    ) {
+      setShowDropIndicator(false);
+      return;
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseY = e.clientY;
+    const rowTop = rect.top;
+    const rowHeight = rect.height;
+    const midPoint = rowTop + rowHeight / 2;
+
+    // Determine if we should show indicator above or below this row
+    let dropPosition;
+    let indicatorY;
+
+    if (mouseY < midPoint) {
+      // Drop above this row
+      dropPosition = index;
+      indicatorY = rowTop - 2; // Position indicator at top of row
+    } else {
+      // Drop below this row
+      dropPosition = index + 1;
+      indicatorY = rowTop + rowHeight - 2; // Position indicator at bottom of row
+    }
+
+    // Adjust for dragged row removal in display
+    let adjustedDropPosition = dropPosition;
+    if (draggedFromIndex !== null && draggedFromIndex < dropPosition) {
+      adjustedDropPosition = dropPosition - 1;
+    }
+
+    setDragOverIndex(adjustedDropPosition);
+    setDropIndicatorPosition(indicatorY - window.scrollY);
+    setShowDropIndicator(true);
+  };
+
+  const handleDragLeave = () => {
+    // Small delay to prevent flickering when moving between elements
+    setTimeout(() => {
+      setShowDropIndicator(false);
+      setDragOverIndex(null);
+    }, 50);
   };
 
   const handleDrop = (draggedId, dropIndex) => {
     setActiveRowId(null);
     setDragOverIndex(null);
+    setShowDropIndicator(false);
+    setDropIndicatorPosition(null);
+    setDraggedFromIndex(null);
 
     const dropRow = rows[dropIndex];
 
@@ -676,60 +763,81 @@ export default function App() {
     }
 
     if (draggedId.startsWith("timeline-")) {
-      // Reordering timeline rows
+      // Enhanced row reordering logic
       const fromDisplayIndex = parseInt(draggedId.replace("timeline-", ""), 10);
-      const toDisplayIndex = dropIndex;
 
-      if (fromDisplayIndex === toDisplayIndex) return;
+      // Calculate the actual drop position based on mouse position during drag
+      let actualDropIndex = dragOverIndex !== null ? dragOverIndex : dropIndex;
 
-      const fromRow = rows[fromDisplayIndex];
-      const toRow = rows[toDisplayIndex];
-
-      const fromUserIndex = userRows.findIndex(
-        (userRow) => userRow === fromRow
-      );
-      const toUserIndex = userRows.findIndex((userRow) => userRow === toRow);
-
-      if (fromUserIndex === -1 || toUserIndex === -1) return;
+      // Don't do anything if dropping in the same position
+      if (fromDisplayIndex === actualDropIndex) return;
 
       const newUserRows = [...userRows];
 
-      // The dragged row takes the target row's time, but keeps its own event, location, and duration
-      const draggedRow = { ...newUserRows[fromUserIndex] };
-      const targetTime = toRow.time;
-
-      // Update the dragged row's time to the target time
-      draggedRow.time = targetTime;
-
-      // Remove the dragged row from its original position
-      newUserRows.splice(fromUserIndex, 1);
-
-      // Find the correct insertion index after removal
-      // If we're moving down, we need to find the target row in the new array
-      let insertionIndex;
-      if (fromUserIndex < toUserIndex) {
-        // Moving down - find the target row after removal
-        const targetRowAfterRemoval = newUserRows.find((row) => row === toRow);
-        insertionIndex = newUserRows.indexOf(targetRowAfterRemoval);
-      } else {
-        // Moving up - find the target row after removal
-        const targetRowAfterRemoval = newUserRows.find((row) => row === toRow);
-        insertionIndex = newUserRows.indexOf(targetRowAfterRemoval);
-      }
-
-      // Insert the dragged row at the target position
-      newUserRows.splice(insertionIndex, 0, draggedRow);
-
-      // Now recalculate all times starting from the inserted position
-      const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
-      const insertedRowSortedIndex = sortedRows.findIndex(
-        (r) => r === draggedRow
+      // Find the dragged row in the sorted display order
+      const draggedRow = rows[fromDisplayIndex];
+      const draggedRowUserIndex = newUserRows.findIndex(
+        (row) => row === draggedRow
       );
 
-      // Recalculate times for all rows after the inserted row
-      const recalculated = recalculateTimes(sortedRows, insertedRowSortedIndex);
+      if (draggedRowUserIndex === -1) return;
 
-      saveToHistory(recalculated);
+      // Remove the dragged row
+      const [removedRow] = newUserRows.splice(draggedRowUserIndex, 1);
+
+      // Sort the remaining rows and find insertion point
+      const sortedRemainingRows = [...newUserRows].sort(
+        (a, b) => a.time - b.time
+      );
+
+      // Determine target time for the dropped row
+      let targetTime;
+      if (actualDropIndex === 0) {
+        // Dropping at the beginning
+        targetTime =
+          sortedRemainingRows.length > 0
+            ? sortedRemainingRows[0].time - removedRow.duration
+            : removedRow.time;
+      } else if (actualDropIndex >= sortedRemainingRows.length) {
+        // Dropping at the end
+        const lastRow = sortedRemainingRows[sortedRemainingRows.length - 1];
+        targetTime = lastRow
+          ? lastRow.time + lastRow.duration
+          : removedRow.time;
+      } else {
+        // Dropping in the middle - use the time of the row at the target position
+        targetTime = sortedRemainingRows[actualDropIndex].time;
+      }
+
+      // Update the dragged row's time
+      removedRow.time = targetTime;
+
+      // Insert the row back into userRows at the correct position
+      const targetRow =
+        actualDropIndex < sortedRemainingRows.length
+          ? sortedRemainingRows[actualDropIndex]
+          : null;
+      if (targetRow) {
+        const targetUserIndex = newUserRows.findIndex(
+          (row) => row === targetRow
+        );
+        newUserRows.splice(targetUserIndex, 0, removedRow);
+      } else {
+        // Insert at the end
+        newUserRows.push(removedRow);
+      }
+
+      // Sort all rows by time and recalculate subsequent times
+      const finalSortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
+      const insertedRowIndex = finalSortedRows.findIndex(
+        (row) => row === removedRow
+      );
+      const recalculatedRows = recalculateTimes(
+        finalSortedRows,
+        insertedRowIndex
+      );
+
+      saveToHistory(recalculatedRows);
     }
   };
 
@@ -881,7 +989,20 @@ export default function App() {
 
   return (
     <div style={{ display: "flex", height: "100vh" }}>
-      <div style={{ flex: 3, padding: "1rem", overflowY: "auto" }}>
+      <div
+        style={{
+          flex: 3,
+          padding: "1rem",
+          overflowY: "auto",
+          position: "relative",
+        }}
+      >
+        {/* Drop Indicator */}
+        <DropIndicator
+          show={showDropIndicator}
+          position={dropIndicatorPosition}
+        />
+
         <div
           style={{
             display: "flex",
@@ -1112,7 +1233,8 @@ export default function App() {
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
-              dragOverIndex={dragOverIndex}
+              onDragLeave={handleDragLeave}
+              isBeingDraggedOver={dragOverIndex === index}
             />
           ))}
         </div>
