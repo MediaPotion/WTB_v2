@@ -67,6 +67,46 @@ function getEventColor(label, fallback = "#ffffff") {
   return COLOR_BUCKETS[key] || COLOR_BUCKETS.Other;
 }
 
+// Drop zone that also contains the AddRowButton
+function RowDropZone({ index, onDropBetween, onAddRow, isLast }) {
+  const [over, setOver] = React.useState(false);
+  return (
+    <div
+      onDragOver={(e) => {
+        if (e.dataTransfer?.types?.includes('text/plain')) {
+          e.preventDefault();
+          setOver(true);
+        }
+      }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => {
+        if (e.dataTransfer?.types?.includes('text/plain')) {
+          e.preventDefault();
+          setOver(false);
+          console.log(`[DnD] RowDropZone: drop fired for index ${index}`);
+          onDropBetween?.(e, index);
+        }
+      }}
+      style={{
+        position: 'relative',
+        height: over ? 60 : 40, // Grow to row height on hover
+        margin: '2px 0',
+        backgroundColor: over ? 'rgba(76, 175, 80, 0.1)' : 'transparent',
+        border: over ? '2px dashed #4CAF50' : '2px dashed transparent',
+        borderRadius: 8,
+        transition: 'all 0.15s ease-in-out',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+      aria-label="Drop here to reorder"
+      title={over ? 'Release to drop row here' : ''}
+    >
+      {!over && <AddRowButton onClick={onAddRow} isLast={isLast} />}
+    </div>
+  );
+}
+
 /* --------------------------------------
    CSS injected at runtime
 ---------------------------------------*/
@@ -245,10 +285,16 @@ function parseTimeInput(hourStr, minuteStr, period) {
 }
 
 /* ---------------- Time Popover ---------------- */
-function TimePopover({ open, value, onSet, onClose }) {
+function TimePopover({ open, value, onSet, onClose, isLocked, onLockToggle }) {
   const [hh, setHh] = useState("12");
   const [mm, setMm] = useState("00");
   const [ap, setAp] = useState("PM");
+  const [localIsLocked, setLocalIsLocked] = useState(isLocked || false);
+  
+  // Sync with parent's lock state
+  useEffect(() => {
+    setLocalIsLocked(isLocked);
+  }, [isLocked]);
 
   useEffect(() => {
     if (open && value) {
@@ -305,6 +351,85 @@ function TimePopover({ open, value, onSet, onClose }) {
           style={{
             display: "flex",
             alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 10,
+            padding: '0 4px',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              const newLockState = !localIsLocked;
+              setLocalIsLocked(newLockState);
+              onLockToggle?.(newLockState);
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              background: localIsLocked ? '#f8f8f8' : '#fff',
+              border: `1px solid ${localIsLocked ? '#ccc' : '#ddd'}`,
+              cursor: 'pointer',
+              color: localIsLocked ? '#333' : '#666',
+              fontSize: 13,
+              padding: '6px 12px',
+              borderRadius: 6,
+              width: '100%',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+              transition: 'all 0.2s ease',
+              ':hover': {
+                background: localIsLocked ? '#f0f0f0' : '#f8f8f8',
+                borderColor: localIsLocked ? '#bbb' : '#ccc',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+              },
+              ':active': {
+                background: localIsLocked ? '#e8e8e8' : '#f0f0f0',
+                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)'
+              }
+            }}
+          >
+            {localIsLocked ? (
+              <>
+                <svg 
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor"
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <span>Time is Locked</span>
+              </>
+            ) : (
+              <>
+                <svg 
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor"
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                </svg>
+                <span>Time is Flexible</span>
+              </>
+            )}
+          </button>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
             justifyContent: "center",
             gap: 6,
             marginBottom: 10,
@@ -313,12 +438,16 @@ function TimePopover({ open, value, onSet, onClose }) {
           <select
             value={hh}
             onChange={(e) => setHh(e.target.value)}
+            disabled={localIsLocked}
             style={{
               width: 64,
               height: 32,
               fontSize: 14,
-              border: "1px solid #ccc",
+              border: `1px solid ${localIsLocked ? '#e0e0e0' : '#ccc'}`,
               borderRadius: 6,
+              backgroundColor: localIsLocked ? '#f9f9f9' : 'white',
+              cursor: localIsLocked ? 'not-allowed' : 'pointer',
+              opacity: localIsLocked ? 0.7 : 1,
             }}
           >
             {hours.map((h) => (
@@ -331,12 +460,16 @@ function TimePopover({ open, value, onSet, onClose }) {
           <select
             value={mm}
             onChange={(e) => setMm(e.target.value)}
+            disabled={localIsLocked}
             style={{
               width: 64,
               height: 32,
               fontSize: 14,
-              border: "1px solid #ccc",
+              border: `1px solid ${localIsLocked ? '#e0e0e0' : '#ccc'}`,
               borderRadius: 6,
+              backgroundColor: localIsLocked ? '#f9f9f9' : 'white',
+              cursor: localIsLocked ? 'not-allowed' : 'pointer',
+              opacity: localIsLocked ? 0.7 : 1,
             }}
           >
             {minutes.map((m) => (
@@ -348,12 +481,16 @@ function TimePopover({ open, value, onSet, onClose }) {
           <select
             value={ap}
             onChange={(e) => setAp(e.target.value)}
+            disabled={localIsLocked}
             style={{
               width: 70,
               height: 32,
               fontSize: 14,
-              border: "1px solid #ccc",
+              border: `1px solid ${localIsLocked ? '#e0e0e0' : '#ccc'}`,
               borderRadius: 6,
+              backgroundColor: localIsLocked ? '#f9f9f9' : 'white',
+              cursor: localIsLocked ? 'not-allowed' : 'pointer',
+              opacity: localIsLocked ? 0.7 : 1,
             }}
           >
             <option value="AM">AM</option>
@@ -376,7 +513,7 @@ function TimePopover({ open, value, onSet, onClose }) {
             Cancel
           </button>
           <button
-            onClick={() => onSet?.(hh, mm, ap)}
+            onClick={() => onSet?.(hh, mm, ap, localIsLocked)}
             style={{
               padding: "6px 12px",
               border: "1px solid #4CAF50",
@@ -604,6 +741,52 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent }) {
   );
 }
 
+/* ---------------- Add Row Button ---------------- */
+function AddRowButton({ onClick, isLast }) {
+  if (isLast) return null;
+  
+  return (
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center',
+      margin: '8px 0',
+      position: 'relative',
+      zIndex: 1
+    }}>
+      <button
+        onClick={onClick}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '6px 12px',
+          borderRadius: '20px',
+          border: '1px solid #2e7d32',
+          background: '#4caf50',
+          color: 'white',
+          fontSize: '13px',
+          fontWeight: 500,
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          ':hover': {
+            background: '#3d8b40',
+            borderColor: '#1b5e20',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          },
+          ':active': {
+            background: '#2e7d32',
+            transform: 'translateY(1px)'
+          }
+        }}
+        title="Add new event here"
+      >
+        <span style={{ fontSize: '16px', lineHeight: '16px' }}>+</span>
+        <span>Add Event</span>
+      </button>
+    </div>
+  );
+}
+
 /* ---------------- Timeline Row ---------------- */
 function TimelineRow({
   row,
@@ -621,31 +804,70 @@ function TimelineRow({
   photoEnabledGlobal,
   videoEnabledGlobal,
   onDropEventBlock,
+  onTimeLockToggle,
+  isTimeLocked,
+  onDrop,
 }) {
   const t = formatTime(row.time);
   const timeBtnRef = useRef(null);
   const [timeOpen, setTimeOpen] = useState(false);
   const [dropping, setDropping] = useState(false);
+  // Use the isTimeLocked prop instead of local state
 
   // Drop handlers on the whole row
   const allowDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      // Prefer copy for event blocks, move for row reordering
+      if (e.dataTransfer.types?.includes("application/json")) {
+        e.dataTransfer.dropEffect = "copy";
+      } else {
+        e.dataTransfer.dropEffect = "move";
+      }
+    }
+    // Only show the dropping indicator for event blocks from the sidebar
     if (e.dataTransfer?.types?.includes("application/json")) {
-      e.preventDefault();
       setDropping(true);
     }
   };
-  const leaveDrop = () => setDropping(false);
+  
+  const leaveDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropping(false);
+  };
+  
   const handleDrop = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setDropping(false);
+    
     try {
-      const raw = e.dataTransfer.getData("application/json");
-      if (!raw) return;
-      const data = JSON.parse(raw); // { event, duration }
-      if (data?.event && data?.duration) {
-        onDropEventBlock(index, data);
+      // First try to get application/json data (for event blocks)
+      const jsonData = e.dataTransfer.getData("application/json");
+      if (jsonData) {
+        try {
+          const data = JSON.parse(jsonData);
+          if (data?.event && data?.duration) {
+            console.log("[DnD] TimelineRow: dropping event block", { rowIndex: index, data });
+            onDropEventBlock?.(data);
+            return;
+          }
+        } catch (parseError) {
+          console.error("Error parsing JSON data:", parseError);
+        }
       }
-    } catch (_) {}
+      
+      // Then try text/plain (for row reordering)
+      const rowId = e.dataTransfer.getData("text/plain");
+      if (rowId && onDrop) {
+        // Pass the TARGET row id (this row) to the parent so it can reorder correctly
+        onDrop(e, row.id);
+      }
+    } catch (error) {
+      console.error("Error handling drop:", error);
+    }
   };
 
   const rowBg = getEventColor(row.event || "", "#ffffff");
@@ -658,14 +880,17 @@ function TimelineRow({
       onDrop={handleDrop}
       className={dropping ? "wtb-dropping" : ""}
       style={{
-        border: "1px solid #ccc",
+        border: dropping ? "2px dashed #4caf50" : "1px solid #ccc",
         borderRadius: 8,
         marginBottom: 12,
-        backgroundColor: rowBg,
+        backgroundColor: dropping ? "rgba(76, 175, 80, 0.1)" : rowBg,
         overflow: "hidden",
         width: "100%",
         position: "relative",
+        transition: "all 0.2s ease",
+        minHeight: "60px",
       }}
+      title={dropping ? "Drop here to add event" : ""}
     >
       {/* TOP row: Buttons (left) | Time (middle) | Event (+photo/video) (right) */}
       <div
@@ -766,23 +991,73 @@ function TimelineRow({
           >
             Time
           </label>
-          <button
-            ref={timeBtnRef}
-            onClick={() => setTimeOpen(true)}
-            style={{
-              width: 50,
-              padding: "2px 1px",
-              fontSize: 14,
-              textAlign: "center",
-              border: "1px solid #ccc",
-              background: "white",
-              borderRadius: 4,
-              cursor: "pointer",
-            }}
-            title="Click to set time"
-          >
-            {t.hour}:{t.minute} {t.period}
-          </button>
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <button
+              ref={timeBtnRef}
+              onClick={() => setTimeOpen(true)}
+              style={{
+                width: 70,
+                padding: "2px 1px 2px 20px",
+                fontSize: 14,
+                textAlign: "center",
+                border: `1px solid #ccc`,
+                background: 'white',
+                borderRadius: 4,
+                cursor: 'pointer',
+                opacity: isTimeLocked ? 0.9 : 1,
+                ':hover': {
+                  borderColor: '#999',
+                }
+              }}
+              title="Click to set time"
+            >
+              {t.hour}:{t.minute} {t.period}
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onTimeLockToggle(index);
+              }}
+              style={{
+                position: 'absolute',
+                left: 2,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              title={isTimeLocked ? 'Time is locked - click to unlock' : 'Time is unlocked - click to lock'}
+            >
+              <svg 
+                width="14" 
+                height="14" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke={isTimeLocked ? '#333' : '#ccc'}
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                {isTimeLocked ? (
+                  <>
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </>
+                ) : (
+                  <>
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                  </>
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Event column (right) */}
@@ -1084,15 +1359,24 @@ function TimelineRow({
       </div>
 
       {/* Time popover */}
-      <TimePopover
-        open={timeOpen}
-        onClose={() => setTimeOpen(false)}
-        value={{ hour: t.hour, minute: t.minute, period: t.period }}
-        onSet={(hh, mm, ap) => {
-          onTimeSet(index, hh, mm, ap);
-          setTimeOpen(false);
-        }}
-      />
+      {timeOpen && (
+        <TimePopover
+          open={timeOpen}
+          value={t}
+          isLocked={isTimeLocked}
+          onLockToggle={(locked) => {
+            onTimeLockToggle(index, locked);
+          }}
+          onSet={(h, m, p, shouldLock) => {
+            onTimeSet(h, m, p);
+            if (shouldLock !== undefined) {
+              onTimeLockToggle(index, shouldLock);
+            }
+            setTimeOpen(false);
+          }}
+          onClose={() => setTimeOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -1112,6 +1396,10 @@ function EventSidebar() {
               key={block}
               draggable
               onDragStart={(e) => {
+                // Indicate this is a copy-type drag (not move)
+                if (e.dataTransfer) {
+                  e.dataTransfer.effectAllowed = "copy";
+                }
                 e.dataTransfer.setData(
                   "application/json",
                   JSON.stringify({ event: label, duration: dur })
@@ -1171,12 +1459,14 @@ export default function MobileApp() {
       photo: true,
       video: true,
       notes: "",
+      isTimeLocked: false,
     },
   ]);
   const [nextId, setNextId] = useState(2);
   const [history, setHistory] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
-
+  const [draggedRowId, setDraggedRowId] = useState(null);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [showEventSelector, setShowEventSelector] = useState(false);
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
 
@@ -1186,10 +1476,34 @@ export default function MobileApp() {
 
   const recalculateTimes = (rowsIn, startIndex = 0) => {
     const newRows = [...rowsIn];
-    for (let i = startIndex + 1; i < newRows.length; i++) {
-      const prevRow = newRows[i - 1];
-      newRows[i].time = prevRow.time + prevRow.duration;
+    let lastUnlockedIndex = startIndex;
+    
+    // Find the first unlocked row at or after startIndex
+    while (lastUnlockedIndex < newRows.length && newRows[lastUnlockedIndex].isTimeLocked) {
+      lastUnlockedIndex++;
     }
+    
+    // If we found an unlocked row, use its time as the base
+    // Otherwise, use the startIndex row's time (even if it's locked)
+    const baseIndex = lastUnlockedIndex < newRows.length ? lastUnlockedIndex : startIndex;
+    
+    for (let i = baseIndex + 1; i < newRows.length; i++) {
+      // Skip locked rows - they won't be updated
+      if (newRows[i].isTimeLocked) continue;
+      
+      // Find the previous non-locked row to calculate the time from
+      let prevIndex = i - 1;
+      while (prevIndex >= 0 && newRows[prevIndex].isTimeLocked) {
+        prevIndex--;
+      }
+      
+      // If we found a previous non-locked row, use it to calculate the new time
+      if (prevIndex >= 0) {
+        const prevRow = newRows[prevIndex];
+        newRows[i].time = prevRow.time + prevRow.duration;
+      }
+    }
+    
     return newRows;
   };
 
@@ -1221,7 +1535,11 @@ export default function MobileApp() {
         const originalIndex = newUserRows.findIndex(
           (r) => r.id === sortedRows[i].id
         );
-        if (originalIndex !== -1) newUserRows[originalIndex] = recalcRow;
+        if (originalIndex !== -1) {
+          // Preserve the isTimeLocked state when recalculating times
+          recalcRow.isTimeLocked = newUserRows[originalIndex].isTimeLocked;
+          newUserRows[originalIndex] = recalcRow;
+        }
       });
       setUserRows(newUserRows);
       return;
@@ -1252,6 +1570,16 @@ export default function MobileApp() {
     }
 
     saveToHistory(newUserRows);
+  };
+
+  const handleTimeLockToggle = (index, newLockState) => {
+    const newUserRows = [...userRows];
+    const rowIndex = newUserRows.findIndex((r) => r.id === rows[index].id);
+    if (rowIndex !== -1) {
+      newUserRows[rowIndex].isTimeLocked = newLockState !== undefined ? newLockState : !newUserRows[rowIndex].isTimeLocked;
+      setUserRows(newUserRows);
+      saveToHistory(newUserRows);
+    }
   };
 
   const handleMoveUp = (displayIndex) => {
@@ -1299,9 +1627,19 @@ export default function MobileApp() {
     setShowEventSelector(true);
   };
 
-  const addRow = () => {
-    const lastRow = rows[rows.length - 1];
-    const newTime = lastRow ? lastRow.time + lastRow.duration : 12 * 60;
+  const addRowAtIndex = (insertIndex) => {
+    let newTime;
+    if (insertIndex === 0) {
+      newTime = Math.max(0, (rows[0]?.time || 12 * 60) - 30);
+    } else if (insertIndex >= rows.length) {
+      const lastRow = rows[rows.length - 1];
+      newTime = lastRow ? lastRow.time + lastRow.duration : 12 * 60;
+    } else {
+      const prevRow = rows[insertIndex - 1];
+      const nextRow = rows[insertIndex];
+      newTime = Math.floor((prevRow.time + prevRow.duration + nextRow.time) / 2);
+    }
+
     const newRow = {
       id: nextId,
       location: "",
@@ -1312,9 +1650,20 @@ export default function MobileApp() {
       photo: photoEnabled,
       video: videoEnabled,
       notes: "",
+      isTimeLocked: false,
     };
-    setUserRows((prev) => [...prev, newRow]);
-    setNextId((n) => n + 1);
+    
+    const newUserRows = [...userRows];
+    newUserRows.splice(insertIndex, 0, newRow);
+    setUserRows(newUserRows);
+    setNextId(nextId + 1);
+    // Do not open the event selector automatically; just record in history
+    saveToHistory(newUserRows);
+  };
+
+  // For backward compatibility
+  const addRow = () => {
+    addRowAtIndex(rows.length);
   };
 
   const handleEventSelect = (eventData) => {
@@ -1332,15 +1681,7 @@ export default function MobileApp() {
           (r) => r.id === newUserRows[userRowIndex].id
         );
         const recalculated = recalculateTimes(sortedRows, sortedIndex);
-
-        recalculated.forEach((recalcRow, i) => {
-          const originalIndex = newUserRows.findIndex(
-            (r) => r.id === sortedRows[i].id
-          );
-          if (originalIndex !== -1) newUserRows[originalIndex] = recalcRow;
-        });
-
-        saveToHistory(newUserRows);
+        saveToHistory(recalculated);
 
         if (wasBottom && eventData.event.trim()) {
           setTimeout(() => addRow(), 0);
@@ -1363,19 +1704,173 @@ export default function MobileApp() {
     setPhotoEnabled(checked);
     setUserRows((prev) => prev.map((r) => ({ ...r, photo: checked })));
   };
+
+
+  // Check if time is locked for a row
+  const isRowTimeLocked = (row) => {
+    return row.isTimeLocked || false;
+  };
+
   const handleVideoToggle = (checked) => {
     setVideoEnabled(checked);
     setUserRows((prev) => prev.map((r) => ({ ...r, video: checked })));
   };
 
-  // Filenames
-  const buildDefaultFilename = (ext) => {
-    const first = (name, fallback) => (name || fallback).trim().split(/\s+/)[0];
-    const brideFirst = first(bride, "Bride");
-    const groomFirst = first(groom, "Groom");
+  // Handle drops from the sidebar onto a specific row (by display index)
+  const handleDropEventBlockToRow = (eventData, displayIndex) => {
+    console.log("[DnD] MobileApp: handleDropEventBlockToRow", { eventData, displayIndex });
+    if (!eventData || !eventData.event || !eventData.duration) return;
 
+    // Translate display index (from rows) to actual userRows index using id mapping
+    const displayRow = rows[displayIndex];
+    if (!displayRow) return;
+    const userRowIndex = userRows.findIndex((u) => u.id === displayRow.id);
+    if (userRowIndex === -1) return;
+
+    const newUserRows = [...userRows];
+    const targetRow = newUserRows[userRowIndex];
+
+    // Update row details
+    targetRow.event = eventData.event;
+    targetRow.duration = eventData.duration;
+
+    // If dropped on the last visible row, append a fresh empty row
+    const droppedOnLastVisible = displayIndex === rows.length - 1;
+    if (droppedOnLastVisible) {
+      newUserRows.push({
+        id: nextId,
+        location: "",
+        time: targetRow.time + targetRow.duration,
+        event: "",
+        duration: 30,
+        isOutdoor: false,
+        photo: photoEnabled,
+        video: videoEnabled,
+        notes: "",
+        isTimeLocked: false,
+      });
+      setNextId(nextId + 1);
+    }
+
+    // Recalculate times starting from the modified user row index
+    const recalculated = recalculateTimes(newUserRows, userRowIndex);
+    console.log("[DnD] MobileApp: recalculated rows (preview)", recalculated.slice(Math.max(0, userRowIndex - 1), userRowIndex + 2));
+    setUserRows(recalculated);
+    saveToHistory(recalculated);
+  };
+
+  // Drag and drop handlers for row reordering
+  const handleDragStart = (e, rowId) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', rowId);
+    // Normalize to string so UI comparisons are consistent
+    setDraggedRowId(String(rowId));
+    console.log('[DnD] Row dragStart', { rowId });
+    // Add a small delay to ensure the drag image is set
+    setTimeout(() => {
+      e.target.style.opacity = '0.4';
+    }, 0);
+  };
+
+  const handleDragOver = (e, targetRowId) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    if (targetRowId !== draggedRowId) {
+      setIsDraggingOver(true);
+    }
+    
+    // Add visual feedback for the drop target
+    const targetElement = e.currentTarget;
+    if (targetElement) {
+      targetElement.style.borderTop = '2px solid #4caf50';
+      targetElement.style.marginTop = '4px';
+    }
+  };
+
+  const handleDragLeave = (e) => {
+    setIsDraggingOver(false);
+    // Remove visual feedback when leaving the drop target
+    const targetElement = e.currentTarget;
+    if (targetElement) {
+      targetElement.style.borderTop = 'none';
+      targetElement.style.marginTop = '0';
+    }
+  };
+
+  const handleDragEnd = (e) => {
+    // Reset styles
+    e.target.style.opacity = '1';
+    setDraggedRowId(null);
+    setIsDraggingOver(false);
+    // Remove any lingering drop indicators
+    document.querySelectorAll('.timeline-row').forEach(el => {
+      el.style.borderTop = 'none';
+      el.style.marginTop = '0';
+    });
+  };
+
+
+  // Handle dropping a dragged row between rows (at insertion index)
+  const handleDropBetween = (e, insertIndex) => {
+    if (!e?.dataTransfer?.types?.includes('text/plain')) return;
+    e.preventDefault();
+    const sourceRowId = e.dataTransfer.getData('text/plain');
+    if (!sourceRowId) return;
+
+    console.log(`[DnD] handleDropBetween: drop of row ${sourceRowId} at index ${insertIndex}`);
+    console.log('[DnD] State before move:', JSON.parse(JSON.stringify(userRows.map(r => ({id: r.id, time: r.time, event: r.event})))));
+
+    const working = [...userRows];
+    const sourceIndex = working.findIndex((r) => r.id.toString() === sourceRowId);
+    if (sourceIndex === -1) {
+      console.error('[DnD] ERROR: source row not found');
+      return;
+    }
+
+    // Remove the source row
+    const [moved] = working.splice(sourceIndex, 1);
+    // Adjust target insert index if needed (after removal, indices shift)
+    let targetIndex = insertIndex;
+    if (sourceIndex < insertIndex) targetIndex = Math.max(0, insertIndex - 1);
+
+    console.log(`[DnD] Indices: source ${sourceIndex}, target ${targetIndex}`);
+
+    // Insert at the drop zone's index
+    working.splice(targetIndex, 0, moved);
+    console.log('[DnD] State after splice:', JSON.parse(JSON.stringify(working.map(r => ({id: r.id, time: r.time, event: r.event})))));
+
+    // Assign a new time to the moved row based on its new neighbors to preserve order
+    const prev = working[targetIndex - 1] || null;
+    const next = working[targetIndex + 1] || null; // The row *after* the moved one
+
+    if (!moved.isTimeLocked) {
+      if (prev) {
+        // If there's a row before it, start after that one ends.
+        moved.time = prev.time + prev.duration;
+      } else if (next) {
+        // If it's the new first row, end it 5 mins before the next one starts.
+        moved.time = Math.max(0, next.time - moved.duration - 5);
+      } else {
+        // Only row in the list, keep its time or default to noon.
+        moved.time = moved.time || 12 * 60;
+      }
+      console.log(`[DnD] New time for moved row ${moved.id}: ${moved.time}`);
+    }
+
+    const recalculated = recalculateTimes(working, Math.min(sourceIndex, targetIndex));
+    console.log('[DnD] Final recalculated state:', JSON.parse(JSON.stringify(recalculated.map(r => ({id: r.id, time: r.time, event: r.event})))));
+
+    setUserRows(recalculated);
+    saveToHistory(recalculated);
+    setDraggedRowId(null);
+    setIsDraggingOver(false);
+  };
+
+  const buildDefaultFilename = (ext) => {
     const formatDatePart = (s) => {
       if (!s) return "";
+      
       if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
         const [y, m, d] = s.split("-");
         return `${m}_${d}_${y}`;
@@ -1498,6 +1993,7 @@ export default function MobileApp() {
                   photo: true,
                   video: true,
                   notes: "",
+                  isTimeLocked: false,
                 },
               ]) || []
         );
@@ -1573,21 +2069,14 @@ export default function MobileApp() {
     }
   };
 
-  // Handle drops from the sidebar onto a row
-  const handleDropEventBlockToRow = (displayIndex, data) => {
+  const handleTimeSet = (displayIndex, time) => {
     const row = rows[displayIndex];
     const userRowIndex = userRows.findIndex((u) => u.id === row.id);
-    if (userRowIndex === -1) return;
-    const newUserRows = [...userRows];
-    newUserRows[userRowIndex].event = data.event;
-    newUserRows[userRowIndex].duration = parseInt(data.duration, 10) || 30;
+    if (userRowIndex === -1 || row.isTimeLocked) return;
 
-    const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
-    const sortedIndex = sortedRows.findIndex(
-      (r) => r.id === newUserRows[userRowIndex].id
-    );
-    const recalculated = recalculateTimes(sortedRows, sortedIndex);
-    saveToHistory(recalculated);
+    const newUserRows = [...userRows];
+    newUserRows[userRowIndex].time = time;
+    saveToHistory(newUserRows);
   };
 
   return (
@@ -2152,45 +2641,70 @@ export default function MobileApp() {
             </div>
 
             <div style={{ width: "100%" }}>
+              {/* Top drop zone (before first row) */}
+              <RowDropZone index={0} onDropBetween={handleDropBetween} onAddRow={() => addRowAtIndex(0)} />
               {rows.map((row, index) => (
-                <TimelineRow
-                  key={row.id}
-                  row={row}
-                  index={index}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  onDelete={handleDelete}
-                  onEventClick={handleEventClick}
-                  onMoveUp={handleMoveUp}
-                  onMoveDown={handleMoveDown}
-                  isFirst={index === 0}
-                  isLast={index === rows.length - 1}
-                  onEventBlur={handleEventBlur}
-                  photoEnabledGlobal={photoEnabled}
-                  videoEnabledGlobal={videoEnabled}
-                  onTimeSet={(i, hh, mm, ap) => {
-                    const r = rows[i];
-                    const userRowIndex = userRows.findIndex(
-                      (u) => u.id === r.id
-                    );
-                    if (userRowIndex === -1) return;
-                    const newTime = parseTimeInput(String(hh), String(mm), ap);
-                    const newUserRows = [...userRows];
-                    newUserRows[userRowIndex].time = newTime;
-                    const sortedRows = [...newUserRows].sort(
-                      (a, b) => a.time - b.time
-                    );
-                    const sortedIndex = sortedRows.findIndex(
-                      (rr) => rr.id === newUserRows[userRowIndex].id
-                    );
-                    const recalculated = recalculateTimes(
-                      sortedRows,
-                      sortedIndex
-                    );
-                    saveToHistory(recalculated);
-                  }}
-                  onDropEventBlock={handleDropEventBlockToRow}
-                />
+                <React.Fragment key={row.id}>
+                  <div 
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, row.id)}
+                    onDragEnd={handleDragEnd}
+                    className={`timeline-row ${draggedRowId === String(row.id) ? 'dragging' : ''}`}
+                    style={{
+                      opacity: draggedRowId === String(row.id) ? 0.4 : 1,
+                      transition: 'opacity 0.2s ease',
+                      cursor: 'move',
+                    }}
+                  >
+                    <TimelineRow
+                      row={row}
+                      index={index}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      onDelete={handleDelete}
+                      onEventClick={handleEventClick}
+                      onMoveUp={handleMoveUp}
+                      onMoveDown={handleMoveDown}
+                      isFirst={index === 0}
+                      isLast={index === rows.length - 1}
+                      onEventBlur={handleEventBlur}
+                      photoEnabledGlobal={photoEnabled}
+                      videoEnabledGlobal={videoEnabled}
+                      onTimeSet={(h, m, p, shouldLock) => {
+                        const newTime = parseTimeInput(h, m, p);
+                        const newUserRows = [...userRows];
+                        const rowIndex = newUserRows.findIndex((r) => r.id === row.id);
+                        
+                        if (rowIndex !== -1) {
+                          if (!isRowTimeLocked(newUserRows[rowIndex]) || shouldLock !== undefined) {
+                            newUserRows[rowIndex].time = newTime;
+                            if (shouldLock !== undefined) {
+                              newUserRows[rowIndex].isTimeLocked = shouldLock;
+                            }
+                            setUserRows(newUserRows);
+                            
+                            if (!shouldLock) {
+                              const recalculated = recalculateTimes(newUserRows, rowIndex);
+                              saveToHistory(recalculated);
+                            } else {
+                              saveToHistory(newUserRows);
+                            }
+                          }
+                        }
+                      }}
+                      onDropEventBlock={(eventData) => handleDropEventBlockToRow(eventData, index)}
+                      onTimeLockToggle={handleTimeLockToggle}
+                      isTimeLocked={isRowTimeLocked(row)}
+                    />
+                  </div>
+
+                  <RowDropZone 
+                    index={index + 1} 
+                    onDropBetween={handleDropBetween} 
+                    onAddRow={() => addRowAtIndex(index + 1)} 
+                    isLast={index === rows.length - 1} 
+                  />
+                </React.Fragment>
               ))}
             </div>
 
@@ -2222,14 +2736,18 @@ export default function MobileApp() {
               <button
                 onClick={addRow}
                 style={{
-                  padding: "12px 24px",
-                  backgroundColor: "#4CAF50",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 6,
-                  cursor: "pointer",
-                  fontSize: 16,
-                  fontWeight: "bold",
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  border: '1px solid #2e7d32',
+                  background: '#4caf50',
+                  color: 'white',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
                 }}
               >
                 + Add Event
