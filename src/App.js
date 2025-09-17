@@ -730,7 +730,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent }) {
               }}
             >
               <span>{label}</span>
-              <span style={{ fontSize: 12, color: "#555", fontWeight: "bold" }}>
+              <span style={{ fontSize: 12, color: "#555", fontWeight: "bold", marginLeft: "16px" }}>
                 {duration} min
               </span>
             </button>
@@ -1411,7 +1411,7 @@ function EventSidebar() {
               title="Drag to timeline"
             >
               <span>{label}</span>
-              <span style={{ fontSize: 12, color: "#555", fontWeight: "bold" }}>
+              <span style={{ fontSize: 12, color: "#555", fontWeight: "bold", marginLeft: "16px" }}>
                 {dur} min
               </span>
             </button>
@@ -1895,6 +1895,10 @@ export default function MobileApp() {
         .replace(/[^a-zA-Z0-9._()&-]/g, "");
 
     const datePart = formatDatePart(date) || "MM_DD_YYYY";
+    // Derive first names safely from the existing bride/groom inputs
+    const brideFirst = (bride || "Bride").toString().trim().split(/\s+/)[0] || "Bride";
+    const groomFirst = (groom || "Groom").toString().trim().split(/\s+/)[0] || "Groom";
+
     const base =
       datePart +
       "_" +

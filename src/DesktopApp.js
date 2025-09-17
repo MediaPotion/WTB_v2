@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { saveAs } from 'file-saver';
 
 function formatTime(totalMinutes) {
   const hours = Math.floor(totalMinutes / 60);
@@ -62,7 +63,7 @@ function DraggableEvent({ id, label, onDragStart }) {
       }}
     >
       <span>{label}</span>
-      <span style={{ fontSize: "12px", color: "#555", fontWeight: "bold" }}>
+      <span style={{ fontSize: "12px", color: "#555", fontWeight: "bold", marginLeft: "16px" }}>
         {duration} min
       </span>
     </div>
@@ -887,14 +888,7 @@ export default function App() {
     const blob = new Blob([JSON.stringify(projectData, null, 2)], {
       type: "application/json",
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    saveAs(blob, filename);
   };
 
   const loadProject = () => {
@@ -979,15 +973,8 @@ export default function App() {
     const filename = `${bride.trim().replace(/\s+/g, "_") || "Bride"}_${
       groom.trim().replace(/\s+/g, "_") || "Groom"
     }_Timeline.txt`;
-    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    saveAs(blob, filename);
   };
 
   return (
