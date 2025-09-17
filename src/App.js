@@ -285,16 +285,10 @@ function parseTimeInput(hourStr, minuteStr, period) {
 }
 
 /* ---------------- Time Popover ---------------- */
-function TimePopover({ open, value, onSet, onClose, isLocked, onLockToggle }) {
+function TimePopover({ open, value, onSet, onClose }) {
   const [hh, setHh] = useState("12");
   const [mm, setMm] = useState("00");
   const [ap, setAp] = useState("PM");
-  const [localIsLocked, setLocalIsLocked] = useState(isLocked || false);
-  
-  // Sync with parent's lock state
-  useEffect(() => {
-    setLocalIsLocked(isLocked);
-  }, [isLocked]);
 
   useEffect(() => {
     if (open && value) {
@@ -351,85 +345,6 @@ function TimePopover({ open, value, onSet, onClose, isLocked, onLockToggle }) {
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 10,
-            padding: '0 4px',
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              const newLockState = !localIsLocked;
-              setLocalIsLocked(newLockState);
-              onLockToggle?.(newLockState);
-            }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              background: localIsLocked ? '#f8f8f8' : '#fff',
-              border: `1px solid ${localIsLocked ? '#ccc' : '#ddd'}`,
-              cursor: 'pointer',
-              color: localIsLocked ? '#333' : '#666',
-              fontSize: 13,
-              padding: '6px 12px',
-              borderRadius: 6,
-              width: '100%',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-              transition: 'all 0.2s ease',
-              ':hover': {
-                background: localIsLocked ? '#f0f0f0' : '#f8f8f8',
-                borderColor: localIsLocked ? '#bbb' : '#ccc',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-              },
-              ':active': {
-                background: localIsLocked ? '#e8e8e8' : '#f0f0f0',
-                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)'
-              }
-            }}
-          >
-            {localIsLocked ? (
-              <>
-                <svg 
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor"
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-                <span>Time is Locked</span>
-              </>
-            ) : (
-              <>
-                <svg 
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor"
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                  <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
-                </svg>
-                <span>Time is Flexible</span>
-              </>
-            )}
-          </button>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
             justifyContent: "center",
             gap: 6,
             marginBottom: 10,
@@ -438,16 +353,14 @@ function TimePopover({ open, value, onSet, onClose, isLocked, onLockToggle }) {
           <select
             value={hh}
             onChange={(e) => setHh(e.target.value)}
-            disabled={localIsLocked}
             style={{
               width: 64,
               height: 32,
               fontSize: 14,
-              border: `1px solid ${localIsLocked ? '#e0e0e0' : '#ccc'}`,
+              border: '1px solid #ccc',
               borderRadius: 6,
-              backgroundColor: localIsLocked ? '#f9f9f9' : 'white',
-              cursor: localIsLocked ? 'not-allowed' : 'pointer',
-              opacity: localIsLocked ? 0.7 : 1,
+              backgroundColor: 'white',
+              cursor: 'pointer',
             }}
           >
             {hours.map((h) => (
@@ -460,16 +373,14 @@ function TimePopover({ open, value, onSet, onClose, isLocked, onLockToggle }) {
           <select
             value={mm}
             onChange={(e) => setMm(e.target.value)}
-            disabled={localIsLocked}
             style={{
               width: 64,
               height: 32,
               fontSize: 14,
-              border: `1px solid ${localIsLocked ? '#e0e0e0' : '#ccc'}`,
+              border: '1px solid #ccc',
               borderRadius: 6,
-              backgroundColor: localIsLocked ? '#f9f9f9' : 'white',
-              cursor: localIsLocked ? 'not-allowed' : 'pointer',
-              opacity: localIsLocked ? 0.7 : 1,
+              backgroundColor: 'white',
+              cursor: 'pointer',
             }}
           >
             {minutes.map((m) => (
@@ -481,16 +392,14 @@ function TimePopover({ open, value, onSet, onClose, isLocked, onLockToggle }) {
           <select
             value={ap}
             onChange={(e) => setAp(e.target.value)}
-            disabled={localIsLocked}
             style={{
               width: 70,
               height: 32,
               fontSize: 14,
-              border: `1px solid ${localIsLocked ? '#e0e0e0' : '#ccc'}`,
+              border: '1px solid #ccc',
               borderRadius: 6,
-              backgroundColor: localIsLocked ? '#f9f9f9' : 'white',
-              cursor: localIsLocked ? 'not-allowed' : 'pointer',
-              opacity: localIsLocked ? 0.7 : 1,
+              backgroundColor: 'white',
+              cursor: 'pointer',
             }}
           >
             <option value="AM">AM</option>
@@ -513,7 +422,7 @@ function TimePopover({ open, value, onSet, onClose, isLocked, onLockToggle }) {
             Cancel
           </button>
           <button
-            onClick={() => onSet?.(hh, mm, ap, localIsLocked)}
+            onClick={() => onSet?.(hh, mm, ap)}
             style={{
               padding: "6px 12px",
               border: "1px solid #4CAF50",
@@ -534,22 +443,35 @@ function TimePopover({ open, value, onSet, onClose, isLocked, onLockToggle }) {
 }
 
 /* ---------------- Event Selector (existing popup) ---------------- */
-function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent }) {
+function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, currentTime }) {
   const [customEvent, setCustomEvent] = useState(currentEvent || "");
   const [customDuration, setCustomDuration] = useState("30");
+  const [timeHour, setTimeHour] = useState("12");
+  const [timeMinute, setTimeMinute] = useState("00");
+  const [timePeriod, setTimePeriod] = useState("PM");
 
   useEffect(() => {
-    if (isVisible) setCustomEvent(currentEvent || "");
-  }, [isVisible, currentEvent]);
+    if (isVisible) {
+      setCustomEvent(currentEvent || "");
+      if (currentTime) {
+        const timeFormatted = formatTime(currentTime);
+        setTimeHour(timeFormatted.hour);
+        setTimeMinute(timeFormatted.minute);
+        setTimePeriod(timeFormatted.period);
+      }
+    }
+  }, [isVisible, currentEvent, currentTime]);
 
   const isValidDuration =
     /\d+/.test(customDuration) && parseInt(customDuration, 10) > 0;
 
   const handleCustomEventSubmit = () => {
     if (!customEvent.trim() || !isValidDuration) return;
+    const newTime = parseTimeInput(timeHour, timeMinute, timePeriod);
     onSelect({
       event: customEvent.trim(),
       duration: parseInt(customDuration, 10),
+      time: newTime,
     });
   };
 
@@ -648,57 +570,132 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent }) {
               }}
             />
           </div>
-          <div style={{ marginBottom: 10 }}>
-            <label
+          <div style={{ display: "flex", gap: 20, marginBottom: 10 }}>
+            <div style={{ flex: 1 }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 5,
+                  fontSize: 12,
+                  color: "#666",
+                  fontWeight: "bold",
+                }}
+              >
+                Start Time:
+              </label>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <select
+                  value={timeHour}
+                  onChange={(e) => setTimeHour(e.target.value)}
+                  style={{
+                    width: 64,
+                    height: 32,
+                    fontSize: 14,
+                    border: '1px solid #ccc',
+                    borderRadius: 4,
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {Array.from({ length: 12 }, (_, i) => String(i + 1)).map((h) => (
+                    <option key={h} value={h}>
+                      {h}
+                    </option>
+                  ))}
+                </select>
+                <span style={{ fontSize: 16 }}>:</span>
+                <select
+                  value={timeMinute}
+                  onChange={(e) => setTimeMinute(e.target.value)}
+                  style={{
+                    width: 64,
+                    height: 32,
+                    fontSize: 14,
+                    border: '1px solid #ccc',
+                    borderRadius: 4,
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0")).map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={timePeriod}
+                  onChange={(e) => setTimePeriod(e.target.value)}
+                  style={{
+                    width: 70,
+                    height: 32,
+                    fontSize: 14,
+                    border: '1px solid #ccc',
+                    borderRadius: 4,
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+              </div>
+            </div>
+            <div style={{ minWidth: 120 }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 5,
+                  fontSize: 12,
+                  color: "#666",
+                  fontWeight: "bold",
+                }}
+              >
+                Duration (minutes):
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={customDuration}
+                onChange={(e) =>
+                  setCustomDuration(e.target.value.replace(/\D/g, ""))
+                }
+                onBlur={normalizeCustomDuration}
+                placeholder="e.g. 30"
+                style={{
+                  width: 100,
+                  height: 32,
+                  padding: 8,
+                  border: "1px solid #ccc",
+                  borderRadius: 4,
+                  fontSize: 14,
+                }}
+              />
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <button
+              onClick={handleCustomEventSubmit}
+              disabled={!customEvent.trim() || !isValidDuration}
               style={{
-                display: "block",
-                marginBottom: 5,
-                fontSize: 12,
-                color: "#666",
+                padding: "10px 20px",
+                backgroundColor:
+                  customEvent.trim() && isValidDuration ? "#4CAF50" : "#ccc",
+                color: "white",
+                border: "none",
+                borderRadius: 4,
+                cursor:
+                  customEvent.trim() && isValidDuration
+                    ? "pointer"
+                    : "not-allowed",
+                fontSize: 14,
                 fontWeight: "bold",
               }}
             >
-              Duration (minutes):
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={customDuration}
-              onChange={(e) =>
-                setCustomDuration(e.target.value.replace(/\D/g, ""))
-              }
-              onBlur={normalizeCustomDuration}
-              placeholder="e.g. 30"
-              style={{
-                width: 100,
-                padding: 8,
-                border: "1px solid #ccc",
-                borderRadius: 4,
-                fontSize: 14,
-              }}
-            />
+              Use Custom Event
+            </button>
           </div>
-          <button
-            onClick={handleCustomEventSubmit}
-            disabled={!customEvent.trim() || !isValidDuration}
-            style={{
-              padding: "10px 20px",
-              backgroundColor:
-                customEvent.trim() && isValidDuration ? "#4CAF50" : "#ccc",
-              color: "white",
-              border: "none",
-              borderRadius: 4,
-              cursor:
-                customEvent.trim() && isValidDuration
-                  ? "pointer"
-                  : "not-allowed",
-              fontSize: 14,
-              fontWeight: "bold",
-            }}
-          >
-            Use Custom Event
-          </button>
         </div>
 
         <div style={{ marginBottom: 10, fontWeight: "bold", color: "#666" }}>
@@ -710,9 +707,14 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent }) {
           return (
             <button
               key={block}
-              onClick={() =>
-                onSelect({ event: label, duration: parseInt(duration, 10) })
-              }
+              onClick={() => {
+                const newTime = parseTimeInput(timeHour, timeMinute, timePeriod);
+                onSelect({ 
+                  event: label, 
+                  duration: parseInt(duration, 10),
+                  time: newTime,
+                });
+              }}
               style={{
                 width: "100%",
                 padding: 12,
@@ -804,8 +806,7 @@ function TimelineRow({
   photoEnabledGlobal,
   videoEnabledGlobal,
   onDropEventBlock,
-  onTimeLockToggle,
-  isTimeLocked,
+  onChainToPrevious,
   onDrop,
 }) {
   const t = formatTime(row.time);
@@ -1004,7 +1005,7 @@ function TimelineRow({
                 background: 'white',
                 borderRadius: 4,
                 cursor: 'pointer',
-                opacity: isTimeLocked ? 0.9 : 1,
+                opacity: 1,
                 ':hover': {
                   borderColor: '#999',
                 }
@@ -1017,44 +1018,41 @@ function TimelineRow({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onTimeLockToggle(index);
+                console.log('[Chain] Clicked on row index', index);
+                onChainToPrevious && onChainToPrevious(index);
               }}
               style={{
                 position: 'absolute',
                 left: 2,
                 top: '50%',
                 transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
+                background: '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderRadius: '4px',
                 cursor: 'pointer',
-                padding: '4px',
+                width: '24px',
+                height: '24px',
+                padding: 0,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                zIndex: 2,
               }}
-              title={isTimeLocked ? 'Time is locked - click to unlock' : 'Time is unlocked - click to lock'}
+              title="Chain to previous event - update time to follow previous row"
             >
               <svg 
-                width="14" 
-                height="14" 
+                width="16" 
+                height="16" 
                 viewBox="0 0 24 24" 
                 fill="none" 
-                stroke={isTimeLocked ? '#333' : '#ccc'}
-                strokeWidth="2" 
+                stroke="#495057"
+                strokeWidth="2.5" 
                 strokeLinecap="round" 
                 strokeLinejoin="round"
               >
-                {isTimeLocked ? (
-                  <>
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                  </>
-                ) : (
-                  <>
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
-                  </>
-                )}
+                {/* Arrow pointing up then right - vertically flipped from the down-right version */}
+                <path d="M7 7L7 17L17 17"></path>
+                <path d="M13 21L17 17L13 13"></path>
               </svg>
             </button>
           </div>
@@ -1363,15 +1361,8 @@ function TimelineRow({
         <TimePopover
           open={timeOpen}
           value={t}
-          isLocked={isTimeLocked}
-          onLockToggle={(locked) => {
-            onTimeLockToggle(index, locked);
-          }}
-          onSet={(h, m, p, shouldLock) => {
+          onSet={(h, m, p) => {
             onTimeSet(h, m, p);
-            if (shouldLock !== undefined) {
-              onTimeLockToggle(index, shouldLock);
-            }
             setTimeOpen(false);
           }}
           onClose={() => setTimeOpen(false)}
@@ -1474,9 +1465,8 @@ export default function MobileApp() {
     return [...userRows].sort((a, b) => a.time - b.time);
   }, [userRows]);
 
+  // Preserve existing times by default; only the chain action should advance times
   const recalculateTimes = (rowsIn, startIndex = 0) => {
-    // Cascading time updates are disabled by design per requirements.
-    // Preserve all existing row times; only explicitly edited rows change.
     return [...rowsIn];
   };
 
@@ -1486,6 +1476,7 @@ export default function MobileApp() {
     setRedoStack([]);
     setUserRows(newUserRows);
   };
+
 
   const handleChange = (displayIndex, field, value) => {
     const row = rows[displayIndex];
@@ -1545,12 +1536,26 @@ export default function MobileApp() {
     saveToHistory(newUserRows);
   };
 
-  const handleTimeLockToggle = (index, newLockState) => {
+  // Chain current row's time to previous row's end time
+  const handleChainToPrevious = (index) => {
+    console.log('[Chain] handleChainToPrevious called for index', index);
+    if (index === 0) {
+      console.warn('[Chain] First row has no previous row to chain to');
+      return; // nothing to chain to
+    }
+
+    const currentRow = rows[index];
+    const previousRow = rows[index - 1];
+
+    const newTime = previousRow.time + previousRow.duration;
     const newUserRows = [...userRows];
-    const rowIndex = newUserRows.findIndex((r) => r.id === rows[index].id);
-    if (rowIndex !== -1) {
-      newUserRows[rowIndex].isTimeLocked = newLockState !== undefined ? newLockState : !newUserRows[rowIndex].isTimeLocked;
-      setUserRows(newUserRows);
+    const userRowIndex = newUserRows.findIndex((r) => r.id === currentRow.id);
+    
+    if (userRowIndex !== -1) {
+      newUserRows[userRowIndex].time = newTime;
+      console.log('[Chain] Updated row id', currentRow.id, 'time ->', newTime);
+      console.log('[Chain] Saving new state preview:', newUserRows.map(r => ({id: r.id, time: r.time, event: r.event})));
+      setUserRows(newUserRows); // Force immediate UI update
       saveToHistory(newUserRows);
     }
   };
@@ -1560,19 +1565,23 @@ export default function MobileApp() {
     const currentRow = rows[displayIndex];
     const previousRow = rows[displayIndex - 1];
 
-    const newUserRows = userRows.map((row) => {
-      if (row.id === currentRow.id) return { ...row, time: previousRow.time };
-      if (row.id === previousRow.id) return { ...row, time: currentRow.time };
-      return row;
-    });
+    // Find the positions of these rows in userRows
+    const currentUserIndex = userRows.findIndex(r => r.id === currentRow.id);
+    const previousUserIndex = userRows.findIndex(r => r.id === previousRow.id);
+    
+    if (currentUserIndex === -1 || previousUserIndex === -1) return;
 
-    const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
-    const recalculatedRows = recalculateTimes(sortedRows, displayIndex - 1);
+    // Create new userRows array with swapped positions AND times
+    const newUserRows = [...userRows];
+    
+    // Swap the entire rows but also swap their times
+    const currentRowCopy = { ...newUserRows[currentUserIndex], time: previousRow.time };
+    const previousRowCopy = { ...newUserRows[previousUserIndex], time: currentRow.time };
+    
+    newUserRows[currentUserIndex] = previousRowCopy;
+    newUserRows[previousUserIndex] = currentRowCopy;
 
-    const finalUserRows = userRows.map(
-      (row) => recalculatedRows.find((r) => r.id === row.id) || row
-    );
-    saveToHistory(finalUserRows);
+    saveToHistory(newUserRows);
   };
 
   const handleMoveDown = (displayIndex) => {
@@ -1580,19 +1589,23 @@ export default function MobileApp() {
     const currentRow = rows[displayIndex];
     const nextRow = rows[displayIndex + 1];
 
-    const newUserRows = userRows.map((row) => {
-      if (row.id === currentRow.id) return { ...row, time: nextRow.time };
-      if (row.id === nextRow.id) return { ...row, time: currentRow.time };
-      return row;
-    });
+    // Find the positions of these rows in userRows
+    const currentUserIndex = userRows.findIndex(r => r.id === currentRow.id);
+    const nextUserIndex = userRows.findIndex(r => r.id === nextRow.id);
+    
+    if (currentUserIndex === -1 || nextUserIndex === -1) return;
 
-    const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
-    const recalculatedRows = recalculateTimes(sortedRows, displayIndex);
+    // Create new userRows array with swapped positions AND times
+    const newUserRows = [...userRows];
+    
+    // Swap the entire rows but also swap their times
+    const currentRowCopy = { ...newUserRows[currentUserIndex], time: nextRow.time };
+    const nextRowCopy = { ...newUserRows[nextUserIndex], time: currentRow.time };
+    
+    newUserRows[currentUserIndex] = nextRowCopy;
+    newUserRows[nextUserIndex] = currentRowCopy;
 
-    const finalUserRows = userRows.map(
-      (row) => recalculatedRows.find((r) => r.id === row.id) || row
-    );
-    saveToHistory(finalUserRows);
+    saveToHistory(newUserRows);
   };
 
   const handleEventClick = (index) => {
@@ -1600,7 +1613,55 @@ export default function MobileApp() {
     setShowEventSelector(true);
   };
 
+  // Handle selecting an event from the EventBlockSelector
+  const handleEventSelect = (eventData) => {
+    if (selectedRowIndex !== null && eventData) {
+      const displayRow = rows[selectedRowIndex];
+      const userRowIndex = userRows.findIndex((u) => u.id === displayRow.id);
+      if (userRowIndex !== -1) {
+        const newUserRows = [...userRows];
+        newUserRows[userRowIndex].event = eventData.event;
+        newUserRows[userRowIndex].duration = eventData.duration;
+        
+        // Update time if provided
+        if (eventData.time !== undefined) {
+          newUserRows[userRowIndex].time = eventData.time;
+        }
+
+        // Recalculate subsequent times starting from this row in display order
+        const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
+        const sortedIndex = sortedRows.findIndex((r) => r.id === newUserRows[userRowIndex].id);
+        const recalculated = recalculateTimes(sortedRows, sortedIndex);
+
+        // Map recalculated times back to original order
+        recalculated.forEach((recalcRow, i) => {
+          const originalIndex = newUserRows.findIndex((r) => r.id === sortedRows[i].id);
+          if (originalIndex !== -1) {
+            newUserRows[originalIndex] = recalcRow;
+          }
+        });
+
+        saveToHistory(newUserRows);
+      }
+    }
+
+    // Close the selector and reset the selection
+    setShowEventSelector(false);
+    setSelectedRowIndex(null);
+  };
+
+  const handleEventBlur = (displayIndex) => {
+    const isBottom = displayIndex === rows.length - 1;
+    const hasEvent = rows[displayIndex]?.event?.trim() !== "";
+    if (isBottom && hasEvent) addRow();
+  };
+
+  // Add a new row at a specific display index
   const addRowAtIndex = (insertIndex) => {
+    console.log('[AddRow] insertIndex:', insertIndex, 'rows.length:', rows.length);
+    console.log('[AddRow] Current rows:', rows.map(r => ({id: r.id, time: r.time, event: r.event})));
+    
+    // Determine the intended time for the new row based on display order
     let newTime;
     if (insertIndex === 0) {
       newTime = Math.max(0, (rows[0]?.time || 12 * 60) - 30);
@@ -1609,8 +1670,28 @@ export default function MobileApp() {
       newTime = lastRow ? lastRow.time + lastRow.duration : 12 * 60;
     } else {
       const prevRow = rows[insertIndex - 1];
-      newTime = prevRow.time + prevRow.duration;
+      const nextRow = rows[insertIndex];
+      // Insert between prevRow and nextRow - calculate time between them
+      const prevEndTime = prevRow.time + prevRow.duration;
+      const nextStartTime = nextRow.time;
+      
+      // If there's a gap, place it at the previous row's end time
+      // If there's no gap (overlapping), place it between the times
+      if (prevEndTime <= nextStartTime) {
+        newTime = prevEndTime;
+      } else {
+        // If overlapping, place it halfway between prev start and next start
+        newTime = Math.floor((prevRow.time + nextStartTime) / 2);
+      }
+      
+      console.log('[AddRow] Inserting between rows:', {
+        prevRow: {id: prevRow.id, time: prevRow.time, duration: prevRow.duration, endTime: prevEndTime},
+        nextRow: {id: nextRow.id, time: nextRow.time},
+        calculatedTime: newTime
+      });
     }
+    
+    console.log('[AddRow] Calculated newTime:', newTime);
 
     const newRow = {
       id: nextId,
@@ -1624,63 +1705,45 @@ export default function MobileApp() {
       notes: "",
       isTimeLocked: false,
     };
-    
+
+    // Insert the new row at the correct position based on time order
     const newUserRows = [...userRows];
-    newUserRows.splice(insertIndex, 0, newRow);
-    setUserRows(newUserRows);
-    setNextId(nextId + 1);
-    // Do not open the event selector automatically; just record in history
-    saveToHistory(newUserRows);
-  };
-
-  // For backward compatibility
-  const addRow = () => {
-    addRowAtIndex(rows.length);
-  };
-
-  const handleEventSelect = (eventData) => {
-    if (selectedRowIndex !== null) {
-      const wasBottom = selectedRowIndex === rows.length - 1;
-      const row = rows[selectedRowIndex];
-      const userRowIndex = userRows.findIndex((u) => u.id === row.id);
-      if (userRowIndex !== -1) {
-        const newUserRows = [...userRows];
-        newUserRows[userRowIndex].event = eventData.event;
-        newUserRows[userRowIndex].duration = eventData.duration;
-
-        const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
-        const sortedIndex = sortedRows.findIndex(
-          (r) => r.id === newUserRows[userRowIndex].id
-        );
-        const recalculated = recalculateTimes(sortedRows, sortedIndex);
-        saveToHistory(recalculated);
-
-        if (wasBottom && eventData.event.trim()) {
-          setTimeout(() => addRow(), 0);
+    
+    // Find the correct insertion point in userRows based on time and display order
+    let insertPosition = newUserRows.length; // Default to end
+    
+    // We need to insert based on the intended display position, not just time
+    // Find the row that corresponds to rows[insertIndex] (the row we want to insert before)
+    if (insertIndex < rows.length) {
+      const targetRow = rows[insertIndex]; // The row we want to insert before
+      // Find this row in userRows
+      for (let i = 0; i < newUserRows.length; i++) {
+        if (newUserRows[i].id === targetRow.id) {
+          insertPosition = i;
+          break;
         }
       }
     }
-
-    setShowEventSelector(false);
-    setSelectedRowIndex(null);
+    
+    console.log('[AddRow] Insert position in userRows:', insertPosition, 'of', newUserRows.length);
+    console.log('[AddRow] UserRows before insert:', newUserRows.map(r => ({id: r.id, time: r.time})));
+    
+    // Insert the new row at the calculated position
+    newUserRows.splice(insertPosition, 0, newRow);
+    
+    console.log('[AddRow] UserRows after insert:', newUserRows.map(r => ({id: r.id, time: r.time})));
+    
+    setNextId(nextId + 1);
+    saveToHistory(newUserRows);
   };
 
-  const handleEventBlur = (displayIndex) => {
-    const isBottom = displayIndex === rows.length - 1;
-    const hasEvent = rows[displayIndex]?.event?.trim() !== "";
-    if (isBottom && hasEvent) addRow();
-  };
+  // Append a new row at the end of the list
+  const addRow = () => addRowAtIndex(rows.length);
 
   // Apply-to-all toggles
   const handlePhotoToggle = (checked) => {
     setPhotoEnabled(checked);
     setUserRows((prev) => prev.map((r) => ({ ...r, photo: checked })));
-  };
-
-
-  // Check if time is locked for a row
-  const isRowTimeLocked = (row) => {
-    return row.isTimeLocked || false;
   };
 
   const handleVideoToggle = (checked) => {
@@ -2048,7 +2111,7 @@ export default function MobileApp() {
   const handleTimeSet = (displayIndex, time) => {
     const row = rows[displayIndex];
     const userRowIndex = userRows.findIndex((u) => u.id === row.id);
-    if (userRowIndex === -1 || row.isTimeLocked) return;
+    if (userRowIndex === -1) return;
 
     const newUserRows = [...userRows];
     newUserRows[userRowIndex].time = time;
@@ -2646,31 +2709,21 @@ export default function MobileApp() {
                       onEventBlur={handleEventBlur}
                       photoEnabledGlobal={photoEnabled}
                       videoEnabledGlobal={videoEnabled}
-                      onTimeSet={(h, m, p, shouldLock) => {
+                      onTimeSet={(h, m, p) => {
                         const newTime = parseTimeInput(h, m, p);
                         const newUserRows = [...userRows];
                         const rowIndex = newUserRows.findIndex((r) => r.id === row.id);
                         
                         if (rowIndex !== -1) {
-                          if (!isRowTimeLocked(newUserRows[rowIndex]) || shouldLock !== undefined) {
-                            newUserRows[rowIndex].time = newTime;
-                            if (shouldLock !== undefined) {
-                              newUserRows[rowIndex].isTimeLocked = shouldLock;
-                            }
-                            setUserRows(newUserRows);
-                            
-                            if (!shouldLock) {
-                              const recalculated = recalculateTimes(newUserRows, rowIndex);
-                              saveToHistory(recalculated);
-                            } else {
-                              saveToHistory(newUserRows);
-                            }
-                          }
+                          newUserRows[rowIndex].time = newTime;
+                          setUserRows(newUserRows);
+                          
+                          const recalculated = recalculateTimes(newUserRows, rowIndex);
+                          saveToHistory(recalculated);
                         }
                       }}
                       onDropEventBlock={(eventData) => handleDropEventBlockToRow(eventData, index)}
-                      onTimeLockToggle={handleTimeLockToggle}
-                      isTimeLocked={isRowTimeLocked(row)}
+                      onChainToPrevious={handleChainToPrevious}
                     />
                   </div>
 
@@ -2757,12 +2810,16 @@ export default function MobileApp() {
             currentEvent={
               selectedRowIndex !== null ? rows[selectedRowIndex]?.event : ""
             }
+            currentTime={
+              selectedRowIndex !== null ? rows[selectedRowIndex]?.time : undefined
+            }
           />
         </div>
 
         {/* SIDEBAR (desktop only) */}
         <EventSidebar />
       </div>
+
     </div>
   );
 }

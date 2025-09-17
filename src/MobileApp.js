@@ -289,6 +289,7 @@ function TimelineRow({
   onMoveDown,
   isFirst,
   isLast,
+  onChainToPrevious,
 }) {
   const colors = {
     Details: "#FFE5B4",
@@ -425,6 +426,36 @@ function TimelineRow({
       >
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            {/* Chain-to-previous button */}
+            <button
+              onClick={() => onChainToPrevious && onChainToPrevious(index)}
+              title="Chain to previous event"
+              style={{
+                width: "28px",
+                height: "28px",
+                border: "1px solid #ccc",
+                background: "#fff",
+                borderRadius: "4px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+              }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#666"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+            </button>
             <div
               style={{
                 display: "flex",
@@ -887,6 +918,36 @@ export default function App() {
   const handleEventClick = (index) => {
     setSelectedRowIndex(index);
     setShowEventSelector(true);
+  };
+
+  // Chain current row's time to the previous row's end time
+  const handleChainToPrevious = (index) => {
+    if (index === 0) return; // nothing to chain to
+
+    const currentRow = rows[index];
+    const previousRow = rows[index - 1];
+
+    const newTime = previousRow.time + previousRow.duration;
+    const newUserRows = [...userRows];
+    const userRowIndex = newUserRows.findIndex((r) => r.id === currentRow.id);
+    if (userRowIndex !== -1) {
+      newUserRows[userRowIndex].time = newTime;
+
+      // Recalculate subsequent rows based on display order
+      const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
+      const sortedIndex = sortedRows.findIndex((r) => r.id === currentRow.id);
+      const recalculated = recalculateTimes(sortedRows, sortedIndex);
+
+      // Map recalculated times back to original userRows order
+      recalculated.forEach((recalcRow, i) => {
+        const originalIndex = newUserRows.findIndex((r) => r.id === sortedRows[i].id);
+        if (originalIndex !== -1) {
+          newUserRows[originalIndex] = recalcRow;
+        }
+      });
+
+      saveToHistory(newUserRows);
+    }
   };
 
   const handleEventSelect = (eventData) => {
@@ -1565,6 +1626,7 @@ export default function App() {
               onMoveDown={handleMoveDown}
               isFirst={index === 0}
               isLast={index === rows.length - 1}
+              onChainToPrevious={handleChainToPrevious}
             />
           ))}
         </div>
