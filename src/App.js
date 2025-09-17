@@ -2068,15 +2068,35 @@ export default function MobileApp() {
       if (row.photo) coverage.push("Photo");
       if (row.video) coverage.push("Video");
 
+      // Always include Time
       lines.push(`Time: ${time.hour}:${time.minute} ${time.period}`);
+      
+      // Include Location only if it has content
+      if (row.location && row.location.trim()) {
+        lines.push(`Location: ${row.location}`);
+      }
+      
+      // Always include Event
       lines.push(`Event: ${row.event || "(no event)"}`);
+      
+      // Always include Duration
       lines.push(`Duration: ${row.duration} minutes`);
-      lines.push(
-        `Coverage: ${coverage.length ? coverage.join(" & ") : "None"}`
-      );
-      lines.push(`Location: ${row.location}`);
+      
+      // Include Coverage only if there is coverage
+      if (coverage.length > 0) {
+        lines.push(`Coverage: ${coverage.join(" & ")}`);
+      }
+      
+      // Always include Setting
       lines.push(`Setting: ${row.isOutdoor ? "Outside" : "Indoors"}`);
-      lines.push(`Notes: ${row.notes ? row.notes : ""}`, "");
+      
+      // Include Notes only if it has content
+      if (row.notes && row.notes.trim()) {
+        lines.push(`Notes: ${row.notes}`);
+      }
+      
+      // Add empty line after each row
+      lines.push("");
     });
 
     const timeline = lines.join("\n"); // <- real newlines
