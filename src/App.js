@@ -1475,36 +1475,9 @@ export default function MobileApp() {
   }, [userRows]);
 
   const recalculateTimes = (rowsIn, startIndex = 0) => {
-    const newRows = [...rowsIn];
-    let lastUnlockedIndex = startIndex;
-    
-    // Find the first unlocked row at or after startIndex
-    while (lastUnlockedIndex < newRows.length && newRows[lastUnlockedIndex].isTimeLocked) {
-      lastUnlockedIndex++;
-    }
-    
-    // If we found an unlocked row, use its time as the base
-    // Otherwise, use the startIndex row's time (even if it's locked)
-    const baseIndex = lastUnlockedIndex < newRows.length ? lastUnlockedIndex : startIndex;
-    
-    for (let i = baseIndex + 1; i < newRows.length; i++) {
-      // Skip locked rows - they won't be updated
-      if (newRows[i].isTimeLocked) continue;
-      
-      // Find the previous non-locked row to calculate the time from
-      let prevIndex = i - 1;
-      while (prevIndex >= 0 && newRows[prevIndex].isTimeLocked) {
-        prevIndex--;
-      }
-      
-      // If we found a previous non-locked row, use it to calculate the new time
-      if (prevIndex >= 0) {
-        const prevRow = newRows[prevIndex];
-        newRows[i].time = prevRow.time + prevRow.duration;
-      }
-    }
-    
-    return newRows;
+    // Cascading time updates are disabled by design per requirements.
+    // Preserve all existing row times; only explicitly edited rows change.
+    return [...rowsIn];
   };
 
   const saveToHistory = (newUserRows) => {
