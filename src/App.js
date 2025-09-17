@@ -1050,9 +1050,9 @@ function TimelineRow({
                 strokeLinecap="round" 
                 strokeLinejoin="round"
               >
-                {/* Arrow pointing up then right - vertically flipped from the down-right version */}
-                <path d="M7 7L7 17L17 17"></path>
-                <path d="M13 21L17 17L13 13"></path>
+                {/* Chain icon */}
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
               </svg>
             </button>
           </div>
@@ -1552,8 +1552,23 @@ export default function MobileApp() {
     const userRowIndex = newUserRows.findIndex((r) => r.id === currentRow.id);
     
     if (userRowIndex !== -1) {
+      // Update the current row's time
       newUserRows[userRowIndex].time = newTime;
       console.log('[Chain] Updated row id', currentRow.id, 'time ->', newTime);
+      
+      // Update all subsequent rows in display order
+      let runningTime = newTime + currentRow.duration;
+      for (let i = index + 1; i < rows.length; i++) {
+        const subsequentRow = rows[i];
+        const subsequentUserIndex = newUserRows.findIndex((r) => r.id === subsequentRow.id);
+        
+        if (subsequentUserIndex !== -1) {
+          newUserRows[subsequentUserIndex].time = runningTime;
+          console.log('[Chain] Updated subsequent row id', subsequentRow.id, 'time ->', runningTime);
+          runningTime += subsequentRow.duration;
+        }
+      }
+      
       console.log('[Chain] Saving new state preview:', newUserRows.map(r => ({id: r.id, time: r.time, event: r.event})));
       setUserRows(newUserRows); // Force immediate UI update
       saveToHistory(newUserRows);
