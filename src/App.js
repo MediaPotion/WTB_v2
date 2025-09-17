@@ -1609,8 +1609,7 @@ export default function MobileApp() {
       newTime = lastRow ? lastRow.time + lastRow.duration : 12 * 60;
     } else {
       const prevRow = rows[insertIndex - 1];
-      const nextRow = rows[insertIndex];
-      newTime = Math.floor((prevRow.time + prevRow.duration + nextRow.time) / 2);
+      newTime = prevRow.time + prevRow.duration;
     }
 
     const newRow = {
