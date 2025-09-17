@@ -66,7 +66,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent }) {
     "Reception: Bride & Parent Dance::5",
     "Reception: Groom & Parent Dance::5",
     "Reception: Special Dance::5",
-    "Reception: Dinner::30",
+    "Reception: Dinner::60",
     "Reception: Speeches (Per Speaker)::10",
     "Reception: Open Dance Floor::20",
     "Reception: Garder Belt Toss::15",
