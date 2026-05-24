@@ -2052,18 +2052,55 @@ export default function MobileApp() {
     const userRowIndex = userRows.findIndex((u) => u.id === row.id);
     if (userRowIndex === -1) return;
 
-    let newUserRows = userRows.filter((_, idx) => idx !== userRowIndex);
+    const newUserRows = userRows.filter((_, idx) => idx !== userRowIndex);
 
-    if (newUserRows.length > 0) {
-      const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
-      const deletedSortedIndex = Math.min(userRowIndex, sortedRows.length - 1);
-      newUserRows = recalculateTimes(
-        sortedRows,
-        Math.max(0, deletedSortedIndex - 1)
-      );
+    if (newUserRows.length === 0) {
+      saveToHistory(newUserRows);
+      return;
     }
 
-    saveToHistory(newUserRows);
+    // Identify ceremony block
+    const isCeremony = (r) => r.event === "Ceremony: Average" || r.event === "Ceremony: Catholic";
+    const ceremonyRow = newUserRows.find(isCeremony);
+
+    // No ceremony in timeline, or the ceremony itself was deleted — no anchor logic
+    if (!ceremonyRow || isCeremony(row)) {
+      saveToHistory(newUserRows);
+      return;
+    }
+
+    const ceremonyTime = ceremonyRow.time;
+    const ceremonyEnd = ceremonyTime + ceremonyRow.duration;
+    const sorted = [...newUserRows].sort((a, b) => a.time - b.time);
+
+    if (row.time < ceremonyTime) {
+      // Pre-ceremony deletion: cascade backwards from ceremony start so blocks shift later
+      const pre  = sorted.filter(r => r.time < ceremonyTime);
+      const rest = sorted.filter(r => r.time >= ceremonyTime); // ceremony + post, untouched
+
+      let t = ceremonyTime;
+      const newPre = [...pre].reverse().map(r => {
+        t -= r.duration;
+        return { ...r, time: t };
+      }).reverse();
+
+      const result = [...newPre, ...rest];
+      saveToHistory(newUserRows.map(ur => result.find(r => r.id === ur.id) || ur));
+    } else {
+      // Post-ceremony deletion: cascade forwards from ceremony end so blocks shift earlier
+      const preAndCeremony = sorted.filter(r => r.time <= ceremonyTime); // untouched
+      const post = sorted.filter(r => r.time > ceremonyTime);
+
+      let t = ceremonyEnd;
+      const newPost = post.map(r => {
+        const updated = { ...r, time: t };
+        t += r.duration;
+        return updated;
+      });
+
+      const result = [...preAndCeremony, ...newPost];
+      saveToHistory(newUserRows.map(ur => result.find(r => r.id === ur.id) || ur));
+    }
   };
 
   // Chain current row's time to previous row's end time
