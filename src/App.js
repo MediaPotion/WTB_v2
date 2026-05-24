@@ -4062,91 +4062,185 @@ export default function MobileApp() {
 
     // Step 99 — Confirmation
     if (wizardStep === 99) {
-      const ceremonyTime = `${wiz_ceremonyHour}:${wiz_ceremonyMinute} ${wiz_ceremonyPeriod}`;
-      const receptionTime = `${wiz_receptionHour}:${wiz_receptionMinute} ${wiz_receptionPeriod}`;
-      const firstLooksList = [];
-      if (wiz_firstLookGroom) firstLooksList.push("Groom");
-      if (wiz_firstLookParent) firstLooksList.push("Parent(s)");
-      if (wiz_firstLookBridesmaids) firstLooksList.push("Bridesmaids");
-      const groupShotsBeforeCeremony = wiz_firstLookGroom || wiz_brideOkayBefore === true;
-
-      const summaryRow = (label, value) => (
-        <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #1e1c19", fontSize: 14 }}>
-          <span style={{ color: "#6e6358", fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em", fontSize: 13 }}>{label}</span>
-          <span style={{ color: "#ddd0bc", textAlign: "right", maxWidth: "60%", fontFamily: "'Jost', sans-serif" }}>{value}</span>
+      const cardStyle = { background: "#0f0d0b", border: "1px solid #1e1c19", borderRadius: 8, padding: "20px", marginBottom: 12 };
+      const sectionHeading = (label) => (
+        <h3 style={{ margin: "0 0 14px 0", fontSize: 12, color: "#b8906a", fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase" }}>{label}</h3>
+      );
+      const reviewRow = (label, value, incomplete = false) => (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "8px 0", borderBottom: "1px solid #161310", ...(incomplete ? { borderLeft: "2px solid #b8906a", paddingLeft: 8 } : {}) }}>
+          <span style={{ color: "#6e6358", fontFamily: "'Jost', sans-serif", fontSize: 13, fontWeight: 300, flexShrink: 0, marginRight: 12 }}>{label}</span>
+          <span style={{ color: incomplete ? "#b8906a" : "#ddd0bc", textAlign: "right", fontFamily: "'Jost', sans-serif", fontSize: 13 }}>{value}</span>
         </div>
       );
+      const noneSelected = <p style={{ fontSize: 13, color: "#6e6358", fontFamily: "'Jost', sans-serif", margin: 0 }}>None selected</p>;
+
+      // Pre-Ceremony shot types
+      const preCeremonyShots = [
+        wiz_preCeremonyBrideReady && `${brideLabel} Getting Ready`,
+        wiz_preCeremonyGroomReady && `${groomLabel} Getting Ready`,
+        wiz_preCeremonyDetails && "Detail Shots",
+        wiz_preCeremonyPreDress && "Bridal Party Pre-Dress Portraits",
+        wiz_preCeremonyBrideParty && `${brideLabel} & Party Portraits`,
+        wiz_preCeremonyGroomParty && `${groomLabel} & Party Portraits`,
+      ].filter(Boolean);
+
+      // Reception events
+      const receptionEvents = [
+        wiz_cakeCutting && "Cake Cutting",
+        wiz_firstDance && "First Dance",
+        wiz_brideParentDance && `${brideLabel} & Parent Dance`,
+        wiz_groomParentDance && `${groomLabel} & Parent Dance`,
+        wiz_specialDance && "Special Dance",
+        wiz_openDanceFloor && "Open Dance Floor",
+        wiz_garterToss && "Garter Toss",
+        wiz_bouquetToss && "Bouquet Toss",
+      ].filter(Boolean);
+
+      // Person 1 getting ready value
+      const brideReadyValue = wiz_brideReadyAtCeremony
+        ? "At ceremony venue"
+        : wiz_brideReadyAtReception
+        ? "At reception venue"
+        : wiz_brideReadyAddress
+        ? (wiz_brideReadyStreet ? `${wiz_brideReadyAddress}\n${wiz_brideReadyStreet}` : wiz_brideReadyAddress)
+        : "(not entered)";
+      const brideReadyIncomplete = !wiz_brideReadyAtCeremony && !wiz_brideReadyAtReception && !wiz_brideReadyAddress;
+
+      // Person 2 getting ready value
+      const groomReadyValue = wiz_groomReadyAtCeremony
+        ? "At ceremony venue"
+        : wiz_groomReadyAtReception
+        ? "At reception venue"
+        : wiz_groomReadyAddress
+        ? wiz_groomReadyAddress
+        : "(not entered)";
+      const groomReadyIncomplete = !wiz_groomReadyAtCeremony && !wiz_groomReadyAtReception && !wiz_groomReadyAddress;
+
+      // First looks — has any?
+      const hasAnyFirstLook = wiz_firstLookGroom || wiz_firstLookParent || wiz_firstLookBridesmaids || wiz_firstLookOther || wiz_customFirstLooks.length > 0;
+      const noFirstLooks = wiz_hasFirstLooks === false || (!wiz_hasFirstLooks && !hasAnyFirstLook);
 
       return (
         <div className="wiz-layout" style={{ padding: "16px 0" }}>
           <div className="wiz-step-col">
-          <div style={{ maxWidth: 600, margin: "0 auto", padding: "24px 16px 40px" }}>
-          <div style={{ background: "#0f0d0b", border: "1px solid #1e1c19", borderRadius: 12, padding: "24px 20px", marginBottom: 20 }}>
-            <h2 style={{ margin: "0 0 8px 0", fontSize: "clamp(22px,4vw,32px)", color: "#ddd0bc", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Ready to Generate</h2>
-            <p style={{ margin: "0 0 20px 0", fontSize: 14, color: "#6e6358", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>Review your selections below, then click Generate Timeline.</p>
+            <div style={{ maxWidth: 600, margin: "0 auto", padding: "24px 16px 40px" }}>
+              <h2 style={{ margin: "0 0 6px 0", fontSize: "clamp(22px,4vw,32px)", color: "#ddd0bc", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Ready to Generate</h2>
+              <p style={{ margin: "0 0 20px 0", fontSize: 14, color: "#6e6358", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>Review your selections below, then click Generate Timeline.</p>
 
-            {summaryRow("Bride / Person 1", `${brideLabel}: ${bride || "(not set)"}`)}
-            {summaryRow("Groom / Person 2", `${groomLabel}: ${groom || "(not set)"}`)}
-            {summaryRow("Wedding Date", date || "(not set)")}
-            {wiz_photoCoverageHours && summaryRow("Photo Coverage", `${wiz_photoCoverageHours} hrs`)}
-            {wiz_videoCoverageHours && summaryRow("Video Coverage", `${wiz_videoCoverageHours} hrs`)}
-            {wiz_brideReadyAddress && summaryRow("Bride Getting Ready", wiz_brideReadyAddress)}
-            {wiz_groomReadyAddress && summaryRow("Groom Getting Ready", wiz_groomReadyAddress)}
-            {wiz_distanceBetweenReady && summaryRow("Distance Between Ready Locations", wiz_distanceBetweenReady)}
-            {wiz_distanceBrideToCeremony && summaryRow("Bride's Distance to Ceremony", wiz_distanceBrideToCeremony)}
-            {wiz_distanceGroomToCeremony && summaryRow("Groom's Distance to Ceremony", wiz_distanceGroomToCeremony)}
-            {summaryRow("Hair & Make-up Done By", `${wiz_hairMakeupDoneHour}:${wiz_hairMakeupDoneMinute} ${wiz_hairMakeupDonePeriod}`)}
-            {summaryRow("Ceremony Time", ceremonyTime)}
-            {summaryRow("Ceremony Duration", `${wiz_ceremonyDuration} min`)}
-            {wiz_ceremonyVenue && summaryRow("Ceremony Venue", wiz_ceremonyVenue)}
-            {wiz_ceremonyAddress && summaryRow("Ceremony Address", wiz_ceremonyAddress)}
-            {summaryRow("Reception Venue", wiz_receptionSameAsCeremony ? `Same as ceremony (${wiz_ceremonyVenue || "ceremony venue"})` : (wiz_receptionVenue || "Not entered"))}
-            {!wiz_receptionSameAsCeremony && wiz_receptionAddress && summaryRow("Reception Address", wiz_receptionAddress)}
-            {summaryRow("Ceremony Setting", wiz_ceremonyOutdoor ? "Outdoor" : "Indoors")}
-            {wiz_guestCount && summaryRow("Anticipated Guests", wiz_guestCount)}
-            {summaryRow("Drone Coverage", wiz_drone ? "Yes" : "No")}
-            {summaryRow("Narration", wiz_narration ? "Yes" : "No")}
-            {summaryRow("First Looks", wiz_hasFirstLooks === false || !wiz_hasFirstLooks ? "None" : firstLooksList.length > 0 ? firstLooksList.join(", ") : "Yes (unspecified)")}
-            {!wiz_firstLookGroom && summaryRow("Bride OK Before Ceremony", wiz_brideOkayBefore === null ? "(not answered)" : wiz_brideOkayBefore ? "Yes" : "No")}
-            {summaryRow("Group Shots Before Ceremony", groupShotsBeforeCeremony ? "Yes" : "No")}
-            {summaryRow("Family Groups", wiz_familyGroups === "none" ? "None" : wiz_familyGroups === "5" ? "5 Groups (~20 min)" : "10 Groups (~45 min)")}
-            {wiz_familyGroups !== "none" && wiz_familyGroupNames.some(n => n) && summaryRow("Group Names", wiz_familyGroupNames.filter(Boolean).join(", "))}
-            {wiz_portraitLocations.length > 0 && summaryRow("Portrait Locations", wiz_portraitLocations.map((l, i) => l.name || `Location ${i + 1}`).join(", "))}
-            {summaryRow("Golden Hour", wiz_goldenHour ? "Yes" : "No")}
-            {summaryRow("Reception Time", receptionTime)}
-            {wiz_dinner && summaryRow("Dinner Start", `${wiz_dinnerStartHour}:${wiz_dinnerStartMinute} ${wiz_dinnerStartPeriod}`)}
-            {wiz_dinner && wiz_dinnerStyle && summaryRow("Dinner Style", wiz_dinnerStyle)}
-            {summaryRow("Reception Events", [
-              wiz_grandEntrance && "Grand Entrance",
-              wiz_cakeCutting && "Cake Cutting",
-              wiz_firstDance && "First Dance",
-              wiz_brideParentDance && "Bride & Parent Dance",
-              wiz_groomParentDance && "Groom & Parent Dance",
-              wiz_dinner && "Dinner",
-              wiz_dinner && wiz_dinnerStyle && `(${wiz_dinnerStyle})`,
-              wiz_speeches && `Speeches (${wiz_speechCount})`,
-              wiz_openDanceFloor && "Open Dance Floor",
-              wiz_garterToss && "Garter Toss",
-              wiz_bouquetToss && "Bouquet Toss",
-            ].filter(Boolean).join(", ") || "None")}
-          </div>
+              {/* 1. The Couple */}
+              <div style={cardStyle}>
+                {sectionHeading("The Couple")}
+                {reviewRow(`${brideLabel}`, bride || "(not entered)", !bride)}
+                {reviewRow(`${groomLabel}`, groom || "(not entered)", !groom)}
+                {reviewRow("Wedding Date", date || "(not entered)", !date)}
+              </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-            <button
-              onClick={() => setWizardStep(9)}
-              style={{ padding: "12px 28px", border: "1px solid #b8906a", borderRadius: 8, background: "transparent", color: "#ddd0bc", fontSize: 15, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}
-            >
-              Go Back
-            </button>
-            <button
-              onClick={generateTimeline}
-              className="generate-btn"
-              style={{ padding: "18px 48px", color: "#060504", border: "none", borderRadius: 10, fontSize: 22, fontWeight: 400, cursor: "pointer", fontFamily: "'Cormorant Garamond', serif" }}
-            >
-              Generate Timeline
-            </button>
-          </div>
-          </div>
+              {/* 2. Package */}
+              <div style={cardStyle}>
+                {sectionHeading("Package")}
+                {reviewRow("Photo Coverage", wiz_photoCoverageHours ? wiz_photoCoverageHours + " hrs" : "(not entered)", !wiz_photoCoverageHours)}
+                {reviewRow("Video Coverage", wiz_videoCoverageHours ? wiz_videoCoverageHours + " hrs" : "(not entered)", !wiz_videoCoverageHours)}
+                {reviewRow("Drone Coverage", wiz_drone ? "Yes" : "No")}
+                {reviewRow("Narration Recording", wiz_narration ? "Yes" : "No")}
+              </div>
+
+              {/* 3. Locations */}
+              <div style={cardStyle}>
+                {sectionHeading("Locations")}
+                {reviewRow("Ceremony Venue", wiz_ceremonyVenue || "(not entered)", !wiz_ceremonyVenue)}
+                {reviewRow("Ceremony Address", wiz_ceremonyAddress || "(not entered)", !wiz_ceremonyAddress)}
+                {reviewRow(
+                  "Reception Venue",
+                  wiz_receptionSameAsCeremony ? "Same as ceremony" : (wiz_receptionVenue || "(not entered)"),
+                  !wiz_receptionSameAsCeremony && !wiz_receptionVenue
+                )}
+                {!wiz_receptionSameAsCeremony && reviewRow(
+                  "Reception Address",
+                  wiz_receptionAddress || "(not entered)",
+                  !wiz_receptionAddress
+                )}
+                {reviewRow(`${brideLabel} Getting Ready`, brideReadyValue, brideReadyIncomplete)}
+                {reviewRow(`${groomLabel} Getting Ready`, groomReadyValue, groomReadyIncomplete)}
+                {wiz_locations.length > 0
+                  ? wiz_locations.map((loc, i) => (
+                      <div key={i}>{reviewRow(`Additional Location ${i + 1}`, [loc.name, loc.address].filter(Boolean).join(" — ") || "(unnamed)")}</div>
+                    ))
+                  : reviewRow("Additional Locations", "None added")}
+              </div>
+
+              {/* 4. Pre-Ceremony */}
+              <div style={cardStyle}>
+                {sectionHeading("Pre-Ceremony")}
+                {reviewRow("Hair & Makeup Done By", `${wiz_hairMakeupDoneHour}:${wiz_hairMakeupDoneMinute} ${wiz_hairMakeupDonePeriod}`)}
+                {reviewRow("Shot Types", preCeremonyShots.length > 0 ? preCeremonyShots.join(", ") : "None")}
+                {reviewRow(
+                  `Can ${groomLabel} see ${brideLabel} before Ceremony?`,
+                  wiz_brideOkayBefore === null ? "(not answered)" : wiz_brideOkayBefore ? "Yes" : "No",
+                  wiz_brideOkayBefore === null && !wiz_firstLookGroom
+                )}
+              </div>
+
+              {/* 5. First Looks */}
+              <div style={cardStyle}>
+                {sectionHeading("First Looks")}
+                {noFirstLooks ? noneSelected : (
+                  <>
+                    {wiz_firstLookGroom && reviewRow(`with ${groomLabel}`, wiz_firstLookGroomLocation || "(location not set)")}
+                    {wiz_firstLookParent && reviewRow("with Parent(s)", wiz_firstLookParentLocation || "(location not set)")}
+                    {wiz_firstLookBridesmaids && reviewRow("with Bridesmaids", wiz_firstLookBridsmaidsLocation || "(location not set)")}
+                    {wiz_firstLookOther && reviewRow("Other First Look", wiz_firstLookOtherLocation || "(location not set)")}
+                    {wiz_customFirstLooks.map((fl, i) => (
+                      <div key={i}>{reviewRow(fl.label || "Custom", fl.location || "(location not set)")}</div>
+                    ))}
+                  </>
+                )}
+              </div>
+
+              {/* 6. Ceremony */}
+              <div style={cardStyle}>
+                {sectionHeading("Ceremony")}
+                {reviewRow("Start Time", `${wiz_ceremonyHour}:${wiz_ceremonyMinute} ${wiz_ceremonyPeriod}`)}
+                {reviewRow("Duration", `${wiz_ceremonyDuration} min`)}
+                {reviewRow("Guest Count", wiz_guestCount || "(not entered)", !wiz_guestCount)}
+                {reviewRow("Setting", wiz_ceremonyOutdoor ? "Outdoor" : "Indoor")}
+                {wiz_ceremonyNotes && reviewRow("Notes", wiz_ceremonyNotes)}
+              </div>
+
+              {/* 7. Portraits */}
+              <div style={cardStyle}>
+                {sectionHeading("Portraits")}
+                {wiz_portraitLocations.length > 0
+                  ? wiz_portraitLocations.map((loc, i) => (
+                      <div key={i}>{reviewRow(`Portrait Location ${i + 1}`, [loc.name || "(unnamed)", loc.address].filter(Boolean).join(" — "))}</div>
+                    ))
+                  : reviewRow("Portrait Sessions", "None added")}
+                {reviewRow("Family Groups", wiz_familyGroups === "none" ? "None" : wiz_familyGroups === "5" ? "5 Groups (~20 min)" : "10 Groups (~45 min)")}
+                {wiz_familyGroups !== "none" && wiz_familyGroupNames.some(n => n) && reviewRow("Group Names", wiz_familyGroupNames.filter(Boolean).join(", "))}
+                {reviewRow("Golden Hour", wiz_goldenHour ? "Yes" : "No")}
+              </div>
+
+              {/* 8. Reception */}
+              <div style={cardStyle}>
+                {sectionHeading("Reception")}
+                {reviewRow("Start Time", `${wiz_receptionHour}:${wiz_receptionMinute} ${wiz_receptionPeriod}`)}
+                {reviewRow("Grand Entrance", wiz_grandEntrance ? "Yes" : "No")}
+                {reviewRow("Dinner", wiz_dinner ? `${wiz_dinnerStartHour}:${wiz_dinnerStartMinute} ${wiz_dinnerStartPeriod}${wiz_dinnerStyle ? " — " + wiz_dinnerStyle : ""}` : "No")}
+                {reviewRow("Reception Events", receptionEvents.length > 0 ? receptionEvents.join(", ") : "None")}
+                {reviewRow("Speeches", wiz_speeches ? `${wiz_speechCount} speaker${wiz_speechCount !== 1 ? "s" : ""}` : "No")}
+                {wiz_customReceptionEvents.length > 0 && wiz_customReceptionEvents.map((ev, i) => (
+                  <div key={i}>{reviewRow(ev.label || "Custom", ev.duration ? ev.duration + " min" : "")}</div>
+                ))}
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 8 }}>
+                <button onClick={() => setWizardStep(9)} style={{ padding: "12px 28px", border: "1px solid #b8906a", borderRadius: 8, background: "transparent", color: "#ddd0bc", fontSize: 15, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>
+                  Go Back
+                </button>
+                <button onClick={generateTimeline} className="generate-btn" style={{ padding: "18px 48px", color: "#060504", border: "none", borderRadius: 10, fontSize: 22, fontWeight: 400, cursor: "pointer", fontFamily: "'Cormorant Garamond', serif" }}>
+                  Generate Timeline
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       );
