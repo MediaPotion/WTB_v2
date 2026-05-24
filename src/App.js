@@ -61,6 +61,28 @@ const COLOR_BUCKETS = {
   Other: "#ffffff", // default to white
 };
 
+// Available colors for custom row coloring
+const COLOR_PALETTE = [
+  { name: "Peach (Details)", value: "#FFE5B4" },
+  { name: "Light Pink (Bride Pre-Dress)", value: "#FFB6C1" },
+  { name: "Hot Pink (Bride Dress On)", value: "#FF69B4" },
+  { name: "Sea Green (First Look)", value: "#20B2AA" },
+  { name: "Orchid (Bride & Groom)", value: "#DA70D6" },
+  { name: "Salmon (Narration)", value: "#FFA07A" },
+  { name: "Pale Green (Groom)", value: "#98FB98" },
+  { name: "Gold (Ceremony)", value: "#FFD700" },
+  { name: "Sky Blue (Reception)", value: "#87CEEB" },
+  { name: "Plum (Group Photos)", value: "#DDA0DD" },
+  { name: "Purple (Wedding Party)", value: "#B57EDC" },
+  { name: "Lavender", value: "#E6E6FA" },
+  { name: "Mint", value: "#3CB371" },
+  { name: "Coral", value: "#FF7F50" },
+  { name: "Turquoise", value: "#40E0D0" },
+  { name: "Rose", value: "#FFE4E1" },
+  { name: "Sage", value: "#9DC183" },
+  { name: "White", value: "#ffffff" },
+];
+
 function getEventColor(label, fallback = "#ffffff") {
   if (!label) return fallback;
   const key = Object.keys(COLOR_BUCKETS).find((k) => label.startsWith(k));
@@ -91,8 +113,8 @@ function RowDropZone({ index, onDropBetween, onAddRow, isLast }) {
         position: 'relative',
         height: over ? 60 : 40, // Grow to row height on hover
         margin: '2px 0',
-        backgroundColor: over ? 'rgba(76, 175, 80, 0.1)' : 'transparent',
-        border: over ? '2px dashed #4CAF50' : '2px dashed transparent',
+        backgroundColor: over ? 'rgba(184,144,106,0.08)' : 'transparent',
+        border: over ? '2px dashed #b8906a' : '2px dashed transparent',
         borderRadius: 8,
         transition: 'all 0.15s ease-in-out',
         display: 'flex',
@@ -111,95 +133,125 @@ function RowDropZone({ index, onDropBetween, onAddRow, isLast }) {
    CSS injected at runtime
 ---------------------------------------*/
 const MOBILE_TWEAKS = `
-  /* Prevent iOS zoom on focus (keep inputs >=16px) */
-  input, select, textarea { font-size: 16px; }
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500&display=swap');
 
-  /* Hide desktop number spinners just in case */
+  *, *::before, *::after { box-sizing: border-box; }
+
+  input, select, textarea {
+    font-size: 16px;
+    font-family: 'Jost', sans-serif;
+    background: #0f0d0b;
+    color: #ddd0bc;
+    border: 1px solid #2a2520;
+  }
+  input::placeholder, textarea::placeholder { color: #6e6358; }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #b8906a;
+    box-shadow: 0 0 0 2px rgba(184,144,106,0.15);
+  }
+
   input[type="number"]::-webkit-outer-spin-button,
   input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   input[type="number"] { -moz-appearance: textfield; }
 
-  /* Small helpers */
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6) sepia(0.3) saturate(0.8) hue-rotate(10deg); }
+
+  input[type="checkbox"] { accent-color: #b8906a; }
+
+  select option { background: #0f0d0b; color: #ddd0bc; }
+
   .wtb-mins input { width: 44px; padding: 2px 4px; text-align: center; }
   .wtb-notes { padding-right: 10px; }
 
-  /* App shell with optional desktop sidebar */
   .wtb-shell {
     display: grid;
-    grid-template-columns: 1fr; /* mobile/tablet: single column */
+    grid-template-columns: 1fr;
     gap: 10px;
+    background: #060504;
   }
 
-  /* DESKTOP: main (50%) | sidebar (50%) */
   @media (min-width: 901px) {
     .wtb-shell {
-      grid-template-columns: 1fr 1fr; /* equal halves */
+      grid-template-columns: 1fr 1fr;
       gap: 16px;
       align-items: start;
     }
-    .wtb-sidebar {
-      display: block;
+    .wtb-sidebar-wrap {
       position: sticky;
       top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
       max-height: calc(100vh - 20px);
-      overflow: auto; /* should not scroll if columns fit; safety fallback */
-      border: 1px solid #ddd;
-      background: #fff;
+    }
+    .wtb-sidebar {
+      display: block;
+      overflow: auto;
+      border: 1px solid #1e1c19;
+      background: #0f0d0b;
       border-radius: 8px;
       padding: 12px;
+      flex: 1;
+      min-height: 0;
     }
   }
 
-  /* Hide sidebar on small screens */
   @media (max-width: 900px) {
     .wtb-sidebar { display: none; }
   }
 
-  /* Sidebar styling */
   .wtb-side-title {
     margin: 0 0 8px 0;
     text-align: center;
-    font-size: 16px;
-    font-weight: bold;
-    color: #333;
+    font-size: 13px;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #b8906a;
+    font-family: 'Jost', sans-serif;
   }
   .wtb-side-note {
-    font-size: 12px;
-    color: #666;
+    font-size: 11px;
+    color: #6e6358;
     text-align: center;
     margin-bottom: 8px;
+    font-family: 'Jost', sans-serif;
   }
 
-  /* --- Palette: top-down order, then next column --- */
   @media (min-width: 901px) {
     .wtb-palette {
-      /* Multi-column layout flows items vertically first, then next column */
-      column-count: 3;           /* at least 3 columns */
+      column-count: 3;
       column-gap: 10px;
     }
-    /* Add more columns as width grows to help fit everything without scrolling */
     @media (min-width: 1200px) { .wtb-palette { column-count: 4; } }
     @media (min-width: 1500px) { .wtb-palette { column-count: 5; } }
-
     .wtb-palette button {
-      display: inline-block;     /* required for multi-column flow */
+      display: inline-block;
       width: 100%;
-      padding: 8px;              /* compact to fit more per column */
-      margin: 0 0 8px;           /* vertical spacing */
-      border: 2px solid #999;
-      border-radius: 8px;
+      padding: 8px;
+      margin: 0 0 8px;
+      border: 1px solid #2a2520;
+      border-radius: 6px;
       text-align: left;
-      font-size: 13px;
+      font-size: 12px;
+      font-family: 'Jost', sans-serif;
       cursor: grab;
       user-select: none;
-      break-inside: avoid;       /* keep a button from splitting between columns */
+      break-inside: avoid;
       -webkit-column-break-inside: avoid;
       page-break-inside: avoid;
+      background: #0f0d0b;
+      color: #ddd0bc;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .wtb-palette button:hover {
+      border-color: #b8906a;
+      box-shadow: 0 0 8px rgba(184,144,106,0.2);
     }
     .wtb-palette button:active { cursor: grabbing; }
   }
 
-  /* Mobile/tablet fallback keeps a single column list */
   @media (max-width: 900px) {
     .wtb-palette {
       display: grid;
@@ -210,19 +262,21 @@ const MOBILE_TWEAKS = `
       width: 100%;
       padding: 10px;
       margin: 0;
-      border: 2px solid #999;
-      border-radius: 8px;
+      border: 1px solid #2a2520;
+      border-radius: 6px;
       text-align: left;
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 14px;
+      font-family: 'Jost', sans-serif;
       cursor: grab;
       user-select: none;
+      background: #0f0d0b;
+      color: #ddd0bc;
     }
   }
 
-  /* Bottom grid: Duration | Location | Setting (content-tight right col) */
   @media (max-width: 480px) {
     .wtb-bottom {
       grid-template-columns: auto minmax(0,1fr) max-content !important;
@@ -250,18 +304,116 @@ const MOBILE_TWEAKS = `
     }
   }
 
-  /* Compact time row + centered on small screens */
   .time-range { display: flex; align-items: center; gap: 4px; }
   .time-range .time-dash { display: inline-block; margin: 0 6px; line-height: 1; }
   @media (max-width: 480px) { .time-range { justify-content: center; } }
 
-  /* Setting column extra breathing room on desktop (left/right only) */
   @media (min-width: 901px) {
     .wtb-setting-col { padding: 0 8px; }
   }
 
-  /* Row drop highlight */
-  .wtb-dropping { outline: 2px dashed #4CAF50; outline-offset: -2px; }
+  .wtb-dropping { outline: 2px dashed #b8906a; outline-offset: -2px; }
+
+  /* Event block hover lift */
+  .wtb-row-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .wtb-row-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(184,144,106,0.12) !important;
+  }
+
+  /* Wizard layout */
+  .wiz-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 8px;
+  }
+  .wiz-mascot-col { width: 160px; margin-bottom: 8px; }
+  .wiz-step-col { width: 100%; }
+
+  @media (min-width: 901px) {
+    .wiz-layout {
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 28px;
+      padding: 0 16px;
+    }
+    .wiz-mascot-col {
+      width: 200px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 20px;
+      margin-bottom: 0;
+    }
+    .wiz-step-col { flex: 1; max-width: 600px; }
+  }
+
+  @keyframes wiz-bob {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-8px); }
+  }
+  @keyframes wiz-shake {
+    0%, 100% { transform: translateX(0); }
+    20%      { transform: translateX(-10px); }
+    40%      { transform: translateX(10px); }
+    60%      { transform: translateX(-7px); }
+    80%      { transform: translateX(7px); }
+  }
+  @keyframes wiz-hop {
+    0%   { transform: translateY(0) scale(1); }
+    35%  { transform: translateY(-20px) scale(1.08); }
+    65%  { transform: translateY(-20px) scale(1.08); }
+    100% { transform: translateY(0) scale(1); }
+  }
+  @keyframes wiz-pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.18); }
+  }
+  @keyframes wiz-spin {
+    0%   { transform: rotate(0deg) scale(1); }
+    50%  { transform: rotate(180deg) scale(1.1); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+  @keyframes gold-shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes wiz-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .wiz-bob   { animation: wiz-bob   2.4s ease-in-out infinite; }
+  .wiz-shake { animation: wiz-shake 0.5s ease-in-out; }
+  .wiz-hop   { animation: wiz-hop   0.55s ease-out; }
+  .wiz-pulse { animation: wiz-pulse 0.4s ease-in-out 2; }
+  .wiz-spin  { animation: wiz-spin  0.8s ease-in-out; }
+  .wiz-step-fade { animation: wiz-fade 0.3s ease; }
+
+  .generate-btn {
+    background: linear-gradient(90deg, #b8906a, #cfa882, #b8906a);
+    background-size: 200% auto;
+    transition: background-position 0.4s ease, box-shadow 0.2s ease;
+  }
+  .generate-btn:hover {
+    background-position: right center;
+    box-shadow: 0 0 24px rgba(184,144,106,0.45);
+  }
+
+  .welcome-fade-up { animation: fade-up 0.6s ease both; }
+  .welcome-fade-up:nth-child(2) { animation-delay: 0.15s; }
+  .welcome-fade-up:nth-child(3) { animation-delay: 0.3s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wiz-bob, .wiz-shake, .wiz-hop, .wiz-pulse, .wiz-spin,
+    .generate-btn, .welcome-fade-up { animation: none !important; transform: none !important; }
+  }
 `;
 
 /* ---------------- helpers ---------------- */
@@ -319,7 +471,7 @@ function TimePopover({ open, value, onSet, onClose }) {
         style={{
           position: "fixed",
           inset: 0,
-          background: "rgba(0,0,0,0.35)",
+          background: "rgba(0,0,0,0.75)",
           zIndex: 1000,
         }}
       />
@@ -333,12 +485,12 @@ function TimePopover({ open, value, onSet, onClose }) {
           transform: "translate(-50%, -50%)",
           width: 260,
           maxWidth: "90vw",
-          background: "#fff",
-          border: "1px solid #ccc",
+          background: "#0f0d0b",
+          border: "1px solid #2a2520",
           borderRadius: 10,
           padding: 12,
           zIndex: 1001,
-          boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
         }}
       >
         <div
@@ -357,9 +509,10 @@ function TimePopover({ open, value, onSet, onClose }) {
               width: 64,
               height: 32,
               fontSize: 14,
-              border: '1px solid #ccc',
+              border: '1px solid #2a2520',
               borderRadius: 6,
-              backgroundColor: 'white',
+              background: '#0f0d0b',
+              color: '#ddd0bc',
               cursor: 'pointer',
             }}
           >
@@ -369,7 +522,7 @@ function TimePopover({ open, value, onSet, onClose }) {
               </option>
             ))}
           </select>
-          <span style={{ fontSize: 16, lineHeight: "32px" }}>:</span>
+          <span style={{ fontSize: 16, lineHeight: "32px", color: "#ddd0bc" }}>:</span>
           <select
             value={mm}
             onChange={(e) => setMm(e.target.value)}
@@ -377,9 +530,10 @@ function TimePopover({ open, value, onSet, onClose }) {
               width: 64,
               height: 32,
               fontSize: 14,
-              border: '1px solid #ccc',
+              border: '1px solid #2a2520',
               borderRadius: 6,
-              backgroundColor: 'white',
+              background: '#0f0d0b',
+              color: '#ddd0bc',
               cursor: 'pointer',
             }}
           >
@@ -396,9 +550,10 @@ function TimePopover({ open, value, onSet, onClose }) {
               width: 70,
               height: 32,
               fontSize: 14,
-              border: '1px solid #ccc',
+              border: '1px solid #2a2520',
               borderRadius: 6,
-              backgroundColor: 'white',
+              background: '#0f0d0b',
+              color: '#ddd0bc',
               cursor: 'pointer',
             }}
           >
@@ -412,8 +567,9 @@ function TimePopover({ open, value, onSet, onClose }) {
             onClick={onClose}
             style={{
               padding: "6px 10px",
-              border: "1px solid #ccc",
-              background: "#f5f5f5",
+              border: "1px solid #2a2520",
+              background: "#161310",
+              color: "#ddd0bc",
               borderRadius: 6,
               cursor: "pointer",
               fontSize: 13,
@@ -425,9 +581,9 @@ function TimePopover({ open, value, onSet, onClose }) {
             onClick={() => onSet?.(hh, mm, ap)}
             style={{
               padding: "6px 12px",
-              border: "1px solid #4CAF50",
-              background: "#4CAF50",
-              color: "white",
+              border: "1px solid #b8906a",
+              background: "#b8906a",
+              color: "#060504",
               borderRadius: 6,
               cursor: "pointer",
               fontSize: 13,
@@ -489,7 +645,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
       style={{
         position: "fixed",
         inset: 0,
-        backgroundColor: "rgba(0,0,0,0.5)",
+        backgroundColor: "rgba(0,0,0,0.85)",
         zIndex: 1100,
         display: "flex",
         alignItems: "center",
@@ -499,7 +655,8 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
     >
       <div
         style={{
-          backgroundColor: "white",
+          backgroundColor: "#0f0d0b",
+          border: "1px solid #2a2520",
           borderRadius: 8,
           padding: 20,
           maxHeight: "80vh",
@@ -514,9 +671,13 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
             justifyContent: "space-between",
             alignItems: "center",
             marginBottom: 20,
+            background: "#060504",
+            borderBottom: "1px solid #2a2520",
+            margin: "-20px -20px 20px -20px",
+            padding: "16px 20px",
           }}
         >
-          <h3 style={{ margin: 0 }}>Select or Create Event</h3>
+          <h3 style={{ margin: 0, color: "#ddd0bc", fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400 }}>Select or Create Event</h3>
           <button
             onClick={onClose}
             style={{
@@ -524,7 +685,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
               border: "none",
               fontSize: 24,
               cursor: "pointer",
-              color: "#666",
+              color: "#6e6358",
             }}
           >
             ×
@@ -536,12 +697,12 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
           style={{
             marginBottom: 20,
             padding: 15,
-            backgroundColor: "#f8f9fa",
+            backgroundColor: "#161310",
             borderRadius: 8,
-            border: "2px solid #e9ecef",
+            border: "1px solid #2a2520",
           }}
         >
-          <h4 style={{ margin: "0 0 10px 0", color: "#333" }}>
+          <h4 style={{ margin: "0 0 10px 0", color: "#ddd0bc", fontFamily: "'Jost', sans-serif", fontWeight: 400, letterSpacing: "0.1em", textTransform: "uppercase", fontSize: 11 }}>
             Create Custom Event
           </h4>
           <div style={{ marginBottom: 10 }}>
@@ -550,8 +711,10 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                 display: "block",
                 marginBottom: 5,
                 fontSize: 12,
-                color: "#666",
-                fontWeight: "bold",
+                color: "#6e6358",
+                fontFamily: "'Jost', sans-serif",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
               }}
             >
               Event Name:
@@ -564,9 +727,11 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
               style={{
                 width: "100%",
                 padding: 8,
-                border: "1px solid #ccc",
+                border: "1px solid #2a2520",
                 borderRadius: 4,
                 fontSize: 14,
+                background: "#0f0d0b",
+                color: "#ddd0bc",
               }}
             />
           </div>
@@ -577,8 +742,10 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                   display: "block",
                   marginBottom: 5,
                   fontSize: 12,
-                  color: "#666",
-                  fontWeight: "bold",
+                  color: "#6e6358",
+                  fontFamily: "'Jost', sans-serif",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
                 }}
               >
                 Start Time:
@@ -591,9 +758,10 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                     width: 64,
                     height: 32,
                     fontSize: 14,
-                    border: '1px solid #ccc',
+                    border: '1px solid #2a2520',
                     borderRadius: 4,
-                    backgroundColor: 'white',
+                    background: '#0f0d0b',
+                    color: '#ddd0bc',
                     cursor: 'pointer',
                   }}
                 >
@@ -603,7 +771,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                     </option>
                   ))}
                 </select>
-                <span style={{ fontSize: 16 }}>:</span>
+                <span style={{ fontSize: 16, color: "#ddd0bc" }}>:</span>
                 <select
                   value={timeMinute}
                   onChange={(e) => setTimeMinute(e.target.value)}
@@ -611,9 +779,10 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                     width: 64,
                     height: 32,
                     fontSize: 14,
-                    border: '1px solid #ccc',
+                    border: '1px solid #2a2520',
                     borderRadius: 4,
-                    backgroundColor: 'white',
+                    background: '#0f0d0b',
+                    color: '#ddd0bc',
                     cursor: 'pointer',
                   }}
                 >
@@ -630,9 +799,10 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                     width: 70,
                     height: 32,
                     fontSize: 14,
-                    border: '1px solid #ccc',
+                    border: '1px solid #2a2520',
                     borderRadius: 4,
-                    backgroundColor: 'white',
+                    background: '#0f0d0b',
+                    color: '#ddd0bc',
                     cursor: 'pointer',
                   }}
                 >
@@ -647,8 +817,10 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                   display: "block",
                   marginBottom: 5,
                   fontSize: 12,
-                  color: "#666",
-                  fontWeight: "bold",
+                  color: "#6e6358",
+                  fontFamily: "'Jost', sans-serif",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
                 }}
               >
                 Duration (minutes):
@@ -667,9 +839,11 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                   width: 100,
                   height: 32,
                   padding: 8,
-                  border: "1px solid #ccc",
+                  border: "1px solid #2a2520",
                   borderRadius: 4,
                   fontSize: 14,
+                  background: "#0f0d0b",
+                  color: "#ddd0bc",
                 }}
               />
             </div>
@@ -681,8 +855,8 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
               style={{
                 padding: "10px 20px",
                 backgroundColor:
-                  customEvent.trim() && isValidDuration ? "#4CAF50" : "#ccc",
-                color: "white",
+                  customEvent.trim() && isValidDuration ? "#b8906a" : "#2a2520",
+                color: customEvent.trim() && isValidDuration ? "#060504" : "#6e6358",
                 border: "none",
                 borderRadius: 4,
                 cursor:
@@ -691,6 +865,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                     : "not-allowed",
                 fontSize: 14,
                 fontWeight: "bold",
+                fontFamily: "'Jost', sans-serif",
               }}
             >
               Use Custom Event
@@ -698,7 +873,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
           </div>
         </div>
 
-        <div style={{ marginBottom: 10, fontWeight: "bold", color: "#666" }}>
+        <div style={{ marginBottom: 10, color: "#b8906a", fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase", fontSize: 11 }}>
           Or Select Preset Event:
         </div>
 
@@ -709,8 +884,8 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
               key={block}
               onClick={() => {
                 const newTime = parseTimeInput(timeHour, timeMinute, timePeriod);
-                onSelect({ 
-                  event: label, 
+                onSelect({
+                  event: label,
                   duration: parseInt(duration, 10),
                   time: newTime,
                 });
@@ -719,8 +894,10 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                 width: "100%",
                 padding: 12,
                 margin: "4px 0",
-                backgroundColor: getEventColor(label),
-                border: "2px solid #999",
+                backgroundColor: "#0f0d0b",
+                borderLeft: `3px solid ${getEventColor(label)}`,
+                border: "1px solid #2a2520",
+                borderLeft: `3px solid ${getEventColor(label)}`,
                 borderRadius: 8,
                 cursor: "pointer",
                 textAlign: "left",
@@ -729,10 +906,11 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                 alignItems: "center",
                 fontSize: 14,
                 fontWeight: 500,
+                color: "#ddd0bc",
               }}
             >
               <span>{label}</span>
-              <span style={{ fontSize: 12, color: "#555", fontWeight: "bold", marginLeft: "16px" }}>
+              <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px" }}>
                 {duration} min
               </span>
             </button>
@@ -763,28 +941,169 @@ function AddRowButton({ onClick, isLast }) {
           gap: '6px',
           padding: '6px 12px',
           borderRadius: '20px',
-          border: '1px solid #2e7d32',
-          background: '#4caf50',
-          color: 'white',
+          border: '1px dashed #b8906a',
+          background: 'transparent',
+          color: '#b8906a',
           fontSize: '13px',
-          fontWeight: 500,
+          fontWeight: 300,
           cursor: 'pointer',
           transition: 'all 0.2s ease',
-          ':hover': {
-            background: '#3d8b40',
-            borderColor: '#1b5e20',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          },
-          ':active': {
-            background: '#2e7d32',
-            transform: 'translateY(1px)'
-          }
+          fontFamily: "'Jost', sans-serif",
         }}
         title="Add new event here"
       >
         <span style={{ fontSize: '16px', lineHeight: '16px' }}>+</span>
         <span>Add Event</span>
       </button>
+    </div>
+  );
+}
+
+/* ---------------- Color Picker ---------------- */
+function ColorPicker({ currentColor, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const pickerRef = useRef(null);
+
+  // Close picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isOpen]);
+
+  const displayColor = currentColor || "#ffffff";
+  const autoMode = !currentColor;
+
+  return (
+    <div ref={pickerRef} style={{ position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        title="Row Color"
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: "50%",
+          border: "2px solid #666",
+          backgroundColor: displayColor,
+          cursor: "pointer",
+          padding: 0,
+          position: "relative",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+        }}
+      >
+        {autoMode && (
+          <span
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              fontSize: 10,
+              fontWeight: "bold",
+            }}
+          >
+            A
+          </span>
+        )}
+        {/* Palette indicator icon */}
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          style={{
+            position: "absolute",
+            bottom: -1,
+            right: -1,
+            filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.5))",
+            pointerEvents: "none",
+          }}
+        >
+          <circle cx="12" cy="12" r="11" fill="white" />
+          <path
+            d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c.55 0 1-.45 1-1 0-.25-.09-.48-.24-.65-.16-.18-.26-.42-.26-.7 0-.55.45-1 1-1h1.5c3.04 0 5.5-2.46 5.5-5.5C20.5 6.35 16.76 2 12 2zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 8 6.5 8s1.5.67 1.5 1.5S7.33 11 6.5 11zm3-4C8.67 7 8 6.33 8 5.5S8.67 4 9.5 4s1.5.67 1.5 1.5S10.33 7 9.5 7zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 4 14.5 4s1.5.67 1.5 1.5S15.33 7 14.5 7zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 8 17.5 8s1.5.67 1.5 1.5S18.33 11 17.5 11z"
+            fill="#333"
+          />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            right: 0,
+            marginTop: 4,
+            backgroundColor: "#0f0d0b",
+            border: "1px solid #2a2520",
+            borderRadius: 8,
+            padding: 8,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.6)",
+            zIndex: 1000,
+            display: "grid",
+            gridTemplateColumns: "repeat(6, 1fr)",
+            gap: 6,
+            width: 200,
+          }}
+        >
+          {/* Auto option */}
+          <button
+            type="button"
+            onClick={() => {
+              onChange("");
+              setIsOpen(false);
+            }}
+            title="Auto color"
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              border: autoMode ? "3px solid #b8906a" : "2px solid #2a2520",
+              backgroundColor: "#161310",
+              color: "#ddd0bc",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 12,
+              fontWeight: "bold",
+            }}
+          >
+            A
+          </button>
+
+          {/* Color palette */}
+          {COLOR_PALETTE.map((color) => (
+            <button
+              key={color.value}
+              type="button"
+              onClick={() => {
+                onChange(color.value);
+                setIsOpen(false);
+              }}
+              title={color.name}
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: "50%",
+                border:
+                  currentColor === color.value
+                    ? "3px solid #b8906a"
+                    : "2px solid #0f0d0b",
+                backgroundColor: color.value,
+                cursor: "pointer",
+                padding: 0,
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -850,7 +1169,7 @@ function TimelineRow({
       if (jsonData) {
         try {
           const data = JSON.parse(jsonData);
-          if (data?.event && data?.duration) {
+          if (data && typeof data.duration === "number") {
             console.log("[DnD] TimelineRow: dropping event block", { rowIndex: index, data });
             onDropEventBlock?.(data);
             return;
@@ -871,7 +1190,10 @@ function TimelineRow({
     }
   };
 
-  const rowBg = getEventColor(row.event || "", "#ffffff");
+  const isLocation = row.type === "location";
+  const isConstraint = row.type === "constraint";
+  // Location blocks are always gray; constraint blocks are transparent with stripe; event blocks use custom or category color
+  const rowBg = isConstraint ? "transparent" : isLocation ? "#B0BEC5" : (row.color || getEventColor(row.event || "", "#ffffff"));
 
   return (
     <div
@@ -879,12 +1201,14 @@ function TimelineRow({
       onDragEnter={allowDrop}
       onDragLeave={leaveDrop}
       onDrop={handleDrop}
-      className={dropping ? "wtb-dropping" : ""}
+      className={`wtb-row-card${dropping ? " wtb-dropping" : ""}`}
       style={{
-        border: dropping ? "2px dashed #4caf50" : "1px solid #ccc",
+        border: dropping ? "2px dashed #b8906a" : isConstraint ? "2px solid #cc4444" : "1px solid #1e1c19",
         borderRadius: 8,
         marginBottom: 12,
-        backgroundColor: dropping ? "rgba(76, 175, 80, 0.1)" : rowBg,
+        backgroundColor: isLocation ? "#1e1e1e" : isConstraint ? "transparent" : (dropping ? "rgba(184,144,106,0.08)" : "#0f0d0b"),
+        backgroundImage: isConstraint ? "repeating-linear-gradient(45deg, #1a0505 0px, #1a0505 10px, #230808 10px, #230808 20px)" : "none",
+        borderLeft: isLocation ? "3px solid #c0c8d0" : isConstraint ? undefined : `4px solid ${rowBg}`,
         overflow: "hidden",
         width: "100%",
         position: "relative",
@@ -899,8 +1223,8 @@ function TimelineRow({
           display: "grid",
           gridTemplateColumns: "auto auto 1fr",
           padding: 6,
-          backgroundColor: rowBg,
-          borderBottom: "1px solid #ccc",
+          backgroundColor: isConstraint ? "rgba(180,0,0,0.12)" : isLocation ? "#1e1e1e" : "#0f0d0b",
+          borderBottom: "1px solid #1e1c19",
           gap: 9,
           alignItems: "center",
         }}
@@ -914,16 +1238,16 @@ function TimelineRow({
             gap: 4,
           }}
         >
-          {!isFirst ? (
+          {!isConstraint && (!isFirst ? (
             <button
               onClick={() => onMoveUp(index)}
               style={{
                 width: 26,
                 height: 18,
                 fontSize: 12,
-                border: "1px solid #333",
-                background: "white",
-                color: "black",
+                border: "1px solid #2a2520",
+                background: "#161310",
+                color: "#6e6358",
                 cursor: "pointer",
                 borderRadius: 4,
                 fontWeight: "bold",
@@ -935,7 +1259,7 @@ function TimelineRow({
             </button>
           ) : (
             <div style={{ width: 26, height: 18 }} />
-          )}
+          ))}
 
           <button
             onClick={() => onDelete(index)}
@@ -943,9 +1267,9 @@ function TimelineRow({
               width: 26,
               height: 18,
               fontSize: 14,
-              border: "1px solid #ff4444",
-              background: "#ff4444",
-              color: "white",
+              border: "1px solid #2a2520",
+              background: "#161310",
+              color: "#6e6358",
               cursor: "pointer",
               borderRadius: 4,
               fontWeight: "bold",
@@ -956,16 +1280,16 @@ function TimelineRow({
             ×
           </button>
 
-          {!isLast ? (
+          {!isConstraint && (!isLast ? (
             <button
               onClick={() => onMoveDown(index)}
               style={{
                 width: 26,
                 height: 18,
                 fontSize: 12,
-                border: "1px solid #333",
-                background: "white",
-                color: "black",
+                border: "1px solid #2a2520",
+                background: "#161310",
+                color: "#6e6358",
                 cursor: "pointer",
                 borderRadius: 4,
                 fontWeight: "bold",
@@ -977,384 +1301,415 @@ function TimelineRow({
             </button>
           ) : (
             <div style={{ width: 26, height: 18 }} />
-          )}
+          ))}
         </div>
 
         {/* Time (middle) */}
         <div>
-          <label
-            style={{
-              fontSize: 12,
-              color: "#666",
-              display: "block",
-              marginBottom: 4,
-            }}
-          >
-            Time
-          </label>
-          <div style={{ position: 'relative', display: 'inline-block' }}>
-            <button
-              ref={timeBtnRef}
-              onClick={() => setTimeOpen(true)}
+          <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
+            <label
               style={{
-                width: 70,
-                padding: "2px 1px 2px 20px",
-                fontSize: 14,
-                textAlign: "center",
-                border: `1px solid #ccc`,
-                background: 'white',
-                borderRadius: 4,
-                cursor: 'pointer',
-                opacity: 1,
-                ':hover': {
-                  borderColor: '#999',
-                }
+                fontSize: 10,
+                color: "#6e6358",
+                fontFamily: "'Jost', sans-serif",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
               }}
-              title="Click to set time"
             >
-              {t.hour}:{t.minute} {t.period}
-            </button>
+              Time
+            </label>
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                console.log('[Chain] Clicked on row index', index);
                 onChainToPrevious && onChainToPrevious(index);
               }}
               style={{
-                position: 'absolute',
-                left: 2,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: '#f8f9fa',
-                border: '1px solid #dee2e6',
-                borderRadius: '4px',
+                background: '#161310',
+                border: '1px solid #2a2520',
+                borderRadius: '3px',
                 cursor: 'pointer',
-                width: '24px',
-                height: '24px',
+                width: '15px',
+                height: '15px',
                 padding: 0,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                zIndex: 2,
+                flexShrink: 0,
               }}
-              title="Chain to previous event - update time to follow previous row"
+              title="Chain to previous event"
             >
-              <svg 
-                width="16" 
-                height="16" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="#495057"
-                strokeWidth="2.5" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-              >
-                {/* Chain icon */}
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#6e6358" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                 <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
               </svg>
             </button>
           </div>
+          <button
+            ref={timeBtnRef}
+            onClick={() => setTimeOpen(true)}
+            style={{
+              width: 70,
+              padding: "2px 6px",
+              fontSize: 14,
+              textAlign: "center",
+              border: `1px solid #2a2520`,
+              background: 'transparent',
+              color: '#ddd0bc',
+              borderRadius: 4,
+              cursor: 'pointer',
+              fontFamily: "'Cormorant Garamond', serif",
+            }}
+            title="Click to set time"
+          >
+            {t.hour}:{t.minute} {t.period}
+          </button>
         </div>
 
-        {/* Event column (right) */}
+        {/* Event / Location Name column (right) */}
         <div>
-          {/* Header row: Event label (left) and Photo/Video (right) */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 4,
-            }}
-          >
-            <label style={{ fontSize: 12, color: "#666" }}>Event</label>
-            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <label
-                style={{
-                  fontSize: 12,
-                  display: "flex",
-                  gap: 6,
-                  alignItems: "center",
-                  opacity: photoEnabledGlobal ? 1 : 0.5,
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={!!row.photo}
-                  onChange={(e) => onChange(index, "photo", e.target.checked)}
-                  onBlur={() => onBlur(index)}
-                  disabled={!photoEnabledGlobal}
-                />
-                Photo
-              </label>
-              <label
-                style={{
-                  fontSize: 12,
-                  display: "flex",
-                  gap: 6,
-                  alignItems: "center",
-                  opacity: videoEnabledGlobal ? 1 : 0.5,
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={!!row.video}
-                  onChange={(e) => onChange(index, "video", e.target.checked)}
-                  onBlur={() => onBlur(index)}
-                  disabled={!videoEnabledGlobal}
-                />
-                Video
-              </label>
+          {isConstraint ? (
+            <div>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: "#ff6b6b", padding: "8px 0" }}>
+                ⚠️ TIME CONSTRAINT
+              </div>
             </div>
-          </div>
-
-          {/* Event input (also accepts drops) */}
-          <input
-            type="text"
-            placeholder="Click to select or drop an event..."
-            value={row.event}
-            onChange={(e) => onChange(index, "event", e.target.value)}
-            onBlur={() => {
-              onBlur(index);
-              onEventBlur && onEventBlur(index);
-            }}
-            onClick={() => onEventClick(index)}
-            onDragOver={allowDrop}
-            onDragEnter={allowDrop}
-            onDragLeave={leaveDrop}
-            onDrop={handleDrop}
-            style={{
-              width: "100%",
-              fontSize: 14,
-              padding: 8,
-              backgroundColor: "white",
-              border: "1px solid #ccc",
-              borderRadius: 4,
-              cursor: "pointer",
-            }}
-          />
+          ) : isLocation ? (
+            <>
+              <label style={{ fontSize: 10, color: "#6e6358", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>📍 Location Name</label>
+              <input
+                type="text"
+                placeholder="Location name..."
+                value={row.event || ""}
+                onChange={(e) => onChange(index, "event", e.target.value)}
+                onBlur={() => onBlur(index)}
+                onDragOver={allowDrop}
+                onDragEnter={allowDrop}
+                onDragLeave={leaveDrop}
+                onDrop={handleDrop}
+                style={{
+                  width: "100%",
+                  fontSize: 14,
+                  padding: 8,
+                  background: "transparent",
+                  border: "none",
+                  borderBottom: "1px solid #2a2520",
+                  color: "#ddd0bc",
+                  borderRadius: 0,
+                  fontFamily: "'Jost', sans-serif",
+                }}
+              />
+            </>
+          ) : (
+            <>
+              {/* Header row: Event label (left) and Photo/Video (right) */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 4,
+                }}
+              >
+                <label style={{ fontSize: 10, color: "#6e6358", fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Event</label>
+                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      display: "flex",
+                      gap: 6,
+                      alignItems: "center",
+                      color: "#6e6358",
+                      opacity: photoEnabledGlobal ? 1 : 0.5,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!!row.photo}
+                      onChange={(e) => onChange(index, "photo", e.target.checked)}
+                      onBlur={() => onBlur(index)}
+                      disabled={!photoEnabledGlobal}
+                    />
+                    Photo
+                  </label>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      display: "flex",
+                      gap: 6,
+                      alignItems: "center",
+                      color: "#6e6358",
+                      opacity: videoEnabledGlobal ? 1 : 0.5,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!!row.video}
+                      onChange={(e) => onChange(index, "video", e.target.checked)}
+                      onBlur={() => onBlur(index)}
+                      disabled={!videoEnabledGlobal}
+                    />
+                    Video
+                  </label>
+                  <ColorPicker
+                    currentColor={row.color}
+                    onChange={(color) => {
+                      onChange(index, "color", color);
+                      onBlur(index);
+                    }}
+                  />
+                </div>
+              </div>
+              {/* Event input (also accepts drops) */}
+              <input
+                type="text"
+                placeholder="Click to select or drop an event..."
+                value={row.event}
+                onChange={(e) => onChange(index, "event", e.target.value)}
+                onBlur={() => {
+                  onBlur(index);
+                  onEventBlur && onEventBlur(index);
+                }}
+                onClick={() => onEventClick(index)}
+                onDragOver={allowDrop}
+                onDragEnter={allowDrop}
+                onDragLeave={leaveDrop}
+                onDrop={handleDrop}
+                style={{
+                  width: "100%",
+                  fontSize: 14,
+                  padding: 8,
+                  background: "transparent",
+                  border: "none",
+                  borderBottom: "1px solid #2a2520",
+                  color: rowBg && rowBg !== "#ffffff" ? rowBg : "#ddd0bc",
+                  borderRadius: 0,
+                  cursor: "pointer",
+                  fontFamily: "'Jost', sans-serif",
+                }}
+              />
+            </>
+          )}
         </div>
       </div>
 
-      {/* BOTTOM: Duration | Location | Setting (3 columns) */}
-      <div
-        className="wtb-bottom"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "auto 1fr auto",
-          padding: 8,
-          paddingRight: 4,
-          gap: 4,
-          alignItems: "start",
-        }}
-      >
-        {/* Duration */}
-        <div style={{ width: "auto" }}>
-          <label
-            style={{
-              fontSize: 12,
-              color: "#666",
-              display: "block",
-              marginBottom: 4,
-            }}
-          >
-            Duration
-          </label>
-          <div style={{ position: "relative", width: 65 }}>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={row.duration}
-              onChange={(e) => {
-                const val = e.target.value.replace(/[^0-9]/g, "");
-                onChange(index, "duration", val);
-              }}
-              onBlur={() => onBlur(index)}
-              style={{
-                width: "100%",
-                fontSize: 14,
-                padding: "6px 34px 6px 12px",
-                textAlign: "left",
-                border: "1px solid #ccc",
-                borderRadius: 6,
-                boxSizing: "border-box",
-              }}
-            />
-            <span
-              style={{
-                position: "absolute",
-                right: 8,
-                top: "50%",
-                transform: "translateY(-50%)",
-                fontSize: 12,
-                color: "#666",
-                pointerEvents: "none",
-              }}
-            >
-              mins
-            </span>
-          </div>
-        </div>
-
-        {/* Location */}
-        <div className="wtb-location">
-          <label
-            style={{
-              fontSize: 12,
-              color: "#666",
-              display: "block",
-              marginBottom: 4,
-            }}
-          >
-            Location
-          </label>
+      {isConstraint ? (
+        /* BOTTOM: Constraint block — notes only */
+        <div style={{ padding: 8, backgroundColor: "rgba(180,0,0,0.08)" }}>
+          <label style={{ fontSize: 10, color: "#ff6b6b", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Conflict Notes</label>
           <textarea
-            placeholder="Leave blank if no change in location..."
-            value={row.location}
-            onChange={(e) => onChange(index, "location", e.target.value)}
-            onBlur={(e) => {
-              onBlur(index);
-              e.target.scrollTop = 0;
-              if (typeof e.target.setSelectionRange === "function") {
-                e.target.setSelectionRange(0, 0);
-              }
-            }}
-            rows={2}
-            style={{
-              width: "100%",
-              minWidth: 0,
-              fontSize: 14,
-              padding: 8,
-              resize: "none",
-              backgroundColor: "white",
-              border: "1px solid #ccc",
-              borderRadius: 4,
-            }}
-          />
-        </div>
-
-        {/* Setting (right): two stacked buttons */}
-        <div className="wtb-setting-col" style={{ width: "auto" }}>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 4,
-              transform:
-                "translateY(-20px)" /* keep previous vertical alignment */,
-            }}
-          >
-            {/* Outside */}
-            <button
-              onClick={() => {
-                if (!row.isOutdoor) {
-                  onChange(index, "isOutdoor", true);
-                  onBlur(index);
-                }
-              }}
-              aria-pressed={row.isOutdoor}
-              title="Outside"
-              style={{
-                marginTop: "22px",
-                width: "100%",
-                padding: "4px 4px",
-                border: "1px solid #333",
-                background: row.isOutdoor ? "#87CEEB" : "#ffffff",
-                color: "#111",
-                cursor: "pointer",
-                borderRadius: 8,
-                fontWeight: "bold",
-                display: "inline-flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 2,
-                whiteSpace: "nowrap",
-                fontSize: 10,
-              }}
-            >
-              <span aria-hidden style={{ fontSize: 16, lineHeight: 1 }}>
-                ☀️
-              </span>
-              <span style={{ lineHeight: 1 }}>Outside</span>
-            </button>
-
-            {/* Indoors */}
-            <button
-              onClick={() => {
-                if (row.isOutdoor) {
-                  onChange(index, "isOutdoor", false);
-                  onBlur(index);
-                }
-              }}
-              aria-pressed={!row.isOutdoor}
-              title="Indoors"
-              style={{
-                width: "100%",
-                padding: "4px 4px",
-                border: "1px solid #333",
-                background: !row.isOutdoor ? "#FFA500" : "#ffffff",
-                color: "#111",
-                cursor: "pointer",
-                borderRadius: 8,
-                fontWeight: "bold",
-                display: "inline-flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 2,
-                whiteSpace: "nowrap",
-                fontSize: 10,
-              }}
-            >
-              <span aria-hidden style={{ fontSize: 16, lineHeight: 1 }}>
-                💡
-              </span>
-              <span style={{ lineHeight: 1 }}>Indoors</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Notes (full width) */}
-        <div
-          className="wtb-notes"
-          style={{ gridColumn: "1 / -1", marginTop: 5 }}
-        >
-          <label
-            style={{
-              fontSize: 12,
-              color: "#666",
-              display: "block",
-              marginBottom: -25,
-              position: "relative",
-              top: "-30px",
-            }}
-          >
-            Notes
-          </label>
-          <textarea
-            placeholder="Add any notes for this event..."
             value={row.notes || ""}
             onChange={(e) => onChange(index, "notes", e.target.value)}
             onBlur={() => onBlur(index)}
-            rows={2}
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              fontSize: 13,
-              padding: 8,
-              resize: "vertical",
-              backgroundColor: "white",
-              border: "1px solid #ccc",
-              borderRadius: 4,
-            }}
+            rows={3}
+            style={{ width: "100%", boxSizing: "border-box", fontSize: 13, padding: 8, resize: "vertical", background: "transparent", border: "1px solid #cc4444", borderRadius: 4, color: "#ff6b6b" }}
           />
         </div>
-      </div>
+      ) : isLocation ? (
+        /* BOTTOM: Location block — Duration | Address, then Notes full-width */
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "auto 1fr",
+            padding: 8,
+            gap: 8,
+            alignItems: "start",
+            background: "#1e1e1e",
+          }}
+        >
+          {/* Duration */}
+          <div style={{ width: "auto" }}>
+            <label style={{ fontSize: 10, color: "#6e6358", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Duration</label>
+            <div style={{ position: "relative", width: 65 }}>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={row.duration}
+                onChange={(e) => { const val = e.target.value.replace(/[^0-9]/g, ""); onChange(index, "duration", val); }}
+                onBlur={() => onBlur(index)}
+                style={{ width: "100%", fontSize: 14, padding: "6px 34px 6px 12px", textAlign: "left", border: "1px solid #2a2520", borderRadius: 6, boxSizing: "border-box", background: "transparent", color: "#ddd0bc" }}
+              />
+              <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "#6e6358", pointerEvents: "none" }}>mins</span>
+            </div>
+          </div>
+
+          {/* Address */}
+          <div>
+            <label style={{ fontSize: 10, color: "#6e6358", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Address</label>
+            <textarea
+              placeholder="Address (optional)..."
+              value={row.address || ""}
+              onChange={(e) => onChange(index, "address", e.target.value)}
+              onBlur={(e) => { onBlur(index); e.target.scrollTop = 0; }}
+              rows={2}
+              style={{ width: "100%", minWidth: 0, fontSize: 14, padding: 8, resize: "none", background: "transparent", border: "1px solid #2a2520", borderRadius: 4, color: "#ddd0bc" }}
+            />
+          </div>
+
+          {/* Notes (full width) */}
+          <div style={{ gridColumn: "1 / -1" }}>
+            <label style={{ fontSize: 10, color: "#6e6358", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Notes</label>
+            <textarea
+              placeholder="Add any notes for this location..."
+              value={row.notes || ""}
+              onChange={(e) => onChange(index, "notes", e.target.value)}
+              onBlur={() => onBlur(index)}
+              rows={2}
+              style={{ width: "100%", boxSizing: "border-box", fontSize: 13, padding: 8, resize: "vertical", background: "transparent", border: "1px solid #2a2520", borderRadius: 4, color: "#ddd0bc" }}
+            />
+          </div>
+        </div>
+      ) : (
+        /* BOTTOM: Event block — Duration | Notes | Setting (3 columns) */
+        <div
+          className="wtb-bottom"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "auto 1fr auto",
+            padding: 8,
+            paddingRight: 4,
+            gap: 4,
+            alignItems: "start",
+          }}
+        >
+          {/* Duration */}
+          <div style={{ width: "auto" }}>
+            <label
+              style={{
+                fontSize: 10,
+                color: "#6e6358",
+                display: "block",
+                marginBottom: 4,
+                fontFamily: "'Jost', sans-serif",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+              }}
+            >
+              Duration
+            </label>
+            <div style={{ position: "relative", width: 65 }}>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={row.duration}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9]/g, "");
+                  onChange(index, "duration", val);
+                }}
+                onBlur={() => onBlur(index)}
+                style={{
+                  width: "100%",
+                  fontSize: 14,
+                  padding: "6px 34px 6px 12px",
+                  textAlign: "left",
+                  border: "none",
+                  borderBottom: "1px solid #2a2520",
+                  borderRadius: 0,
+                  boxSizing: "border-box",
+                  background: "transparent",
+                  color: "#ddd0bc",
+                }}
+              />
+              <span
+                style={{
+                  position: "absolute",
+                  right: 8,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  fontSize: 12,
+                  color: "#6e6358",
+                  pointerEvents: "none",
+                }}
+              >
+                mins
+              </span>
+            </div>
+          </div>
+
+          {/* Notes (center column, replacing Location) */}
+          <div className="wtb-location">
+            <label
+              style={{
+                fontSize: 10,
+                color: "#6e6358",
+                display: "block",
+                marginBottom: 4,
+                fontFamily: "'Jost', sans-serif",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+              }}
+            >
+              Notes
+            </label>
+            <textarea
+              placeholder="Add any notes for this event..."
+              value={row.notes || ""}
+              onChange={(e) => onChange(index, "notes", e.target.value)}
+              onBlur={() => onBlur(index)}
+              rows={2}
+              style={{
+                width: "100%",
+                minWidth: 0,
+                fontSize: 14,
+                padding: 8,
+                resize: "vertical",
+                background: "transparent",
+                border: "1px solid #2a2520",
+                borderRadius: 4,
+                color: "#ddd0bc",
+                fontFamily: "'Jost', sans-serif",
+              }}
+            />
+          </div>
+
+          {/* Setting (right): two stacked buttons */}
+          <div className="wtb-setting-col" style={{ width: "auto" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 4,
+                transform: "translateY(-20px)",
+              }}
+            >
+              {/* Single outdoor/indoor toggle */}
+              <button
+                onClick={() => {
+                  onChange(index, "isOutdoor", !row.isOutdoor);
+                  onBlur(index);
+                }}
+                aria-pressed={row.isOutdoor}
+                title={row.isOutdoor ? "Outside — click for Indoors" : "Indoors — click for Outside"}
+                style={{
+                  marginTop: "22px",
+                  width: "100%",
+                  padding: "4px 4px",
+                  border: "1px solid #2a2520",
+                  background: row.isOutdoor ? "#2a6fd4" : "#c96a20",
+                  color: "#f0ece6",
+                  cursor: "pointer",
+                  borderRadius: 8,
+                  fontWeight: "bold",
+                  display: "inline-flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 2,
+                  whiteSpace: "nowrap",
+                  fontSize: 10,
+                  fontFamily: "'Jost', sans-serif",
+                }}
+              >
+                <span aria-hidden style={{ fontSize: 16, lineHeight: 1 }}>{row.isOutdoor ? "☀️" : "💡"}</span>
+                <span style={{ lineHeight: 1 }}>{row.isOutdoor ? "Outside" : "Indoors"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Time popover */}
       {timeOpen && (
@@ -1373,51 +1728,112 @@ function TimelineRow({
 }
 
 /* ---------------- Sidebar (desktop only) ---------------- */
-function EventSidebar() {
+function EventSidebar({ onUndo, onRedo, canUndo, canRedo }) {
   return (
-    <aside className="wtb-sidebar">
-      <h3 className="wtb-side-title">Event Blocks</h3>
-      <div className="wtb-side-note">Drag a block onto a row</div>
-      <div className="wtb-palette">
-        {EVENT_BLOCKS.map((block) => {
-          const [label, duration] = block.split("::");
-          const dur = parseInt(duration, 10);
-          return (
-            <button
-              key={block}
-              draggable
-              onDragStart={(e) => {
-                // Indicate this is a copy-type drag (not move)
-                if (e.dataTransfer) {
-                  e.dataTransfer.effectAllowed = "copy";
-                }
-                e.dataTransfer.setData(
-                  "application/json",
-                  JSON.stringify({ event: label, duration: dur })
-                );
-              }}
-              style={{
-                backgroundColor: getEventColor(label),
-              }}
-              title="Drag to timeline"
-            >
-              <span>{label}</span>
-              <span style={{ fontSize: 12, color: "#555", fontWeight: "bold", marginLeft: "16px" }}>
-                {dur} min
-              </span>
-            </button>
-          );
-        })}
+    <div className="wtb-sidebar-wrap">
+      <aside className="wtb-sidebar">
+        <h3 className="wtb-side-title">Event Blocks</h3>
+        <div className="wtb-side-note">Drag a block onto a row</div>
+        <div className="wtb-palette">
+          {/* Location / Travel block */}
+          <button
+            draggable
+            onDragStart={(e) => {
+              if (e.dataTransfer) e.dataTransfer.effectAllowed = "copy";
+              e.dataTransfer.setData(
+                "application/json",
+                JSON.stringify({ type: "location", event: "", duration: 15 })
+              );
+            }}
+            style={{ background: "#161310", border: "1px solid #2a2520", borderLeft: "3px solid #c0c8d0", color: "#ddd0bc" }}
+            title="Drag to add a location / travel block"
+          >
+            <span>📍 Location / Travel</span>
+            <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px" }}>
+              15 min
+            </span>
+          </button>
+          {EVENT_BLOCKS.map((block) => {
+            const [label, duration] = block.split("::");
+            const dur = parseInt(duration, 10);
+            return (
+              <button
+                key={block}
+                draggable
+                onDragStart={(e) => {
+                  if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = "copy";
+                  }
+                  e.dataTransfer.setData(
+                    "application/json",
+                    JSON.stringify({ event: label, duration: dur })
+                  );
+                }}
+                style={{
+                  background: "#161310",
+                  border: "1px solid #2a2520",
+                  borderLeft: `3px solid ${getEventColor(label)}`,
+                  color: "#ddd0bc",
+                }}
+                title="Drag to timeline"
+              >
+                <span>{label}</span>
+                <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px" }}>
+                  {dur} min
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </aside>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button
+          onClick={onUndo}
+          disabled={!canUndo}
+          style={{
+            flex: 1,
+            padding: "8px 0",
+            backgroundColor: canUndo ? "#b8906a" : "#1e1c19",
+            color: canUndo ? "#060504" : "#3a3530",
+            border: "none",
+            borderRadius: 4,
+            cursor: canUndo ? "pointer" : "not-allowed",
+            fontSize: 14,
+            fontFamily: "'Jost', sans-serif",
+          }}
+        >
+          Undo
+        </button>
+        <button
+          onClick={onRedo}
+          disabled={!canRedo}
+          style={{
+            flex: 1,
+            padding: "8px 0",
+            backgroundColor: "transparent",
+            color: canRedo ? "#b8906a" : "#3a3530",
+            border: canRedo ? "1px solid #b8906a" : "1px solid #2a2520",
+            borderRadius: 4,
+            cursor: canRedo ? "pointer" : "not-allowed",
+            fontSize: 14,
+            fontFamily: "'Jost', sans-serif",
+          }}
+        >
+          Redo
+        </button>
       </div>
-    </aside>
+    </div>
   );
 }
+
 
 /* ---------------- App ---------------- */
 export default function MobileApp() {
   const [date, setDate] = useState("");
   const [bride, setBride] = useState("");
   const [groom, setGroom] = useState("");
+  const [brideLabel, setBrideLabel] = useState("Bride");
+  const [groomLabel, setGroomLabel] = useState("Groom");
 
   // Defaults: 12:00 PM starts
   const [photoStartHour, setPhotoStartHour] = useState("12");
@@ -1438,6 +1854,16 @@ export default function MobileApp() {
   const [photoEnabled, setPhotoEnabled] = useState(true);
   const [videoEnabled, setVideoEnabled] = useState(true);
 
+  // Screen & modal state
+  const [screen, setScreen] = useState("welcome"); // "welcome" | "wizard" | "settings" | "timeline"
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+
+  // Fixed-time events (Project Settings)
+  const [fixedEvents, setFixedEvents] = useState([
+    { id: 1, event: "Ceremony", timeHour: "3", timeMinute: "00", timePeriod: "PM", duration: 30 },
+  ]);
+  const [fixedEventNextId, setFixedEventNextId] = useState(2);
+
   // Rows
   const [userRows, setUserRows] = useState([
     {
@@ -1451,19 +1877,107 @@ export default function MobileApp() {
       video: true,
       notes: "",
       isTimeLocked: false,
+      color: "",
     },
   ]);
+  const latestUserRowsRef = useRef(null);
+  const beforeEditSnapshotRef = useRef(null);
   const [nextId, setNextId] = useState(2);
   const [history, setHistory] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
+  const [copyConfirm, setCopyConfirm] = useState(false);
   const [draggedRowId, setDraggedRowId] = useState(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [showEventSelector, setShowEventSelector] = useState(false);
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
 
+  // ---- Wizard State ----
+  const [wizardStep, setWizardStep] = useState(1);
+
+  // Step 1 — Locations
+  const [wiz_locations, setWiz_locations] = useState([]);
+  const [wiz_locationNextId, setWiz_locationNextId] = useState(1);
+
+  // Step 2 — Locations (mandatory venue fields)
+  const [wiz_receptionVenue, setWiz_receptionVenue] = useState("");
+  const [wiz_receptionAddress, setWiz_receptionAddress] = useState("");
+  const [wiz_receptionSameAsCeremony, setWiz_receptionSameAsCeremony] = useState(false);
+
+  // Step 1 — Wedding Details (reuses: date, bride, groom, brideLabel, groomLabel)
+
+  // Step 3 (formerly Step 2) — Ceremony
+  const [wiz_ceremonyHour, setWiz_ceremonyHour] = useState("3");
+  const [wiz_ceremonyMinute, setWiz_ceremonyMinute] = useState("00");
+  const [wiz_ceremonyPeriod, setWiz_ceremonyPeriod] = useState("PM");
+  const [wiz_ceremonyDuration, setWiz_ceremonyDuration] = useState(30);
+  const [wiz_ceremonyVenue, setWiz_ceremonyVenue] = useState("");
+  const [wiz_ceremonyAddress, setWiz_ceremonyAddress] = useState("");
+  const [wiz_guestCount, setWiz_guestCount] = useState("");
+  const [wiz_portraitLocations, setWiz_portraitLocations] = useState([]);
+  const [wiz_brideReadyAddress, setWiz_brideReadyAddress] = useState("");
+  const [wiz_groomReadyAddress, setWiz_groomReadyAddress] = useState("");
+  const [wiz_distanceBetweenReady, setWiz_distanceBetweenReady] = useState("");
+  const [wiz_distanceBrideToCeremony, setWiz_distanceBrideToCeremony] = useState("");
+  const [wiz_distanceGroomToCeremony, setWiz_distanceGroomToCeremony] = useState("");
+  const [wiz_sameLocation, setWiz_sameLocation] = useState(null); // null | true | false
+  const [wiz_portraitsAtReadyLocations, setWiz_portraitsAtReadyLocations] = useState(false);
+  const [wiz_bridePortraitsAtReadyLocation, setWiz_bridePortraitsAtReadyLocation] = useState(false);
+  const [wiz_groomPortraitsAtReadyLocation, setWiz_groomPortraitsAtReadyLocation] = useState(false);
+  const [wiz_hairMakeupDoneHour, setWiz_hairMakeupDoneHour] = useState("12");
+  const [wiz_hairMakeupDoneMinute, setWiz_hairMakeupDoneMinute] = useState("00");
+  const [wiz_hairMakeupDonePeriod, setWiz_hairMakeupDonePeriod] = useState("PM");
+  const [wiz_photoCoverageHours, setWiz_photoCoverageHours] = useState("");
+  const [wiz_videoCoverageHours, setWiz_videoCoverageHours] = useState("");
+  const [wiz_ceremonyOutdoor, setWiz_ceremonyOutdoor] = useState(false);
+
+  // Step 3 — Package Inclusions
+  const [wiz_drone, setWiz_drone] = useState(false);
+  const [wiz_narration, setWiz_narration] = useState(false);
+
+  // Step 6 — First Looks
+  const [wiz_hasFirstLooks, setWiz_hasFirstLooks] = useState(null); // null|true|false
+  const [wiz_firstLookGroom, setWiz_firstLookGroom] = useState(false);
+  const [wiz_firstLookParent, setWiz_firstLookParent] = useState(false);
+  const [wiz_firstLookBridesmaids, setWiz_firstLookBridesmaids] = useState(false);
+  const [wiz_firstLookOther, setWiz_firstLookOther] = useState(false);
+  const [wiz_firstLookGroomLocation, setWiz_firstLookGroomLocation] = useState("");
+  const [wiz_firstLookParentLocation, setWiz_firstLookParentLocation] = useState("");
+  const [wiz_firstLookBridsmaidsLocation, setWiz_firstLookBridsmaidsLocation] = useState("");
+  const [wiz_firstLookOtherLocation, setWiz_firstLookOtherLocation] = useState("");
+
+  // Step 7 — Pre-Ceremony Visibility (skipped if wiz_firstLookGroom is true)
+  const [wiz_brideOkayBefore, setWiz_brideOkayBefore] = useState(null); // null|true|false
+
+  // Step 9 — Reception
+  const [wiz_receptionHour, setWiz_receptionHour] = useState("6");
+  const [wiz_receptionMinute, setWiz_receptionMinute] = useState("00");
+  const [wiz_receptionPeriod, setWiz_receptionPeriod] = useState("PM");
+  const [wiz_grandEntrance, setWiz_grandEntrance] = useState(true);
+  const [wiz_cakeCutting, setWiz_cakeCutting] = useState(true);
+  const [wiz_firstDance, setWiz_firstDance] = useState(true);
+  const [wiz_brideParentDance, setWiz_brideParentDance] = useState(true);
+  const [wiz_groomParentDance, setWiz_groomParentDance] = useState(true);
+  const [wiz_specialDance, setWiz_specialDance] = useState(false);
+  const [wiz_speeches, setWiz_speeches] = useState(true);
+  const [wiz_speechCount, setWiz_speechCount] = useState(3);
+  const [wiz_dinner, setWiz_dinner] = useState(true);
+  const [wiz_dinnerStartHour, setWiz_dinnerStartHour] = useState("7");
+  const [wiz_dinnerStartMinute, setWiz_dinnerStartMinute] = useState("00");
+  const [wiz_dinnerStartPeriod, setWiz_dinnerStartPeriod] = useState("PM");
+  const [wiz_dinnerStyle, setWiz_dinnerStyle] = useState(null);
+  const [wiz_openDanceFloor, setWiz_openDanceFloor] = useState(true);
+  const [wiz_garterToss, setWiz_garterToss] = useState(false);
+  const [wiz_bouquetToss, setWiz_bouquetToss] = useState(false);
+  const [wiz_familyGroups, setWiz_familyGroups] = useState("5"); // "5"|"10"|"none"
+  const [wiz_familyGroupNames, setWiz_familyGroupNames] = useState([]);
+  const [wiz_goldenHour, setWiz_goldenHour] = useState(false);
+
   const rows = useMemo(() => {
     return [...userRows].sort((a, b) => a.time - b.time);
   }, [userRows]);
+
+  useEffect(() => {
+  }, [wiz_firstLookGroom]);
 
   // Preserve existing times by default; only the chain action should advance times
   const recalculateTimes = (rowsIn, startIndex = 0) => {
@@ -1479,6 +1993,9 @@ export default function MobileApp() {
 
 
   const handleChange = (displayIndex, field, value) => {
+    if (beforeEditSnapshotRef.current === null) {
+      beforeEditSnapshotRef.current = userRows.map(r => ({ ...r })); // deep-enough clone before any mutation
+    }
     const row = rows[displayIndex];
     const userRowIndex = userRows.findIndex((userRow) => userRow.id === row.id);
     if (userRowIndex === -1) return;
@@ -1487,7 +2004,7 @@ export default function MobileApp() {
 
     if (field === "duration") {
       const newDuration = parseInt(value, 10) || 0;
-      newUserRows[userRowIndex][field] = newDuration;
+      newUserRows[userRowIndex] = { ...newUserRows[userRowIndex], duration: newDuration };
 
       const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
       const sortedIndex = sortedRows.findIndex(
@@ -1500,21 +2017,27 @@ export default function MobileApp() {
           (r) => r.id === sortedRows[i].id
         );
         if (originalIndex !== -1) {
-          // Preserve the isTimeLocked state when recalculating times
-          recalcRow.isTimeLocked = newUserRows[originalIndex].isTimeLocked;
-          newUserRows[originalIndex] = recalcRow;
+          newUserRows[originalIndex] = { ...recalcRow, isTimeLocked: newUserRows[originalIndex].isTimeLocked };
         }
       });
       setUserRows(newUserRows);
+      latestUserRowsRef.current = newUserRows;
       return;
     }
 
-    newUserRows[userRowIndex][field] = value;
+    newUserRows[userRowIndex] = { ...newUserRows[userRowIndex], [field]: value };
     setUserRows(newUserRows);
+    latestUserRowsRef.current = newUserRows;
   };
 
   const handleBlur = () => {
-    saveToHistory(userRows);
+    const snapshot = beforeEditSnapshotRef.current;
+    const latest = latestUserRowsRef.current;
+    beforeEditSnapshotRef.current = null;
+    if (snapshot !== null && latest !== null && JSON.stringify(latest) !== JSON.stringify(snapshot)) {
+      setHistory(prev => [...prev.slice(-11), snapshot]);
+      setRedoStack([]);
+    }
   };
 
   const handleDelete = (displayIndex) => {
@@ -1719,6 +2242,8 @@ export default function MobileApp() {
       video: videoEnabled,
       notes: "",
       isTimeLocked: false,
+      type: "event",
+      address: "",
     };
 
     // Insert the new row at the correct position based on time order
@@ -1769,7 +2294,7 @@ export default function MobileApp() {
   // Handle drops from the sidebar onto a specific row (by display index)
   const handleDropEventBlockToRow = (eventData, displayIndex) => {
     console.log("[DnD] MobileApp: handleDropEventBlockToRow", { eventData, displayIndex });
-    if (!eventData || !eventData.event || !eventData.duration) return;
+    if (!eventData || typeof eventData.duration !== "number") return;
 
     // Translate display index (from rows) to actual userRows index using id mapping
     const displayRow = rows[displayIndex];
@@ -1780,9 +2305,18 @@ export default function MobileApp() {
     const newUserRows = [...userRows];
     const targetRow = newUserRows[userRowIndex];
 
-    // Update row details
-    targetRow.event = eventData.event;
-    targetRow.duration = eventData.duration;
+    // Update row details based on block type
+    if (eventData.type === "location") {
+      targetRow.type = "location";
+      targetRow.event = eventData.event || "";
+      targetRow.duration = eventData.duration;
+      targetRow.address = eventData.address || "";
+      targetRow.color = "";
+    } else {
+      targetRow.type = "event";
+      targetRow.event = eventData.event;
+      targetRow.duration = eventData.duration;
+    }
 
     // If dropped on the last visible row, append a fresh empty row
     const droppedOnLastVisible = displayIndex === rows.length - 1;
@@ -1798,6 +2332,8 @@ export default function MobileApp() {
         video: videoEnabled,
         notes: "",
         isTimeLocked: false,
+        type: "event",
+        address: "",
       });
       setNextId(nextId + 1);
     }
@@ -1833,7 +2369,7 @@ export default function MobileApp() {
     // Add visual feedback for the drop target
     const targetElement = e.currentTarget;
     if (targetElement) {
-      targetElement.style.borderTop = '2px solid #4caf50';
+      targetElement.style.borderTop = '2px solid #b8906a';
       targetElement.style.marginTop = '4px';
     }
   };
@@ -1964,6 +2500,8 @@ export default function MobileApp() {
       date,
       bride,
       groom,
+      brideLabel,
+      groomLabel,
       photoStartHour,
       photoStartMinute,
       photoStartPeriod,
@@ -1979,6 +2517,7 @@ export default function MobileApp() {
       photoEnabled,
       videoEnabled,
       userRows,
+      fixedEvents,
     };
 
     const dataStr = JSON.stringify(projectData, null, 2);
@@ -2002,6 +2541,8 @@ export default function MobileApp() {
         setDate(projectData.date || "");
         setBride(projectData.bride || "");
         setGroom(projectData.groom || "");
+        setBrideLabel(projectData.brideLabel || "Bride");
+        setGroomLabel(projectData.groomLabel || "Groom");
 
         setPhotoStartHour(projectData.photoStartHour || "12");
         setPhotoStartMinute(projectData.photoStartMinute || "00");
@@ -2052,13 +2593,34 @@ export default function MobileApp() {
               ]) || []
         );
 
+        const loadedRows = projectData.userRows;
+        if (loadedRows && loadedRows.length > 0) {
+          const maxId = Math.max(...loadedRows.map((r) => r.id || 0));
+          setNextId(maxId + 1);
+        }
+
+        setFixedEvents(projectData.fixedEvents || []);
+
         setHistory([]);
         setRedoStack([]);
+        setScreen("timeline");
       } catch (err) {
         alert("Error loading project file");
       }
     };
     reader.readAsText(file);
+  };
+
+  // Wizard location helpers
+  const addWizLocation = () => {
+    setWiz_locations(prev => [...prev, { id: wiz_locationNextId, name: "", address: "" }]);
+    setWiz_locationNextId(n => n + 1);
+  };
+  const updateWizLocation = (id, field, value) => {
+    setWiz_locations(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
+  };
+  const removeWizLocation = (id) => {
+    setWiz_locations(prev => prev.filter(l => l.id !== id));
   };
 
   const exportTimeline = () => {
@@ -2079,37 +2641,53 @@ export default function MobileApp() {
 
     sortedRows.forEach((row) => {
       const time = formatTime(row.time);
+
+      if (row.type === "constraint") {
+        lines.push(`Time: ${time.hour}:${time.minute} ${time.period}`);
+        lines.push(`⚠️ TIME CONSTRAINT`);
+        if (row.notes && row.notes.trim()) lines.push(`Note: ${row.notes}`);
+        lines.push("");
+        return;
+      }
+
+      if (row.type === "location") {
+        // Location block: compact single-line format
+        const parts = [`📍 ${row.event || "(no name)"}`];
+        if (row.address && row.address.trim()) parts.push(row.address.trim());
+        parts.push(`Travel time: ${row.duration} min`);
+        lines.push(`Time: ${time.hour}:${time.minute} ${time.period}`);
+        lines.push(parts.join(" — "));
+        if (row.notes && row.notes.trim()) lines.push(`Notes: ${row.notes}`);
+        lines.push("");
+        return;
+      }
+
       const coverage = [];
       if (row.photo) coverage.push("Photo");
       if (row.video) coverage.push("Video");
 
       // Always include Time
       lines.push(`Time: ${time.hour}:${time.minute} ${time.period}`);
-      
-      // Include Location only if it has content
-      if (row.location && row.location.trim()) {
-        lines.push(`Location: ${row.location}`);
-      }
-      
+
       // Always include Event
       lines.push(`Event: ${row.event || "(no event)"}`);
-      
+
       // Always include Duration
       lines.push(`Duration: ${row.duration} minutes`);
-      
+
       // Include Coverage only if there is coverage
       if (coverage.length > 0) {
         lines.push(`Coverage: ${coverage.join(" & ")}`);
       }
-      
+
       // Always include Setting
       lines.push(`Setting: ${row.isOutdoor ? "Outside" : "Indoors"}`);
-      
+
       // Include Notes only if it has content
       if (row.notes && row.notes.trim()) {
         lines.push(`Notes: ${row.notes}`);
       }
-      
+
       // Add empty line after each row
       lines.push("");
     });
@@ -2122,6 +2700,60 @@ export default function MobileApp() {
     link.download = buildDefaultFilename("txt");
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const copyTimeline = async () => {
+    const sortedRows = [...userRows].sort((a, b) => a.time - b.time);
+    const lines = [];
+    lines.push(`Wedding Timeline for ${bride} & ${groom}`);
+    lines.push(`Date: ${date}`, "");
+    lines.push(`Photo Coverage: ${photoStartHour}:${photoStartMinute} ${photoStartPeriod} - ${photoEndHour}:${photoEndMinute} ${photoEndPeriod}`);
+    lines.push(`Video Coverage: ${videoStartHour}:${videoStartMinute} ${videoStartPeriod} - ${videoEndHour}:${videoEndMinute} ${videoEndPeriod}`, "", "TIMELINE:", "");
+    sortedRows.forEach((row) => {
+      const time = formatTime(row.time);
+      if (row.type === "constraint") {
+        lines.push(`Time: ${time.hour}:${time.minute} ${time.period}`);
+        lines.push(`⚠️ TIME CONSTRAINT`);
+        if (row.notes && row.notes.trim()) lines.push(`Note: ${row.notes}`);
+        lines.push("");
+        return;
+      }
+      if (row.type === "location") {
+        const parts = [`📍 ${row.event || "(no name)"}`];
+        if (row.address && row.address.trim()) parts.push(row.address.trim());
+        parts.push(`Travel time: ${row.duration} min`);
+        lines.push(`Time: ${time.hour}:${time.minute} ${time.period}`);
+        lines.push(parts.join(" — "));
+        if (row.notes && row.notes.trim()) lines.push(`Notes: ${row.notes}`);
+        lines.push("");
+        return;
+      }
+      const coverage = [];
+      if (row.photo) coverage.push("Photo");
+      if (row.video) coverage.push("Video");
+      lines.push(`Time: ${time.hour}:${time.minute} ${time.period}`);
+      lines.push(`Event: ${row.event || "(no event)"}`);
+      lines.push(`Duration: ${row.duration} minutes`);
+      if (coverage.length > 0) lines.push(`Coverage: ${coverage.join(" & ")}`);
+      lines.push(`Setting: ${row.isOutdoor ? "Outside" : "Indoors"}`);
+      if (row.notes && row.notes.trim()) lines.push(`Notes: ${row.notes}`);
+      lines.push("");
+    });
+    const text = lines.join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyConfirm(true);
+      setTimeout(() => setCopyConfirm(false), 2000);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setCopyConfirm(true);
+      setTimeout(() => setCopyConfirm(false), 2000);
+    }
   };
 
   const undo = () => {
@@ -2153,566 +2785,1558 @@ export default function MobileApp() {
     saveToHistory(newUserRows);
   };
 
-  return (
-    <div
-      style={{
-        padding: 10,
-        maxWidth: "100%",
-        margin: "0 auto",
-        fontFamily: "Arial, sans-serif",
-        backgroundColor: "#f5f5f5",
-        minHeight: "100vh",
-      }}
-    >
-      <style>{MOBILE_TWEAKS}</style>
+  // ---- Project Settings helpers ----
+  const settingsSelectStyle = {
+    padding: "8px 10px",
+    borderRadius: 6,
+    border: "1px solid #2a2520",
+    background: "#0f0d0b",
+    color: "#ddd0bc",
+    fontFamily: "'Jost', sans-serif",
+    fontSize: 14,
+  };
 
-      <h1
-        style={{
-          textAlign: "center",
-          margin: "10px 0 5px 0",
-          fontSize: "clamp(18px, 5vw, 24px)",
-          lineHeight: 1.2,
-          color: "#333",
-          fontWeight: "bold",
-        }}
-      >
-        Wedding Timeline Builder
-      </h1>
+  const addFixedEvent = (eventName = "", h = "12", m = "00", p = "PM", dur = 30) => {
+    setFixedEvents((prev) => [
+      ...prev,
+      { id: fixedEventNextId, event: eventName, timeHour: h, timeMinute: m, timePeriod: p, duration: dur },
+    ]);
+    setFixedEventNextId((n) => n + 1);
+  };
 
-      <div style={{ textAlign: "center", margin: "0 0 20px 0" }}>
-        <a
-          href="mailto:info@mediapotion.net"
-          style={{ fontSize: 14, color: "#666", textDecoration: "none" }}
-        >
-          by MediaPotion
-        </a>
+  const updateFixedEvent = (id, field, value) => {
+    setFixedEvents((prev) =>
+      prev.map((fe) => (fe.id === id ? { ...fe, [field]: value } : fe))
+    );
+  };
+
+  const removeFixedEvent = (id) => {
+    setFixedEvents((prev) => prev.filter((fe) => fe.id !== id));
+  };
+
+  const renderHourOptions = () =>
+    ["1","2","3","4","5","6","7","8","9","10","11","12"].map((h) => (
+      <option key={h} value={h}>{h}</option>
+    ));
+
+  const renderMinuteOptions = () =>
+    ["00","05","10","15","20","25","30","35","40","45","50","55"].map((m) => (
+      <option key={m} value={m}>{m}</option>
+    ));
+
+  const generateTimeline = () => {
+
+    // ---- Setup ----
+    const ceremonyDurationMin = wiz_ceremonyDuration || 30;
+    const ceremonyStartTime = parseTimeInput(wiz_ceremonyHour, wiz_ceremonyMinute, wiz_ceremonyPeriod);
+    const receptionStartTime = parseTimeInput(wiz_receptionHour, wiz_receptionMinute, wiz_receptionPeriod);
+    const groupShotsBeforeCeremony = wiz_firstLookGroom || wiz_brideOkayBefore === true;
+    const parseTravelMin = (str) => { const n = parseInt(str, 10); return isNaN(n) ? 0 : n; };
+
+    // Golden hour by month (Northern Michigan, sunset − 45 min)
+    const GOLDEN_HOUR_BY_MONTH = [990, 1035, 1125, 1170, 1200, 1230, 1215, 1170, 1125, 1080, 990, 960];
+    let goldenHourTime = null;
+    let weddingMonth = null;
+    if (date) {
+      const parts = date.split("-");
+      if (parts.length >= 2) {
+        const m = parseInt(parts[1], 10) - 1;
+        if (m >= 0 && m <= 11) { weddingMonth = m; goldenHourTime = GOLDEN_HOUR_BY_MONTH[m]; }
+      }
+    }
+
+    const familyGroupNotes = wiz_familyGroups !== "none" && wiz_familyGroupNames.some(n => n)
+      ? wiz_familyGroupNames.filter(Boolean).map((n, i) => `${i + 1}. ${n}`).join(", ")
+      : "";
+
+    const differentLocations = wiz_sameLocation === false;
+    const ceremonyVenueName = wiz_ceremonyVenue || "ceremony venue";
+    const effectiveReceptionVenue = wiz_receptionSameAsCeremony ? ceremonyVenueName : (wiz_receptionVenue || "reception venue");
+    const effectiveReceptionAddress = wiz_receptionSameAsCeremony ? (wiz_ceremonyAddress || "") : (wiz_receptionAddress || "");
+    const brideLoc = wiz_brideReadyAddress || "Getting Ready Location";
+    const groomLoc = differentLocations ? (wiz_groomReadyAddress || "Groom's Getting Ready Location") : brideLoc;
+
+    // ---- Classify each first look into the phase where it will occur ----
+    // Phase = "bride" | "groom" | "ceremony"
+    // Never detour — if location unrecognised or unset, default to ceremony
+    const classifyFL = (locVal) => {
+      if (!locVal) return "ceremony";
+      if (locVal === brideLoc) return "bride";
+      if (differentLocations && locVal === groomLoc) return "groom";
+      if (locVal === ceremonyVenueName) return "ceremony";
+      return "ceremony";
+    };
+    const flGroomPhase    = wiz_firstLookGroom       ? classifyFL(wiz_firstLookGroomLocation)       : null;
+    const flParentPhase   = wiz_firstLookParent      ? classifyFL(wiz_firstLookParentLocation)      : null;
+    const flBmaidsPhase   = wiz_firstLookBridesmaids ? classifyFL(wiz_firstLookBridsmaidsLocation)  : null;
+    const flOtherPhase    = wiz_firstLookOther       ? classifyFL(wiz_firstLookOtherLocation)       : null;
+
+    const pushFLForPhase = (phase, arr) => {
+      if (flGroomPhase  === phase) arr.push({ event: "First Look: with Groom",      duration: 10, isOutdoor: true });
+      if (flParentPhase === phase) arr.push({ event: "First Look: with Parent",     duration: 10, isOutdoor: true });
+      if (flBmaidsPhase === phase) arr.push({ event: "First Look: with Bridemaids", duration: 10, isOutdoor: true });
+      if (flOtherPhase  === phase) arr.push({ event: "First Look: Other",           duration: 10, isOutdoor: true });
+    };
+
+    // ---- Build pre-ceremony blocks (scheduled backwards from ceremony start) ----
+    const preBlocks = [];
+
+    // === Phase 1: Bride's getting ready location ===
+    // First block of the day — duration 0, establishes starting location
+    preBlocks.push({ type: "location", event: brideLoc, address: "", duration: 0, notes: "Start of day" });
+    // Detail shots (earliest in the day)
+    if (wiz_drone) preBlocks.push({ event: "Details: Drone & Venue Shots", duration: 30, isOutdoor: true });
+    preBlocks.push({ event: "Details: Rings, Invitations, & Accessories", duration: 20 });
+    preBlocks.push({ event: "Details: Dress Shots", duration: 10 });
+    // Bride narration before portrait blocks
+    if (wiz_narration) preBlocks.push({ event: "Narration: Bride Record Narration", duration: 15 });
+    // Bride pre-dress
+    preBlocks.push({ event: "Bride (Pre-Dress): Bridemaids Group Shots",    duration: 10, isOutdoor: true });
+    preBlocks.push({ event: "Bride (Pre-Dress): Bridemaids Individual Shots", duration: 10, isOutdoor: true });
+    preBlocks.push({ event: "Bride (Pre-Dress): Hair & Makeup Details",     duration: 10 });
+    preBlocks.push({ event: "Bride (Pre-Dress): Putting Dress On",          duration: 10 });
+    // Bride dress on (first looks can only occur after Putting Dress On)
+    preBlocks.push({ event: "Bride (Dress On): Accessory Shots",            duration: 10 });
+    preBlocks.push({ event: "Bride (Dress On): Bride Portraits",            duration: 15, isOutdoor: true });
+    preBlocks.push({ event: "Bride (Dress On): Bridemaids Group Shots",     duration: 10, isOutdoor: true });
+    preBlocks.push({ event: "Bride (Dress On): Bridemaids Individual Shots",duration: 10, isOutdoor: true });
+    // First looks assigned to bride's getting ready location
+    pushFLForPhase("bride", preBlocks);
+
+    // === Phase 2 / 2b: Groom events ===
+    if (differentLocations) {
+      // Phase 2: different location — travel block to groom's location
+      const travelBrideToGroom = parseTravelMin(wiz_distanceBetweenReady) || 15;
+      preBlocks.push({ type: "location", event: groomLoc, address: "", duration: travelBrideToGroom, notes: `Travel from ${brideLoc} to ${groomLoc}` });
+    }
+    // Groom narration before groom portrait blocks
+    if (wiz_narration) preBlocks.push({ event: "Narration: Groom Record Narration", duration: 15 });
+    preBlocks.push({ event: "Groom: Assisted with Tie & Jacket",  duration: 10 });
+    preBlocks.push({ event: "Groom: Portraits",                   duration: 15, isOutdoor: true });
+    preBlocks.push({ event: "Groom: Groomsmen Group Shots",       duration: 10, isOutdoor: true });
+    preBlocks.push({ event: "Groom: Groomsmen Individual Shots",  duration: 10, isOutdoor: true });
+    // First looks assigned to groom's location (only applies when differentLocations; otherwise
+    // groomLoc === brideLoc so classifyFL returns "bride" and they were already pushed above)
+    if (differentLocations) pushFLForPhase("groom", preBlocks);
+
+    // === Phase 3: Ceremony venue ===
+    const lastPreLocName = differentLocations ? groomLoc : brideLoc;
+    const toCeremonyMin = differentLocations
+      ? parseTravelMin(wiz_distanceGroomToCeremony)
+      : parseTravelMin(wiz_distanceBrideToCeremony);
+    preBlocks.push({
+      type: "location",
+      event: ceremonyVenueName,
+      address: wiz_ceremonyAddress || "",
+      duration: toCeremonyMin,
+      notes: toCeremonyMin > 0 ? `Travel from ${lastPreLocName} to ${ceremonyVenueName}` : ""
+    });
+    // First looks assigned to ceremony venue (happens before couple/party portraits)
+    pushFLForPhase("ceremony", preBlocks);
+    // Wedding party + couple portraits (only if first look with groom occurred or bride approved)
+    if (groupShotsBeforeCeremony) {
+      preBlocks.push({ event: "Wedding Party: Group Shots",  duration: 15, isOutdoor: true });
+      preBlocks.push({ event: "Bride & Groom: Portraits",    duration: 20, isOutdoor: true });
+    }
+    // A/V setup always immediately before ceremony — nothing between them
+    preBlocks.push({ event: "Ceremony: Audio/Video Setup", duration: 20 });
+
+    // === Schedule preBlocks backwards from ceremony start ===
+    const totalPreDuration = preBlocks.reduce((sum, b) => sum + b.duration, 0);
+    const preStart = ceremonyStartTime - totalPreDuration;
+    let pt = preStart;
+    for (const block of preBlocks) { block.time = pt; pt += block.duration; }
+
+    // ---- Ceremony ----
+    const ceremonyEventName = wiz_ceremonyDuration <= 45 ? "Ceremony: Average" : "Ceremony: Catholic";
+    const ceremonyBlocks = [{ event: ceremonyEventName, duration: ceremonyDurationMin, time: ceremonyStartTime, isOutdoor: wiz_ceremonyOutdoor }];
+
+    // ---- Post-ceremony (Phase 3 continues at ceremony venue) ----
+    const postBlocks = [];
+    let postT = ceremonyStartTime + ceremonyDurationMin;
+    const pushPost = (block) => { block.time = postT; postT += block.duration; postBlocks.push(block); };
+
+    // Family photos — always immediately after ceremony, before anything else
+    if (wiz_familyGroups === "5")  pushPost({ event: "Group Photos: Family (5 Groups)",  duration: 20, notes: familyGroupNotes, isOutdoor: true });
+    if (wiz_familyGroups === "10") pushPost({ event: "Group Photos: Family (10 Groups)", duration: 45, notes: familyGroupNotes, isOutdoor: true });
+    // Wedding party + portraits post-ceremony only if they didn't happen before
+    if (!groupShotsBeforeCeremony) {
+      pushPost({ event: "Wedding Party: Group Shots", duration: 15, isOutdoor: true });
+      pushPost({ event: "Bride & Groom: Portraits",   duration: 20, isOutdoor: true });
+    }
+
+    // === Phase 4: Portrait locations (visit each once in order) ===
+    if (wiz_portraitLocations.length > 0) {
+      wiz_portraitLocations.forEach((loc, i) => {
+        const fromName = i === 0
+          ? ceremonyVenueName
+          : (wiz_portraitLocations[i - 1].name || `Portrait Location ${i}`);
+        const travelMin = i === 0 ? parseTravelMin(loc.distFromCeremony) : 0;
+        pushPost({
+          type: "location",
+          event: loc.name || `Portrait Location ${i + 1}`,
+          address: loc.address || "",
+          duration: travelMin,
+          notes: travelMin > 0 ? `Travel from ${fromName} to ${loc.name || `Portrait Location ${i + 1}`}` : ""
+        });
+        pushPost({ event: "Bride & Groom: Portraits", duration: 20, location: loc.name || "", isOutdoor: true });
+      });
+      // Travel from last portrait location to reception
+      const lastPortraitLoc = wiz_portraitLocations[wiz_portraitLocations.length - 1];
+      const travelToReception = parseTravelMin(lastPortraitLoc.distFromReception);
+      if (travelToReception > 0) {
+        pushPost({ type: "location", event: effectiveReceptionVenue, address: effectiveReceptionAddress, duration: travelToReception, notes: `Travel from ${lastPortraitLoc.name || "portrait location"} to ${effectiveReceptionVenue}` });
+      }
+    }
+
+    // Time constraint if post-ceremony events run past reception start
+    if (postT > receptionStartTime && postBlocks.length > 0) {
+      const recFmt = formatTime(receptionStartTime);
+      const postFmt = formatTime(postT);
+      pushPost({
+        type: "constraint",
+        event: "TIME CONSTRAINT",
+        duration: 0,
+        time: receptionStartTime,
+        notes: `Not enough time to complete post-ceremony events before reception start (${recFmt.hour}:${recFmt.minute} ${recFmt.period}). Post-ceremony events would end at ${postFmt.hour}:${postFmt.minute} ${postFmt.period}. Consider starting the reception later, reducing family groupings, or removing some portrait locations.`,
+      });
+    }
+
+    // Golden hour — time-anchored to calculated golden hour, with notes if it conflicts
+    let goldenHourBlock = null;
+    if (wiz_goldenHour) {
+      const ceremonyEnd = ceremonyStartTime + ceremonyDurationMin;
+      goldenHourBlock = { event: "Bride & Groom: Golden Hour Portraits", duration: 20, notes: "", isOutdoor: true };
+      if (goldenHourTime !== null && weddingMonth !== null) {
+        const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+        const ghStartFmt = formatTime(goldenHourTime);
+        const ghEndFmt = formatTime(goldenHourTime + 20);
+        const ghTimeNote = `Estimated golden hour: ${ghStartFmt.hour}:${ghStartFmt.minute} ${ghStartFmt.period} – ${ghEndFmt.hour}:${ghEndFmt.minute} ${ghEndFmt.period} based on a ${MONTH_NAMES[weddingMonth]} wedding in Northern Michigan.`;
+        goldenHourBlock.time = goldenHourTime;
+        if (goldenHourTime < ceremonyEnd) {
+          goldenHourBlock.notes = `Golden hour falls before or during ceremony. Consider scheduling portraits immediately after. ${ghTimeNote}`;
+        } else if (goldenHourTime >= receptionStartTime) {
+          goldenHourBlock.notes = `Golden hour falls during reception. Couple may want to step away briefly for portraits. ${ghTimeNote}`;
+        } else {
+          goldenHourBlock.notes = ghTimeNote;
+        }
+      } else {
+        goldenHourBlock.time = postT;
+      }
+    }
+
+    // === Phase 5: Reception venue ===
+    const receptionBlocks = [];
+    let recT = receptionStartTime;
+    const addRec = (block) => { block.time = recT; recT += block.duration; receptionBlocks.push(block); };
+
+    // Location marker at reception start (travel time captured in postBlocks if coming from portrait location)
+    addRec({ type: "location", event: effectiveReceptionVenue, address: effectiveReceptionAddress, duration: 0, notes: "" });
+    // A/V setup always first at reception, Grand Entrance always immediately after
+    addRec({ event: "Reception: Audio/Video Setup", duration: 20 });
+    if (wiz_grandEntrance) addRec({ event: "Reception: Grand Entrances", duration: 10 });
+    if (wiz_cakeCutting)   addRec({ event: "Reception: Cake Cutting", duration: 5 });
+    if (wiz_firstDance)    addRec({ event: "Reception: Bride & Groom Dance", duration: 5 });
+    if (wiz_brideParentDance) addRec({ event: "Reception: Bride & Parent Dance", duration: 5 });
+    if (wiz_groomParentDance) addRec({ event: "Reception: Groom & Parent Dance", duration: 5 });
+    if (wiz_specialDance)  addRec({ event: "Reception: Special Dance", duration: 5 });
+    if (wiz_dinner) {
+      const dinnerTime = parseTimeInput(wiz_dinnerStartHour, wiz_dinnerStartMinute, wiz_dinnerStartPeriod);
+      recT = Math.max(recT, dinnerTime);
+      addRec({ event: "Reception: Dinner", duration: 60, notes: wiz_dinnerStyle ? `Style: ${wiz_dinnerStyle}` : "" });
+    }
+    if (wiz_speeches)       addRec({ event: "Reception: Speeches (Per Speaker)", duration: 10 * wiz_speechCount, notes: `${wiz_speechCount} speaker${wiz_speechCount !== 1 ? "s" : ""} total` });
+    if (wiz_openDanceFloor) addRec({ event: "Reception: Open Dance Floor", duration: 20 });
+    if (wiz_garterToss)     addRec({ event: "Reception: Garder Belt Toss", duration: 15 });
+    if (wiz_bouquetToss)    addRec({ event: "Reception: Bouquet Toss", duration: 15 });
+
+    // ---- Assemble rows ----
+    const allBlocks = [
+      ...preBlocks, ...ceremonyBlocks, ...postBlocks,
+      ...(goldenHourBlock ? [goldenHourBlock] : []),
+      ...receptionBlocks,
+    ];
+
+    const newRows = allBlocks.map((block, idx) => ({
+      id: idx + 1,
+      event: block.event,
+      time: block.time,
+      duration: block.duration,
+      location: block.location || "",
+      isOutdoor: block.isOutdoor || false,
+      photo: photoEnabled,
+      video: videoEnabled,
+      notes: block.notes || "",
+      isTimeLocked: false,
+      color: block.color || "",
+      type: block.type || "event",
+      address: block.address || "",
+    }));
+    setUserRows(newRows);
+    setNextId(newRows.length + 1);
+    setHistory([]);
+    setRedoStack([]);
+
+    // Set photo/video coverage windows from Step 1 hours
+    if (allBlocks.length > 0) {
+      const coverageStart = allBlocks[0].time;
+      if (wiz_photoCoverageHours) {
+        const photoEnd = coverageStart + parseFloat(wiz_photoCoverageHours) * 60;
+        const ps = formatTime(coverageStart); const pe = formatTime(photoEnd);
+        setPhotoStartHour(ps.hour); setPhotoStartMinute(ps.minute); setPhotoStartPeriod(ps.period);
+        setPhotoEndHour(pe.hour); setPhotoEndMinute(pe.minute); setPhotoEndPeriod(pe.period);
+      }
+      if (wiz_videoCoverageHours) {
+        const videoEnd = coverageStart + parseFloat(wiz_videoCoverageHours) * 60;
+        const vs = formatTime(coverageStart); const ve = formatTime(videoEnd);
+        setVideoStartHour(vs.hour); setVideoStartMinute(vs.minute); setVideoStartPeriod(vs.period);
+        setVideoEndHour(ve.hour); setVideoEndMinute(ve.minute); setVideoEndPeriod(ve.period);
+      }
+    }
+
+    setScreen("timeline");
+  };  // ---- Wizard Rendering ----
+  const renderWizard = () => {
+    const totalWizardSteps = wiz_firstLookGroom ? 9 : 10;
+
+    // All named locations from Step 2 in display order: ceremony, reception (if different), then additional
+    const allWizLocations = [
+      ...(wiz_ceremonyVenue ? [wiz_ceremonyVenue] : []),
+      ...(!wiz_receptionSameAsCeremony && wiz_receptionVenue ? [wiz_receptionVenue] : []),
+      ...wiz_locations.filter(l => l.name).map(l => l.name),
+    ];
+
+
+
+    const wizToggleStyle = (selected) => ({
+      padding: "12px 24px",
+      borderRadius: 8,
+      border: selected ? "1px solid #b8906a" : "1px solid #2a2520",
+      background: selected ? "rgba(184,144,106,0.15)" : "#0f0d0b",
+      color: selected ? "#b8906a" : "#6e6358",
+      fontFamily: "'Jost', sans-serif",
+      fontWeight: selected ? 400 : 300,
+      fontSize: 15,
+      cursor: "pointer",
+      transition: "all 0.2s",
+      minWidth: 80,
+      minHeight: 44,
+    });
+
+    const wizCheckRowStyle = {
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 12,
+      padding: "14px 16px",
+      borderRadius: 8,
+      border: "1px solid #1e1c19",
+      background: "#0f0d0b",
+      cursor: "pointer",
+      marginBottom: 10,
+      transition: "border-color 0.2s",
+      minHeight: 44,
+    };
+
+    const wizSectionHeading = (text) => (
+      <div style={{ fontFamily: "'Jost', sans-serif", fontSize: 11, fontWeight: 300, letterSpacing: "0.18em", textTransform: "uppercase", color: "#b8906a", margin: "20px 0 10px" }}>{text}</div>
+    );
+
+    const stepCard = (title, subtitle, content, backFn, nextFn, nextLabel = "Next") => (
+      <div className="wiz-layout" style={{ padding: "16px 0", background: "#060504", minHeight: "100vh", fontFamily: "'Jost', sans-serif" }}>
+        <div className="wiz-step-col">
+          <div style={{ maxWidth: 600, margin: "0 auto", padding: "24px 16px 40px" }}>
+            {/* Progress bar */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif", letterSpacing: "0.1em" }}>
+                <span>Step {wizardStep} of {totalWizardSteps}</span>
+              </div>
+              <div style={{ height: 3, background: "#161310", borderRadius: 2, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${(wizardStep / totalWizardSteps) * 100}%`, background: "linear-gradient(90deg, #b8906a, #cfa882)", borderRadius: 2, transition: "width 0.3s ease" }} />
+              </div>
+            </div>
+
+            <div style={{ background: "#0f0d0b", border: "1px solid #1e1c19", borderRadius: 12, padding: "24px 20px", marginBottom: 20 }}>
+              <h2 style={{ margin: "0 0 8px 0", fontSize: "clamp(22px,4vw,32px)", color: "#ddd0bc", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>{title}</h2>
+              <p style={{ margin: "0 0 24px 0", fontSize: 14, color: "#6e6358", lineHeight: 1.5, fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>{subtitle}</p>
+              {content}
+            </div>
+
+            {/* Navigation row */}
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+              <button
+                onClick={backFn}
+                style={{ padding: "12px 28px", border: "1px solid #b8906a", borderRadius: 8, background: "transparent", color: "#ddd0bc", fontSize: 15, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300, transition: "all 0.2s" }}
+              >
+                Back
+              </button>
+              <button
+                onClick={nextFn}
+                style={{ padding: "12px 32px", background: "#b8906a", color: "#060504", border: "none", borderRadius: 8, fontSize: 15, fontWeight: 400, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
+              >
+                {nextLabel}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+    );
 
-      {/* App shell: main content + (desktop) sidebar */}
-      <div className="wtb-shell">
-        {/* MAIN */}
+    // Step 2 — Locations
+    if (wizardStep === 2) {
+      const mandatoryLocStyle = { border: "1px solid #1e1c19", borderRadius: 8, padding: "14px 14px 12px", marginBottom: 16, background: "#161310" };
+      const mandatoryLabelStyle = { display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" };
+      const mandatoryInputStyle = { width: "100%", padding: 9, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" };
+      return stepCard(
+        "Wedding Day Locations",
+        "Enter the key venues for the wedding day. These are used to build travel blocks and keep your timeline organized.",
         <div>
-          {/* Wedding Details */}
-          <div
-            style={{
-              backgroundColor: "white",
-              padding: 15,
-              borderRadius: 8,
-              marginBottom: 20,
-              border: "1px solid #ddd",
-              maxWidth: "100%",
-            }}
-          >
-            <h2
-              style={{
-                textAlign: "center",
-                margin: "0 0 15px 0",
-                fontSize: 18,
-                color: "#333",
-              }}
-            >
-              Wedding Details
-            </h2>
-
-            <div
-              style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 10,
-                }}
-              >
-                <label
-                  style={{
-                    fontSize: 14,
-                    fontWeight: "bold",
-                    color: "#555",
-                    minWidth: 40,
-                  }}
-                >
-                  Date:
-                </label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  style={{
-                    width: 140,
-                    padding: 8,
-                    border: "1px solid #ccc",
-                    borderRadius: 4,
-                    fontSize: 14,
-                  }}
-                />
-              </div>
-
-              {/* Photographers */}
-              <div
-                style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10 }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                  }}
-                >
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      marginBottom: 6,
-                      fontSize: 14,
-                      fontWeight: "bold",
-                      color: "#555",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={photoEnabled}
-                      onChange={(e) => {
-                        const enabled = e.target.checked;
-                        setPhotoEnabled(enabled);
-                        setUserRows((rows) =>
-                          rows.map((r) => ({ ...r, photo: enabled }))
-                        );
-                      }}
-                    />
-                    Photography
-                  </label>
-
-                  {/* Centered, compact time range */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexWrap: "wrap",
-                      gap: 3,
-                      opacity: photoEnabled ? 1 : 0.5,
-                    }}
-                  >
-                    <input
-                      type="text"
-                      value={photoStartHour}
-                      onChange={(e) => setPhotoStartHour(e.target.value)}
-                      disabled={!photoEnabled}
-                      style={{
-                        width: 40,
-                        padding: 6,
-                        textAlign: "center",
-                        border: "1px solid #ccc",
-                        borderRadius: 4,
-                        fontSize: 12,
-                        background: !photoEnabled ? "#eee" : "white",
-                      }}
-                    />
-                    <span>:</span>
-                    <input
-                      type="text"
-                      value={photoStartMinute}
-                      onChange={(e) => setPhotoStartMinute(e.target.value)}
-                      disabled={!photoEnabled}
-                      style={{
-                        width: 40,
-                        padding: 6,
-                        textAlign: "center",
-                        border: "1px solid #ccc",
-                        borderRadius: 4,
-                        fontSize: 12,
-                        background: !photoEnabled ? "#eee" : "white",
-                      }}
-                    />
-                    <select
-                      value={photoStartPeriod}
-                      onChange={(e) => setPhotoStartPeriod(e.target.value)}
-                      disabled={!photoEnabled}
-                      style={{
-                        padding: 6,
-                        border: "1px solid #ccc",
-                        borderRadius: 4,
-                        fontSize: 12,
-                        background: !photoEnabled ? "#eee" : "white",
-                      }}
-                    >
-                      <option value="AM">AM</option>
-                      <option value="PM">PM</option>
-                    </select>
-
-                    <span
-                      aria-hidden
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: 16,
-                        lineHeight: "32px",
-                        userSelect: "none",
-                      }}
-                    >
-                      —
-                    </span>
-
-                    <input
-                      type="text"
-                      value={photoEndHour}
-                      onChange={(e) => setPhotoEndHour(e.target.value)}
-                      disabled={!photoEnabled}
-                      style={{
-                        width: 40,
-                        padding: 6,
-                        textAlign: "center",
-                        border: "1px solid #ccc",
-                        borderRadius: 4,
-                        fontSize: 12,
-                        background: !photoEnabled ? "#eee" : "white",
-                      }}
-                    />
-                    <span>:</span>
-                    <input
-                      type="text"
-                      value={photoEndMinute}
-                      onChange={(e) => setPhotoEndMinute(e.target.value)}
-                      disabled={!photoEnabled}
-                      style={{
-                        width: 40,
-                        padding: 6,
-                        textAlign: "center",
-                        border: "1px solid #ccc",
-                        borderRadius: 4,
-                        fontSize: 12,
-                        background: !photoEnabled ? "#eee" : "white",
-                      }}
-                    />
-                    <select
-                      value={photoEndPeriod}
-                      onChange={(e) => setPhotoEndPeriod(e.target.value)}
-                      disabled={!photoEnabled}
-                      style={{
-                        padding: 6,
-                        border: "1px solid #ccc",
-                        borderRadius: 4,
-                        fontSize: 12,
-                        background: !photoEnabled ? "#eee" : "white",
-                      }}
-                    >
-                      <option value="AM">AM</option>
-                      <option value="PM">PM</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Videographers */}
-              <div
-                style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10 }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                  }}
-                >
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      marginBottom: 6,
-                      fontSize: 14,
-                      fontWeight: "bold",
-                      color: "#555",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={videoEnabled}
-                      onChange={(e) => {
-                        const enabled = e.target.checked;
-                        setVideoEnabled(enabled);
-                        setUserRows((rows) =>
-                          rows.map((r) => ({ ...r, video: enabled }))
-                        );
-                      }}
-                    />
-                    Videography
-                  </label>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexWrap: "wrap",
-                      gap: 3,
-                      opacity: videoEnabled ? 1 : 0.5,
-                    }}
-                  >
-                    <input
-                      type="text"
-                      value={videoStartHour}
-                      onChange={(e) => setVideoStartHour(e.target.value)}
-                      disabled={!videoEnabled}
-                      style={{
-                        width: 40,
-                        padding: 6,
-                        textAlign: "center",
-                        border: "1px solid #ccc",
-                        borderRadius: 4,
-                        fontSize: 12,
-                        background: !videoEnabled ? "#eee" : "white",
-                      }}
-                    />
-                    <span>:</span>
-                    <input
-                      type="text"
-                      value={videoStartMinute}
-                      onChange={(e) => setVideoStartMinute(e.target.value)}
-                      disabled={!videoEnabled}
-                      style={{
-                        width: 40,
-                        padding: 6,
-                        textAlign: "center",
-                        border: "1px solid #ccc",
-                        borderRadius: 4,
-                        fontSize: 12,
-                        background: !videoEnabled ? "#eee" : "white",
-                      }}
-                    />
-                    <select
-                      value={videoStartPeriod}
-                      onChange={(e) => setVideoStartPeriod(e.target.value)}
-                      disabled={!videoEnabled}
-                      style={{
-                        padding: 6,
-                        border: "1px solid #ccc",
-                        borderRadius: 4,
-                        fontSize: 12,
-                        background: !videoEnabled ? "#eee" : "white",
-                      }}
-                    >
-                      <option value="AM">AM</option>
-                      <option value="PM">PM</option>
-                    </select>
-
-                    <span
-                      aria-hidden
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: 16,
-                        lineHeight: "32px",
-                        userSelect: "none",
-                      }}
-                    >
-                      —
-                    </span>
-
-                    <input
-                      type="text"
-                      value={videoEndHour}
-                      onChange={(e) => setVideoEndHour(e.target.value)}
-                      disabled={!videoEnabled}
-                      style={{
-                        width: 40,
-                        padding: 6,
-                        textAlign: "center",
-                        border: "1px solid #ccc",
-                        borderRadius: 4,
-                        fontSize: 12,
-                        background: !videoEnabled ? "#eee" : "white",
-                      }}
-                    />
-                    <span>:</span>
-                    <input
-                      type="text"
-                      value={videoEndMinute}
-                      onChange={(e) => setVideoEndMinute(e.target.value)}
-                      disabled={!videoEnabled}
-                      style={{
-                        width: 40,
-                        padding: 6,
-                        textAlign: "center",
-                        border: "1px solid #ccc",
-                        borderRadius: 4,
-                        fontSize: 12,
-                        background: !videoEnabled ? "#eee" : "white",
-                      }}
-                    />
-                    <select
-                      value={videoEndPeriod}
-                      onChange={(e) => setVideoEndPeriod(e.target.value)}
-                      disabled={!videoEnabled}
-                      style={{
-                        padding: 6,
-                        border: "1px solid #ccc",
-                        borderRadius: 4,
-                        fontSize: 12,
-                        background: !videoEnabled ? "#eee" : "white",
-                      }}
-                    >
-                      <option value="AM">AM</option>
-                      <option value="PM">PM</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bride / Groom names */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: "20px",
-                }}
-              >
-                <div style={{ textAlign: "center" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: 4,
-                      fontSize: 14,
-                      fontWeight: "bold",
-                      color: "#555",
-                    }}
-                  >
-                    Bride:
-                  </label>
-                  <input
-                    type="text"
-                    value={bride}
-                    onChange={(e) => setBride(e.target.value)}
-                    placeholder="Bride's name"
-                    style={{
-                      width: 140,
-                      padding: 6,
-                      border: "1px solid #ccc",
-                      borderRadius: 4,
-                      fontSize: 12,
-                      textAlign: "center",
-                    }}
-                  />
-                </div>
-
-                <div style={{ textAlign: "center" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: 4,
-                      fontSize: 14,
-                      fontWeight: "bold",
-                      color: "#555",
-                    }}
-                  >
-                    Groom:
-                  </label>
-                  <input
-                    type="text"
-                    value={groom}
-                    onChange={(e) => setGroom(e.target.value)}
-                    placeholder="Groom's name"
-                    style={{
-                      width: 140,
-                      padding: 6,
-                      border: "1px solid #ccc",
-                      borderRadius: 4,
-                      fontSize: 12,
-                      textAlign: "center",
-                    }}
-                  />
-                </div>
-              </div>
+          {wizSectionHeading("Ceremony Location")}
+          <div style={mandatoryLocStyle}>
+            <div style={{ marginBottom: 10 }}>
+              <label style={mandatoryLabelStyle}>Venue Name</label>
+              <input
+                type="text"
+                value={wiz_ceremonyVenue}
+                onChange={(e) => setWiz_ceremonyVenue(e.target.value)}
+                placeholder="e.g. St. Mary's Church"
+                style={mandatoryInputStyle}
+              />
+            </div>
+            <div>
+              <label style={mandatoryLabelStyle}>Address <span style={{ fontWeight: "normal", color: "#aaa" }}>(optional)</span></label>
+              <input
+                type="text"
+                value={wiz_ceremonyAddress}
+                onChange={(e) => setWiz_ceremonyAddress(e.target.value)}
+                placeholder="e.g. 123 Main St, Springfield, MI"
+                style={mandatoryInputStyle}
+              />
             </div>
           </div>
 
-          {/* Timeline */}
-          <div
-            style={{
-              backgroundColor: "white",
-              padding: 15,
-              borderRadius: 8,
-              border: "1px solid #ddd",
-            }}
-          >
-            <h2
-              style={{
-                textAlign: "center",
-                margin: "0 0 15px 0",
-                fontSize: 18,
-                color: "#333",
-              }}
-            >
-              Timeline Events
-            </h2>
+          {wizSectionHeading("Reception Location")}
+          <div style={mandatoryLocStyle}>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: wiz_receptionSameAsCeremony ? 0 : 12, cursor: "pointer" }}
+              onClick={() => setWiz_receptionSameAsCeremony(!wiz_receptionSameAsCeremony)}>
+              <input type="checkbox" checked={wiz_receptionSameAsCeremony} onChange={() => {}} style={{ width: 18, height: 18, cursor: "pointer", flexShrink: 0 }} />
+              <span style={{ fontSize: 14, color: "#555" }}>Same as ceremony location</span>
+            </label>
+            {!wiz_receptionSameAsCeremony && (
+              <>
+                <div style={{ marginBottom: 10 }}>
+                  <label style={mandatoryLabelStyle}>Venue Name</label>
+                  <input
+                    type="text"
+                    value={wiz_receptionVenue}
+                    onChange={(e) => setWiz_receptionVenue(e.target.value)}
+                    placeholder="e.g. The Grand Ballroom"
+                    style={mandatoryInputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={mandatoryLabelStyle}>Address <span style={{ fontWeight: "normal", color: "#aaa" }}>(optional)</span></label>
+                  <input
+                    type="text"
+                    value={wiz_receptionAddress}
+                    onChange={(e) => setWiz_receptionAddress(e.target.value)}
+                    placeholder="e.g. 456 Oak Ave, Springfield, MI"
+                    style={mandatoryInputStyle}
+                  />
+                </div>
+              </>
+            )}
+          </div>
 
-            {/* Controls */}
-            <div
-              style={{
-                display: "flex",
-                gap: 8,
-                marginBottom: 15,
-                flexWrap: "wrap",
-                justifyContent: "center",
-              }}
+          {wizSectionHeading("Additional Locations")}
+          <p style={{ fontSize: 13, color: "#888", marginBottom: 12 }}>Any other venues you'll visit — portrait spots, getting ready locations, etc.</p>
+          {wiz_locations.map((loc, i) => (
+            <div key={loc.id} style={{ border: "1px solid #1e1c19", borderRadius: 8, padding: "14px 14px 10px", marginBottom: 12, background: "#0f0d0b" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <span style={{ fontSize: 14, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Location {i + 1}</span>
+                <button
+                  onClick={() => removeWizLocation(loc.id)}
+                  style={{ background: "none", border: "1px solid #2a2520", borderRadius: 4, padding: "3px 10px", fontSize: 12, color: "#6e6358", cursor: "pointer" }}
+                >
+                  Remove
+                </button>
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Location Name</label>
+                <input
+                  type="text"
+                  value={loc.name}
+                  onChange={(e) => updateWizLocation(loc.id, "name", e.target.value)}
+                  placeholder="e.g. Riverside Park, Hotel Lobby"
+                  style={{ width: "100%", padding: 9, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Address <span style={{ color: "#3a3530" }}>(optional)</span></label>
+                <input
+                  type="text"
+                  value={loc.address}
+                  onChange={(e) => updateWizLocation(loc.id, "address", e.target.value)}
+                  placeholder="e.g. 123 Main St, Springfield, MI"
+                  style={{ width: "100%", padding: 9, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc" }}
+                />
+              </div>
+            </div>
+          ))}
+          <button
+            onClick={addWizLocation}
+            style={{ padding: "10px 20px", background: "#161310", color: "#b8906a", border: "1px solid #b8906a", borderRadius: 8, fontSize: 14, fontWeight: 300, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
+          >
+            + Add Location
+          </button>
+        </div>,
+        () => setWizardStep(1),
+        () => setWizardStep(3)
+      );
+    }
+
+    // Step 1 — Wedding Details
+    if (wizardStep === 1) {
+      return stepCard(
+        "Wedding Details",
+        "These details will appear in your timeline header and exported documents.",
+        <div>
+          <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>{brideLabel}&apos;s Title</label>
+              <input
+                type="text"
+                value={brideLabel}
+                onChange={(e) => setBrideLabel(e.target.value)}
+                placeholder="Bride"
+                style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>{groomLabel}&apos;s Title</label>
+              <input
+                type="text"
+                value={groomLabel}
+                onChange={(e) => setGroomLabel(e.target.value)}
+                placeholder="Groom"
+                style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+              />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>{brideLabel}&apos;s Name</label>
+              <input
+                type="text"
+                value={bride}
+                onChange={(e) => setBride(e.target.value)}
+                placeholder={`${brideLabel}'s full name`}
+                style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>{groomLabel}&apos;s Name</label>
+              <input
+                type="text"
+                value={groom}
+                onChange={(e) => setGroom(e.target.value)}
+                placeholder={`${groomLabel}'s full name`}
+                style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+              />
+            </div>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Wedding Date</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              style={{ padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+            />
+          </div>
+        </div>,
+        () => setScreen("welcome"),
+        () => setWizardStep(2)
+      );
+    }
+
+    // Step 3 — Package Inclusions
+    if (wizardStep === 3) {
+      return stepCard(
+        "What's Included in Your Package?",
+        "Only check services that are part of your booked package — this ensures we only schedule what you're actually providing.",
+        <div>
+          <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Photo Coverage <span style={{ color: "#3a3530" }}>(hours)</span></label>
+              <input
+                type="number"
+                value={wiz_photoCoverageHours}
+                onChange={(e) => setWiz_photoCoverageHours(e.target.value)}
+                placeholder="e.g. 8"
+                min={1}
+                max={24}
+                style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Video Coverage <span style={{ color: "#3a3530" }}>(hours)</span></label>
+              <input
+                type="number"
+                value={wiz_videoCoverageHours}
+                onChange={(e) => setWiz_videoCoverageHours(e.target.value)}
+                placeholder="e.g. 8"
+                min={1}
+                max={24}
+                style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+              />
+            </div>
+          </div>
+          <label style={{ ...wizCheckRowStyle }} onClick={() => setWiz_drone(!wiz_drone)}>
+            <input type="checkbox" checked={wiz_drone} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Drone Coverage</div>
+              <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>Aerial footage and venue exterior shots</div>
+            </div>
+          </label>
+          <label style={{ ...wizCheckRowStyle }} onClick={() => setWiz_narration(!wiz_narration)}>
+            <input type="checkbox" checked={wiz_narration} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Narration Recording</div>
+              <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>Separate narration sessions for bride and groom</div>
+            </div>
+          </label>
+        </div>,
+        () => setWizardStep(2),
+        () => setWizardStep(4)
+      );
+    }
+
+    // Step 4 — Pre-Ceremony
+    if (wizardStep === 4) {
+      const wizInputStyle = { width: "100%", padding: "10px 12px", border: "1px solid #2a2520", borderRadius: 8, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" };
+      const wizMinuteNote = <p style={{ fontSize: 12, color: "#aaa", margin: "4px 0 0 0" }}>Enter drive time in minutes, not miles</p>;
+      return stepCard(
+        "Pre-Ceremony",
+        "Getting ready locations help us plan travel time and schedule the first part of your day.",
+        <div>
+          {/* Same location question */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>
+              Are the bride and groom getting ready at the same location or venue?
+            </label>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button style={wizToggleStyle(wiz_sameLocation === true)} onClick={() => setWiz_sameLocation(true)}>Yes</button>
+              <button style={wizToggleStyle(wiz_sameLocation === false)} onClick={() => setWiz_sameLocation(false)}>No</button>
+            </div>
+          </div>
+
+          {/* Same location: one shared address + one distance to ceremony */}
+          {wiz_sameLocation === true && (
+            <>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Getting ready location <span style={{ color: "#3a3530" }}>(optional)</span></label>
+                <select value={wiz_brideReadyAddress} onChange={(e) => setWiz_brideReadyAddress(e.target.value)} style={wizInputStyle}>
+                  <option value="">Select a location…</option>
+                  {allWizLocations.map((name, i) => <option key={i} value={name}>{name}</option>)}
+                </select>
+              </div>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Distance from getting ready location to ceremony <span style={{ color: "#3a3530" }}>(optional)</span></label>
+                <input type="text" value={wiz_distanceBrideToCeremony} onChange={(e) => setWiz_distanceBrideToCeremony(e.target.value)} placeholder="e.g. 20" style={wizInputStyle} />
+                {wizMinuteNote}
+              </div>
+            </>
+          )}
+
+          {/* Different locations: separate address fields + distances + portraits-at-location option */}
+          {wiz_sameLocation === false && (
+            <>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Where is the {brideLabel} getting ready? <span style={{ color: "#3a3530" }}>(optional)</span></label>
+                <select value={wiz_brideReadyAddress} onChange={(e) => setWiz_brideReadyAddress(e.target.value)} style={wizInputStyle}>
+                  <option value="">Select a location…</option>
+                  {allWizLocations.map((name, i) => <option key={i} value={name}>{name}</option>)}
+                </select>
+              </div>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Where is the {groomLabel} getting ready? <span style={{ color: "#3a3530" }}>(optional)</span></label>
+                <select value={wiz_groomReadyAddress} onChange={(e) => setWiz_groomReadyAddress(e.target.value)} style={wizInputStyle}>
+                  <option value="">Select a location…</option>
+                  {allWizLocations.map((name, i) => <option key={i} value={name}>{name}</option>)}
+                </select>
+              </div>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Distance between the two getting ready locations <span style={{ color: "#3a3530" }}>(optional)</span></label>
+                <input type="text" value={wiz_distanceBetweenReady} onChange={(e) => setWiz_distanceBetweenReady(e.target.value)} placeholder="e.g. 20" style={wizInputStyle} />
+                {wizMinuteNote}
+              </div>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Distance from bride's getting ready location to ceremony <span style={{ color: "#3a3530" }}>(optional)</span></label>
+                <input type="text" value={wiz_distanceBrideToCeremony} onChange={(e) => setWiz_distanceBrideToCeremony(e.target.value)} placeholder="e.g. 20" style={wizInputStyle} />
+                {wizMinuteNote}
+              </div>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Distance from groom's getting ready location to ceremony <span style={{ color: "#3a3530" }}>(optional)</span></label>
+                <input type="text" value={wiz_distanceGroomToCeremony} onChange={(e) => setWiz_distanceGroomToCeremony(e.target.value)} placeholder="e.g. 15" style={wizInputStyle} />
+                {wizMinuteNote}
+              </div>
+              {/* Portraits at each getting ready location */}
+              <label style={{ ...wizCheckRowStyle, marginBottom: 8 }} onClick={() => { setWiz_portraitsAtReadyLocations(!wiz_portraitsAtReadyLocations); if (wiz_portraitsAtReadyLocations) { setWiz_bridePortraitsAtReadyLocation(false); setWiz_groomPortraitsAtReadyLocation(false); } }}>
+                <input type="checkbox" checked={wiz_portraitsAtReadyLocations} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Will portraits be done at each person's getting ready location?</div>
+                </div>
+              </label>
+              {wiz_portraitsAtReadyLocations && (
+                <div style={{ paddingLeft: 34, marginBottom: 12 }} onClick={(e) => e.stopPropagation()}>
+                  <label style={{ ...wizCheckRowStyle, marginBottom: 6 }} onClick={() => setWiz_bridePortraitsAtReadyLocation(!wiz_bridePortraitsAtReadyLocation)}>
+                    <input type="checkbox" checked={wiz_bridePortraitsAtReadyLocation} onChange={() => {}} style={{ width: 20, height: 20, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
+                    <div style={{ fontSize: 14, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Bride &amp; bridesmaids portraits at bride's getting ready location</div>
+                  </label>
+                  <label style={{ ...wizCheckRowStyle }} onClick={() => setWiz_groomPortraitsAtReadyLocation(!wiz_groomPortraitsAtReadyLocation)}>
+                    <input type="checkbox" checked={wiz_groomPortraitsAtReadyLocation} onChange={() => {}} style={{ width: 20, height: 20, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
+                    <div style={{ fontSize: 14, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Groom &amp; groomsmen portraits at groom's getting ready location</div>
+                  </label>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Hair & makeup done-by time — always shown */}
+          <div>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#ddd0bc", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>
+              When should hair &amp; make-up be done by? <span style={{ color: "#3a3530" }}>(optional)</span>
+            </label>
+            <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 10px 0", fontFamily: "'Jost', sans-serif" }}>Target time for the bride and bridesmaids to be fully ready.</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <select value={wiz_hairMakeupDoneHour} onChange={(e) => setWiz_hairMakeupDoneHour(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                {["1","2","3","4","5","6","7","8","9","10","11","12"].map(h => <option key={h} value={h}>{h}</option>)}
+              </select>
+              <span style={{ fontSize: 18, fontWeight: "bold", color: "#ddd0bc" }}>:</span>
+              <select value={wiz_hairMakeupDoneMinute} onChange={(e) => setWiz_hairMakeupDoneMinute(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                {["00","05","10","15","20","25","30","35","40","45","50","55"].map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+              <select value={wiz_hairMakeupDonePeriod} onChange={(e) => setWiz_hairMakeupDonePeriod(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+          </div>
+        </div>,
+        () => setWizardStep(3),
+        () => setWizardStep(5)
+      );
+    }
+
+    // Step 5 — Ceremony
+    if (wizardStep === 5) {
+      const hourOptions = ["1","2","3","4","5","6","7","8","9","10","11","12"];
+      const minuteOptions = ["00","05","10","15","20","25","30","35","40","45","50","55"];
+      return stepCard(
+        "Ceremony",
+        "Ceremony time and type help us schedule everything before and after accurately.",
+        <div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Ceremony Start Time</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <select value={wiz_ceremonyHour} onChange={(e) => setWiz_ceremonyHour(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                {hourOptions.map((h) => <option key={h} value={h}>{h}</option>)}
+              </select>
+              <span style={{ fontSize: 18, fontWeight: "bold" }}>:</span>
+              <select value={wiz_ceremonyMinute} onChange={(e) => setWiz_ceremonyMinute(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                {minuteOptions.map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+              <select value={wiz_ceremonyPeriod} onChange={(e) => setWiz_ceremonyPeriod(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Ceremony Duration (minutes)</label>
+            <input
+              type="number"
+              value={wiz_ceremonyDuration}
+              min={5}
+              step={5}
+              onChange={(e) => setWiz_ceremonyDuration(parseInt(e.target.value, 10) || 30)}
+              style={{ padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, width: 100, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Anticipated Guest Count <span style={{ color: "#3a3530" }}>(optional)</span></label>
+            <input
+              type="number"
+              value={wiz_guestCount}
+              min={1}
+              onChange={(e) => setWiz_guestCount(e.target.value)}
+              placeholder="e.g. 150"
+              style={{ padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, width: 120, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Ceremony Setting</label>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button style={wizToggleStyle(!wiz_ceremonyOutdoor)} onClick={() => setWiz_ceremonyOutdoor(false)}>Indoors</button>
+              <button style={wizToggleStyle(wiz_ceremonyOutdoor)} onClick={() => setWiz_ceremonyOutdoor(true)}>Outdoor</button>
+            </div>
+          </div>
+        </div>,
+        () => setWizardStep(4),
+        () => setWizardStep(6)
+      );
+    }
+
+    // Step 6 — First Looks
+    if (wizardStep === 6) {
+      return stepCard(
+        "First Looks",
+        "First looks affect the order of portraits and group photos in your timeline.",
+        <div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Will there be any first looks before the ceremony?</label>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button style={wizToggleStyle(wiz_hasFirstLooks === true)} onClick={() => setWiz_hasFirstLooks(true)}>Yes</button>
+              <button style={wizToggleStyle(wiz_hasFirstLooks === false)} onClick={() => { setWiz_hasFirstLooks(false); setWiz_firstLookGroom(false); setWiz_firstLookParent(false); setWiz_firstLookBridesmaids(false); setWiz_firstLookOther(false); }}>No</button>
+            </div>
+          </div>
+          {wiz_hasFirstLooks === true && (
+            <div>
+              <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Who are the first looks with?</label>
+              {[
+                { key: "groom", label: "Groom", sub: "Couple's first look before the ceremony", val: wiz_firstLookGroom, set: setWiz_firstLookGroom, locVal: wiz_firstLookGroomLocation, setLoc: setWiz_firstLookGroomLocation },
+                { key: "parent", label: "Parent(s)", sub: "Bride sees parent(s) for the first time", val: wiz_firstLookParent, set: setWiz_firstLookParent, locVal: wiz_firstLookParentLocation, setLoc: setWiz_firstLookParentLocation },
+                { key: "bridesmaids", label: "Bridesmaids", sub: "Bride reveals look to the bridal party", val: wiz_firstLookBridesmaids, set: setWiz_firstLookBridesmaids, locVal: wiz_firstLookBridsmaidsLocation, setLoc: setWiz_firstLookBridsmaidsLocation },
+                { key: "other", label: "Other", sub: "Any other first look moments", val: wiz_firstLookOther, set: setWiz_firstLookOther, locVal: wiz_firstLookOtherLocation, setLoc: setWiz_firstLookOtherLocation },
+              ].map(({ key, label, sub, val, set, locVal, setLoc }) => (
+                <label key={key} style={{ ...wizCheckRowStyle }} onClick={() => set(!val)}>
+                  <input type="checkbox" checked={val} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 16, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{label}</div>
+                    <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>{sub}</div>
+                    {val && (
+                      <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #1e1c19" }} onClick={e => e.stopPropagation()}>
+                        <label style={{ display: "block", fontSize: 12, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Where will this first look take place?</label>
+                        <select
+                          value={locVal}
+                          onChange={e => setLoc(e.target.value)}
+                          style={{ width: "100%", padding: "6px 8px", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, background: "#0f0d0b", color: "#ddd0bc" }}
+                        >
+                          <option value="">Select a location…</option>
+                          {allWizLocations.map((name, i) => (
+                            <option key={i} value={name}>{name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>,
+        () => setWizardStep(5),
+        () => {
+          if (wiz_firstLookGroom) {
+            setWizardStep(8);
+          } else {
+            setWizardStep(7);
+          }
+        }
+      );
+    }
+
+    // Step 7 — Pre-Ceremony Visibility (skipped if wiz_firstLookGroom)
+    if (wizardStep === 7) {
+      return stepCard(
+        "Pre-Ceremony Visibility",
+        "This affects whether couple and wedding party portraits can be taken before the ceremony.",
+        <div>
+          <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Is the bride okay with the groom seeing her before the ceremony?</label>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button style={wizToggleStyle(wiz_brideOkayBefore === true)} onClick={() => setWiz_brideOkayBefore(true)}>Yes</button>
+            <button style={wizToggleStyle(wiz_brideOkayBefore === false)} onClick={() => setWiz_brideOkayBefore(false)}>No</button>
+          </div>
+        </div>,
+        () => setWizardStep(6),
+        () => setWizardStep(8)
+      );
+    }
+
+    // Step 8 — Post-Ceremony
+    if (wizardStep === 8) {
+      const groupCount = wiz_familyGroups === "none" ? 0 : parseInt(wiz_familyGroups, 10);
+      return stepCard(
+        "Post-Ceremony",
+        "Tell us about group photos, portrait locations, and golden hour after the ceremony.",
+        <div>
+          {wizSectionHeading("Family Group Photos")}
+          <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 10px 0", fontFamily: "'Jost', sans-serif" }}>How many family groupings will be photographed after the ceremony?</p>
+          <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+            <button style={wizToggleStyle(wiz_familyGroups === "5")} onClick={() => setWiz_familyGroups("5")}>5 Groups (~20 min)</button>
+            <button style={wizToggleStyle(wiz_familyGroups === "10")} onClick={() => setWiz_familyGroups("10")}>10 Groups (~45 min)</button>
+            <button style={wizToggleStyle(wiz_familyGroups === "none")} onClick={() => setWiz_familyGroups("none")}>None</button>
+          </div>
+          {groupCount > 0 && (
+            <div style={{ marginBottom: 8 }}>
+              <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 10px 0", fontFamily: "'Jost', sans-serif" }}>List who is in each group <span style={{ color: "#3a3530" }}>(optional)</span></p>
+              {Array.from({ length: groupCount }).map((_, i) => (
+                <div key={i} style={{ marginBottom: 10 }}>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Group {i + 1}</label>
+                  <input
+                    type="text"
+                    value={wiz_familyGroupNames[i] || ""}
+                    onChange={(e) => {
+                      const next = [...wiz_familyGroupNames];
+                      next[i] = e.target.value;
+                      setWiz_familyGroupNames(next);
+                    }}
+                    placeholder="e.g. Smith family — bride's parents + 2 siblings"
+                    style={{ width: "100%", padding: 9, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {wizSectionHeading("Portrait Locations")}
+          <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 12px 0", fontFamily: "'Jost', sans-serif" }}>Add each location where portraits will be taken after the ceremony.</p>
+          {wiz_portraitLocations.map((loc, i) => (
+            <div key={i} style={{ border: "1px solid #1e1c19", borderRadius: 8, padding: "14px 14px 6px", marginBottom: 12, background: "#0f0d0b" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <span style={{ fontSize: 14, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Location {i + 1}</span>
+                <button
+                  onClick={() => setWiz_portraitLocations(prev => prev.filter((_, idx) => idx !== i))}
+                  style={{ background: "none", border: "1px solid #2a2520", borderRadius: 4, padding: "3px 10px", fontSize: 12, color: "#6e6358", cursor: "pointer" }}
+                >
+                  Remove
+                </button>
+              </div>
+              {[
+                { field: "name", label: "Location Name", placeholder: "e.g. Riverside Park" },
+                { field: "address", label: "Address", placeholder: "e.g. 123 River Rd, Springfield" },
+                { field: "distFromCeremony", label: "Distance from Ceremony Venue", placeholder: "e.g. 10" },
+                { field: "distFromReception", label: "Distance from Reception Venue", placeholder: "e.g. 5" },
+              ].map(({ field, label, placeholder }) => (
+                <div key={field} style={{ marginBottom: 10 }}>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>
+                    {label} <span style={{ color: "#3a3530" }}>(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={loc[field] || ""}
+                    onChange={(e) => setWiz_portraitLocations(prev => {
+                      const next = [...prev];
+                      next[i] = { ...next[i], [field]: e.target.value };
+                      return next;
+                    })}
+                    placeholder={placeholder}
+                    style={{ width: "100%", padding: 9, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+                  />
+                  {(field === "distFromCeremony" || field === "distFromReception") && (
+                    <p style={{ fontSize: 12, color: "#6e6358", margin: "4px 0 0 0", fontFamily: "'Jost', sans-serif" }}>Enter drive time in minutes, not miles</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+          <button
+            onClick={() => setWiz_portraitLocations(prev => [...prev, { name: "", address: "", distFromCeremony: "", distFromReception: "" }])}
+            style={{ padding: "9px 18px", background: "#161310", color: "#b8906a", border: "1px solid #b8906a", borderRadius: 8, fontSize: 13, fontWeight: 300, cursor: "pointer", marginBottom: 20, fontFamily: "'Jost', sans-serif" }}
+          >
+            + Add Portrait Location
+          </button>
+
+          {wizSectionHeading("Golden Hour")}
+          <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 10px 0", fontFamily: "'Jost', sans-serif" }}>Golden hour portraits take advantage of the soft light just before sunset.</p>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button style={wizToggleStyle(wiz_goldenHour === true)} onClick={() => setWiz_goldenHour(true)}>Yes</button>
+            <button style={wizToggleStyle(wiz_goldenHour === false)} onClick={() => setWiz_goldenHour(false)}>No</button>
+          </div>
+        </div>,
+        () => {
+          if (wiz_firstLookGroom) {
+            setWizardStep(6);
+          } else {
+            setWizardStep(7);
+          }
+        },
+        () => setWizardStep(9)
+      );
+    }
+
+    // Step 9 — Reception
+    if (wizardStep === 9) {
+      const hourOptions = ["1","2","3","4","5","6","7","8","9","10","11","12"];
+      const minuteOptions = ["00","05","10","15","20","25","30","35","40","45","50","55"];
+      const receptionEvents = [
+        { label: "Grand Entrance", sub: "Couple introduced to the reception", val: wiz_grandEntrance, set: setWiz_grandEntrance },
+        { label: "Cake Cutting", sub: "", val: wiz_cakeCutting, set: setWiz_cakeCutting },
+        { label: "First Dance", sub: "Bride & Groom first dance", val: wiz_firstDance, set: setWiz_firstDance },
+        { label: "Bride & Parent Dance", sub: "", val: wiz_brideParentDance, set: setWiz_brideParentDance },
+        { label: "Groom & Parent Dance", sub: "", val: wiz_groomParentDance, set: setWiz_groomParentDance },
+        { label: "Special Dance", sub: "Any other special dance moments", val: wiz_specialDance, set: setWiz_specialDance },
+        { label: "Open Dance Floor", sub: "", val: wiz_openDanceFloor, set: setWiz_openDanceFloor },
+        { label: "Garter Toss", sub: "", val: wiz_garterToss, set: setWiz_garterToss },
+        { label: "Bouquet Toss", sub: "", val: wiz_bouquetToss, set: setWiz_bouquetToss },
+      ];
+      return stepCard(
+        "Reception",
+        "Select what's happening at the reception so we can build out that part of your timeline.",
+        <div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Reception Start Time</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <select value={wiz_receptionHour} onChange={(e) => setWiz_receptionHour(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                {hourOptions.map((h) => <option key={h} value={h}>{h}</option>)}
+              </select>
+              <span style={{ fontSize: 18, fontWeight: "bold" }}>:</span>
+              <select value={wiz_receptionMinute} onChange={(e) => setWiz_receptionMinute(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                {minuteOptions.map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+              <select value={wiz_receptionPeriod} onChange={(e) => setWiz_receptionPeriod(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+          </div>
+
+          {wizSectionHeading("Reception Events")}
+          {receptionEvents.map(({ label, sub, val, set }) => (
+            <label key={label} style={{ ...wizCheckRowStyle }} onClick={() => set(!val)}>
+              <input type="checkbox" checked={val} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{label}</div>
+                {sub && <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>{sub}</div>}
+              </div>
+            </label>
+          ))}
+
+          <label style={{ ...wizCheckRowStyle }} onClick={() => setWiz_dinner(!wiz_dinner)}>
+            <input type="checkbox" checked={wiz_dinner} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Dinner</div>
+              <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>Sit-down meal service</div>
+              {wiz_dinner && (
+                <div style={{ marginTop: 12 }} onClick={(e) => e.stopPropagation()}>
+                  <div style={{ marginBottom: 10 }}>
+                    <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Dinner Start Time</label>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <select value={wiz_dinnerStartHour} onChange={(e) => setWiz_dinnerStartHour(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                        {hourOptions.map((h) => <option key={h} value={h}>{h}</option>)}
+                      </select>
+                      <span style={{ fontSize: 18, fontWeight: "bold" }}>:</span>
+                      <select value={wiz_dinnerStartMinute} onChange={(e) => setWiz_dinnerStartMinute(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                        {minuteOptions.map((m) => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                      <select value={wiz_dinnerStartPeriod} onChange={(e) => setWiz_dinnerStartPeriod(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Dinner Style</label>
+                    <div style={{ display: "flex", gap: 10 }}>
+                      {["Plated", "Buffet"].map((style) => (
+                        <button
+                          key={style}
+                          onClick={() => setWiz_dinnerStyle(style)}
+                          style={wizToggleStyle(wiz_dinnerStyle === style)}
+                        >
+                          {style}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </label>
+
+          <label style={{ ...wizCheckRowStyle }} onClick={() => setWiz_speeches(!wiz_speeches)}>
+            <input type="checkbox" checked={wiz_speeches} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Speeches</div>
+              {wiz_speeches && (
+                <div onClick={(e) => e.stopPropagation()}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
+                    <label style={{ fontSize: 13, color: "#6e6358", fontWeight: 300, fontFamily: "'Jost', sans-serif" }}>How many speakers?</label>
+                    <input
+                      type="number"
+                      value={wiz_speechCount}
+                      min={1}
+                      step={1}
+                      onChange={(e) => setWiz_speechCount(parseInt(e.target.value, 10) || 1)}
+                      style={{ padding: 6, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, width: 60, textAlign: "center", background: "#0f0d0b", color: "#ddd0bc" }}
+                    />
+                  </div>
+                  <p style={{ fontSize: 12, color: "#6e6358", margin: "6px 0 0 0", fontFamily: "'Jost', sans-serif" }}>Include anyone doing a blessing or prayer in this count.</p>
+                </div>
+              )}
+            </div>
+          </label>
+        </div>,
+        () => setWizardStep(8),
+        () => setWizardStep(99),
+        "Review & Generate"
+      );
+    }
+
+    // Step 99 — Confirmation
+    if (wizardStep === 99) {
+      const ceremonyTime = `${wiz_ceremonyHour}:${wiz_ceremonyMinute} ${wiz_ceremonyPeriod}`;
+      const receptionTime = `${wiz_receptionHour}:${wiz_receptionMinute} ${wiz_receptionPeriod}`;
+      const firstLooksList = [];
+      if (wiz_firstLookGroom) firstLooksList.push("Groom");
+      if (wiz_firstLookParent) firstLooksList.push("Parent(s)");
+      if (wiz_firstLookBridesmaids) firstLooksList.push("Bridesmaids");
+      if (wiz_firstLookOther) firstLooksList.push("Other");
+      const groupShotsBeforeCeremony = wiz_firstLookGroom || wiz_brideOkayBefore === true;
+
+      const summaryRow = (label, value) => (
+        <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #1e1c19", fontSize: 14 }}>
+          <span style={{ color: "#6e6358", fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em", fontSize: 13 }}>{label}</span>
+          <span style={{ color: "#ddd0bc", textAlign: "right", maxWidth: "60%", fontFamily: "'Jost', sans-serif" }}>{value}</span>
+        </div>
+      );
+
+      return (
+        <div className="wiz-layout" style={{ padding: "16px 0" }}>
+          <div className="wiz-step-col">
+          <div style={{ maxWidth: 600, margin: "0 auto", padding: "24px 16px 40px" }}>
+          <div style={{ background: "#0f0d0b", border: "1px solid #1e1c19", borderRadius: 12, padding: "24px 20px", marginBottom: 20 }}>
+            <h2 style={{ margin: "0 0 8px 0", fontSize: "clamp(22px,4vw,32px)", color: "#ddd0bc", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Ready to Generate</h2>
+            <p style={{ margin: "0 0 20px 0", fontSize: 14, color: "#6e6358", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>Review your selections below, then click Generate Timeline.</p>
+
+            {summaryRow("Bride / Person 1", `${brideLabel}: ${bride || "(not set)"}`)}
+            {summaryRow("Groom / Person 2", `${groomLabel}: ${groom || "(not set)"}`)}
+            {summaryRow("Wedding Date", date || "(not set)")}
+            {wiz_photoCoverageHours && summaryRow("Photo Coverage", `${wiz_photoCoverageHours} hrs`)}
+            {wiz_videoCoverageHours && summaryRow("Video Coverage", `${wiz_videoCoverageHours} hrs`)}
+            {wiz_brideReadyAddress && summaryRow("Bride Getting Ready", wiz_brideReadyAddress)}
+            {wiz_groomReadyAddress && summaryRow("Groom Getting Ready", wiz_groomReadyAddress)}
+            {wiz_distanceBetweenReady && summaryRow("Distance Between Ready Locations", wiz_distanceBetweenReady)}
+            {wiz_distanceBrideToCeremony && summaryRow("Bride's Distance to Ceremony", wiz_distanceBrideToCeremony)}
+            {wiz_distanceGroomToCeremony && summaryRow("Groom's Distance to Ceremony", wiz_distanceGroomToCeremony)}
+            {summaryRow("Hair & Make-up Done By", `${wiz_hairMakeupDoneHour}:${wiz_hairMakeupDoneMinute} ${wiz_hairMakeupDonePeriod}`)}
+            {summaryRow("Ceremony Time", ceremonyTime)}
+            {summaryRow("Ceremony Duration", `${wiz_ceremonyDuration} min`)}
+            {wiz_ceremonyVenue && summaryRow("Ceremony Venue", wiz_ceremonyVenue)}
+            {wiz_ceremonyAddress && summaryRow("Ceremony Address", wiz_ceremonyAddress)}
+            {summaryRow("Reception Venue", wiz_receptionSameAsCeremony ? `Same as ceremony (${ceremonyVenueName})` : (wiz_receptionVenue || "Not entered"))}
+            {!wiz_receptionSameAsCeremony && wiz_receptionAddress && summaryRow("Reception Address", wiz_receptionAddress)}
+            {summaryRow("Ceremony Setting", wiz_ceremonyOutdoor ? "Outdoor" : "Indoors")}
+            {wiz_guestCount && summaryRow("Anticipated Guests", wiz_guestCount)}
+            {summaryRow("Drone Coverage", wiz_drone ? "Yes" : "No")}
+            {summaryRow("Narration", wiz_narration ? "Yes" : "No")}
+            {summaryRow("First Looks", wiz_hasFirstLooks === false || !wiz_hasFirstLooks ? "None" : firstLooksList.length > 0 ? firstLooksList.join(", ") : "Yes (unspecified)")}
+            {!wiz_firstLookGroom && summaryRow("Bride OK Before Ceremony", wiz_brideOkayBefore === null ? "(not answered)" : wiz_brideOkayBefore ? "Yes" : "No")}
+            {summaryRow("Group Shots Before Ceremony", groupShotsBeforeCeremony ? "Yes" : "No")}
+            {summaryRow("Family Groups", wiz_familyGroups === "none" ? "None" : wiz_familyGroups === "5" ? "5 Groups (~20 min)" : "10 Groups (~45 min)")}
+            {wiz_familyGroups !== "none" && wiz_familyGroupNames.some(n => n) && summaryRow("Group Names", wiz_familyGroupNames.filter(Boolean).join(", "))}
+            {wiz_portraitLocations.length > 0 && summaryRow("Portrait Locations", wiz_portraitLocations.map((l, i) => l.name || `Location ${i + 1}`).join(", "))}
+            {summaryRow("Golden Hour", wiz_goldenHour ? "Yes" : "No")}
+            {summaryRow("Reception Time", receptionTime)}
+            {wiz_dinner && summaryRow("Dinner Start", `${wiz_dinnerStartHour}:${wiz_dinnerStartMinute} ${wiz_dinnerStartPeriod}`)}
+            {wiz_dinner && wiz_dinnerStyle && summaryRow("Dinner Style", wiz_dinnerStyle)}
+            {summaryRow("Reception Events", [
+              wiz_grandEntrance && "Grand Entrance",
+              wiz_cakeCutting && "Cake Cutting",
+              wiz_firstDance && "First Dance",
+              wiz_brideParentDance && "Bride & Parent Dance",
+              wiz_groomParentDance && "Groom & Parent Dance",
+              wiz_specialDance && "Special Dance",
+              wiz_dinner && "Dinner",
+              wiz_dinner && wiz_dinnerStyle && `(${wiz_dinnerStyle})`,
+              wiz_speeches && `Speeches (${wiz_speechCount})`,
+              wiz_openDanceFloor && "Open Dance Floor",
+              wiz_garterToss && "Garter Toss",
+              wiz_bouquetToss && "Bouquet Toss",
+            ].filter(Boolean).join(", ") || "None")}
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+            <button
+              onClick={() => setWizardStep(9)}
+              style={{ padding: "12px 28px", border: "1px solid #b8906a", borderRadius: 8, background: "transparent", color: "#ddd0bc", fontSize: 15, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}
             >
+              Go Back
+            </button>
+            <button
+              onClick={generateTimeline}
+              className="generate-btn"
+              style={{ padding: "18px 48px", color: "#060504", border: "none", borderRadius: 10, fontSize: 22, fontWeight: 400, cursor: "pointer", fontFamily: "'Cormorant Garamond', serif" }}
+            >
+              Generate Timeline
+            </button>
+          </div>
+          </div>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const renderSettingsForm = (isModal) => (
+    <div>
+      {/* Section 1: Wedding Details */}
+      <div style={{ background: "#0f0d0b", border: "1px solid #161310", borderRadius: 8, padding: 20, marginBottom: 16 }}>
+        <h3 style={{ margin: "0 0 16px 0", fontSize: 12, color: "#b8906a", fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase" }}>Wedding Details</h3>
+
+        {/* Date */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <label style={{ fontSize: 13, fontWeight: 300, color: "#6e6358", minWidth: 60, fontFamily: "'Jost', sans-serif" }}>Date:</label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            style={{ padding: 7, border: "1px solid #2a2520", borderRadius: 4, fontSize: 14, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+          />
+        </div>
+
+        {/* Person 1 */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+          <label style={{ fontSize: 13, fontWeight: 300, color: "#6e6358", minWidth: 60, fontFamily: "'Jost', sans-serif" }}>Person 1:</label>
+          <select
+            value={brideLabel}
+            onChange={(e) => setBrideLabel(e.target.value)}
+            style={{ ...settingsSelectStyle, minWidth: 100 }}
+          >
+            <option value="Bride">Bride</option>
+            <option value="Groom">Groom</option>
+            <option value="Partner 1">Partner 1</option>
+            <option value="Partner 2">Partner 2</option>
+          </select>
+          <input
+            type="text"
+            value={bride}
+            onChange={(e) => setBride(e.target.value)}
+            placeholder={`${brideLabel}'s name`}
+            style={{ padding: 7, border: "1px solid #2a2520", borderRadius: 4, fontSize: 13, flex: 1, minWidth: 0, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+          />
+        </div>
+
+        {/* Person 2 */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <label style={{ fontSize: 13, fontWeight: 300, color: "#6e6358", minWidth: 60, fontFamily: "'Jost', sans-serif" }}>Person 2:</label>
+          <select
+            value={groomLabel}
+            onChange={(e) => setGroomLabel(e.target.value)}
+            style={{ ...settingsSelectStyle, minWidth: 100 }}
+          >
+            <option value="Bride">Bride</option>
+            <option value="Groom">Groom</option>
+            <option value="Partner 1">Partner 1</option>
+            <option value="Partner 2">Partner 2</option>
+          </select>
+          <input
+            type="text"
+            value={groom}
+            onChange={(e) => setGroom(e.target.value)}
+            placeholder={`${groomLabel}'s name`}
+            style={{ padding: 7, border: "1px solid #2a2520", borderRadius: 4, fontSize: 13, flex: 1, minWidth: 0, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+          />
+        </div>
+      </div>
+
+      {/* Section 2: Coverage */}
+      <div style={{ background: "#0f0d0b", border: "1px solid #161310", borderRadius: 8, padding: 20, marginBottom: 16 }}>
+        <h3 style={{ margin: "0 0 16px 0", fontSize: 12, color: "#b8906a", fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase" }}>Coverage</h3>
+
+        {/* Photography */}
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 300, color: "#ddd0bc", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>
+            <input
+              type="checkbox"
+              checked={photoEnabled}
+              onChange={(e) => {
+                const enabled = e.target.checked;
+                setPhotoEnabled(enabled);
+                setUserRows((r) => r.map((row) => ({ ...row, photo: enabled })));
+              }}
+            />
+            Photography
+          </label>
+          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4, paddingLeft: 24, opacity: photoEnabled ? 1 : 0.5 }}>
+            <select value={photoStartHour} onChange={(e) => setPhotoStartHour(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "#1e1c19" : "#0f0d0b", color: !photoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderHourOptions()}</select>
+            <span style={{ color: "#6e6358" }}>:</span>
+            <select value={photoStartMinute} onChange={(e) => setPhotoStartMinute(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "#1e1c19" : "#0f0d0b", color: !photoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderMinuteOptions()}</select>
+            <select value={photoStartPeriod} onChange={(e) => setPhotoStartPeriod(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "#1e1c19" : "#0f0d0b", color: !photoEnabled ? "#3a3530" : "#ddd0bc" }}><option value="AM">AM</option><option value="PM">PM</option></select>
+            <span style={{ margin: "0 4px", color: "#6e6358" }}>—</span>
+            <select value={photoEndHour} onChange={(e) => setPhotoEndHour(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "#1e1c19" : "#0f0d0b", color: !photoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderHourOptions()}</select>
+            <span style={{ color: "#6e6358" }}>:</span>
+            <select value={photoEndMinute} onChange={(e) => setPhotoEndMinute(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "#1e1c19" : "#0f0d0b", color: !photoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderMinuteOptions()}</select>
+            <select value={photoEndPeriod} onChange={(e) => setPhotoEndPeriod(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "#1e1c19" : "#0f0d0b", color: !photoEnabled ? "#3a3530" : "#ddd0bc" }}><option value="AM">AM</option><option value="PM">PM</option></select>
+          </div>
+        </div>
+
+        {/* Videography */}
+        <div>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 300, color: "#ddd0bc", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>
+            <input
+              type="checkbox"
+              checked={videoEnabled}
+              onChange={(e) => {
+                const enabled = e.target.checked;
+                setVideoEnabled(enabled);
+                setUserRows((r) => r.map((row) => ({ ...row, video: enabled })));
+              }}
+            />
+            Videography
+          </label>
+          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4, paddingLeft: 24, opacity: videoEnabled ? 1 : 0.5 }}>
+            <select value={videoStartHour} onChange={(e) => setVideoStartHour(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "#1e1c19" : "#0f0d0b", color: !videoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderHourOptions()}</select>
+            <span style={{ color: "#6e6358" }}>:</span>
+            <select value={videoStartMinute} onChange={(e) => setVideoStartMinute(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "#1e1c19" : "#0f0d0b", color: !videoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderMinuteOptions()}</select>
+            <select value={videoStartPeriod} onChange={(e) => setVideoStartPeriod(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "#1e1c19" : "#0f0d0b", color: !videoEnabled ? "#3a3530" : "#ddd0bc" }}><option value="AM">AM</option><option value="PM">PM</option></select>
+            <span style={{ margin: "0 4px", color: "#6e6358" }}>—</span>
+            <select value={videoEndHour} onChange={(e) => setVideoEndHour(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "#1e1c19" : "#0f0d0b", color: !videoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderHourOptions()}</select>
+            <span style={{ color: "#6e6358" }}>:</span>
+            <select value={videoEndMinute} onChange={(e) => setVideoEndMinute(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "#1e1c19" : "#0f0d0b", color: !videoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderMinuteOptions()}</select>
+            <select value={videoEndPeriod} onChange={(e) => setVideoEndPeriod(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "#1e1c19" : "#0f0d0b", color: !videoEnabled ? "#3a3530" : "#ddd0bc" }}><option value="AM">AM</option><option value="PM">PM</option></select>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 3: Fixed-Time Events */}
+      <div style={{ background: "#0f0d0b", border: "1px solid #161310", borderRadius: 8, padding: 20, marginBottom: 16 }}>
+        <h3 style={{ margin: "0 0 4px 0", fontSize: 12, color: "#b8906a", fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase" }}>Fixed-Time Events</h3>
+        <p style={{ margin: "0 0 14px 0", fontSize: 13, color: "#6e6358", fontFamily: "'Jost', sans-serif" }}>Events that must start at a specific time — added to your timeline as time-locked anchors.</p>
+
+        {/* Column headers */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 160px 70px 28px", gap: 6, marginBottom: 6, paddingRight: 2 }}>
+          <span style={{ fontSize: 11, fontWeight: 300, color: "#6e6358", paddingLeft: 6, fontFamily: "'Jost', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>Event</span>
+          <span style={{ fontSize: 11, fontWeight: 300, color: "#6e6358", textAlign: "center", fontFamily: "'Jost', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>Start Time</span>
+          <span style={{ fontSize: 11, fontWeight: 300, color: "#6e6358", textAlign: "center", fontFamily: "'Jost', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>Duration</span>
+          <span />
+        </div>
+
+        {/* Fixed event rows */}
+        {fixedEvents.map((fe) => (
+          <div key={fe.id} style={{ display: "grid", gridTemplateColumns: "1fr 160px 70px 28px", gap: 6, alignItems: "center", marginBottom: 8 }}>
+            <input
+              type="text"
+              value={fe.event}
+              onChange={(e) => updateFixedEvent(fe.id, "event", e.target.value)}
+              placeholder="Event name"
+              style={{ padding: 6, border: "1px solid #2a2520", borderRadius: 4, fontSize: 13, width: "100%", boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+            />
+            <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <select value={fe.timeHour} onChange={(e) => updateFixedEvent(fe.id, "timeHour", e.target.value)} style={{ ...settingsSelectStyle, flex: 1, minWidth: 0 }}>{renderHourOptions()}</select>
+              <span style={{ fontSize: 13 }}>:</span>
+              <select value={fe.timeMinute} onChange={(e) => updateFixedEvent(fe.id, "timeMinute", e.target.value)} style={{ ...settingsSelectStyle, flex: 1, minWidth: 0 }}>{renderMinuteOptions()}</select>
+              <select value={fe.timePeriod} onChange={(e) => updateFixedEvent(fe.id, "timePeriod", e.target.value)} style={{ ...settingsSelectStyle, flex: 1, minWidth: 0 }}><option value="AM">AM</option><option value="PM">PM</option></select>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <input
+                type="number"
+                value={fe.duration}
+                min={5}
+                step={5}
+                onChange={(e) => updateFixedEvent(fe.id, "duration", parseInt(e.target.value, 10) || 5)}
+                style={{ ...settingsSelectStyle, width: "100%", boxSizing: "border-box", textAlign: "center" }}
+              />
+            </div>
+            <button
+              onClick={() => removeFixedEvent(fe.id)}
+              style={{ padding: 0, width: 24, height: 24, background: "#161310", color: "#6e6358", border: "1px solid #2a2520", borderRadius: 4, fontSize: 13, cursor: "pointer", lineHeight: 1 }}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+
+        {/* Add Custom */}
+        <button
+          onClick={() => addFixedEvent("", "12", "00", "PM")}
+          style={{ padding: "6px 14px", background: "#161310", color: "#b8906a", border: "1px solid #b8906a", borderRadius: 4, fontSize: 13, cursor: "pointer", marginTop: 4, fontFamily: "'Jost', sans-serif", fontWeight: 300 }}
+        >
+          + Add Custom
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: "4px 10px 10px", maxWidth: "100%", margin: "0 auto", fontFamily: "'Jost', sans-serif", backgroundColor: "#060504", minHeight: "100vh", color: "#ddd0bc" }}>
+      <style>{MOBILE_TWEAKS}</style>
+
+      {screen === "welcome" ? (
+        /* ============ WELCOME SCREEN ============ */
+        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", background: "#060504" }}>
+          <div style={{ textAlign: "center", maxWidth: 500, width: "100%" }}>
+            <h1 className="welcome-fade-up" style={{ fontSize: "clamp(36px,6vw,72px)", fontWeight: 300, color: "#ddd0bc", margin: "0 0 8px 0", fontFamily: "'Cormorant Garamond', serif", letterSpacing: "0.05em" }}>
+              Wedding Timeline Builder
+            </h1>
+            <div className="welcome-fade-up" style={{ fontSize: 16, color: "#6e6358", marginBottom: 48, fontFamily: "'Jost', sans-serif", fontWeight: 200 }}>
+              <a href="mailto:info@mediapotion.net" style={{ color: "#6e6358", textDecoration: "none" }}>by Wedding Potion</a>
+            </div>
+
+            <div className="welcome-fade-up" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <button
+                onClick={() => { setWizardStep(1); setScreen("wizard"); }}
+                style={{ padding: "18px 32px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 8, fontSize: 18, fontWeight: 300, cursor: "pointer", width: "100%", fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
+              >
+                Create New Timeline
+              </button>
+
+              <label
+                style={{ padding: "16px 32px", background: "transparent", color: "#b8906a", border: "1px solid #b8906a", borderRadius: 8, fontSize: 16, fontWeight: 300, cursor: "pointer", width: "100%", boxSizing: "border-box", textAlign: "center", fontFamily: "'Jost', sans-serif" }}
+              >
+                Load Existing Timeline
+                <input type="file" accept=".json" onChange={loadProject} style={{ display: "none" }} />
+              </label>
+            </div>
+          </div>
+        </div>
+      ) : screen === "wizard" ? (
+        /* ============ WIZARD SCREEN ============ */
+        renderWizard()
+      ) : screen === "settings" ? (
+        /* ============ PROJECT SETTINGS SCREEN ============ */
+        <div style={{ maxWidth: 700, margin: "0 auto", padding: "10px 0 40px" }}>
+          <h1 style={{ textAlign: "center", margin: "20px 0 4px 0", fontSize: "clamp(18px, 5vw, 24px)", color: "#ddd0bc", fontWeight: 300, fontFamily: "'Cormorant Garamond', serif" }}>
+            Wedding Timeline Builder
+          </h1>
+          <div style={{ textAlign: "center", margin: "0 0 24px 0" }}>
+            <a href="mailto:info@mediapotion.net" style={{ fontSize: 14, color: "#6e6358", textDecoration: "none", fontFamily: "'Jost', sans-serif" }}>by Wedding Potion</a>
+          </div>
+
+          <div style={{ background: "#0f0d0b", border: "1px solid #161310", borderRadius: 10, padding: "24px 24px 8px", marginBottom: 16 }}>
+            <h2 style={{ margin: "0 0 6px 0", fontSize: 20, color: "#ddd0bc", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Project Settings</h2>
+            <p style={{ margin: "0 0 20px 0", fontSize: 14, color: "#6e6358", fontFamily: "'Jost', sans-serif" }}>Set up your wedding details before building the timeline.</p>
+            {renderSettingsForm(false)}
+          </div>
+
+          {/* Bottom actions */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center", marginTop: 8 }}>
+            <button
+              onClick={() => {
+                if (fixedEvents.length > 0) {
+                  const newRows = fixedEvents.map((fe, idx) => ({
+                    id: idx + 1,
+                    event: fe.event,
+                    time: parseTimeInput(fe.timeHour, fe.timeMinute, fe.timePeriod),
+                    duration: fe.duration || 30,
+                    location: "",
+                    isOutdoor: false,
+                    photo: photoEnabled,
+                    video: videoEnabled,
+                    notes: "",
+                    isTimeLocked: true,
+                    color: "",
+                  }));
+                  setUserRows(newRows);
+                  setNextId(fixedEvents.length + 1);
+                }
+                setScreen("timeline");
+              }}
+              style={{ padding: "12px 32px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 6, fontSize: 16, fontWeight: 300, cursor: "pointer", width: "100%", maxWidth: 360, fontFamily: "'Jost', sans-serif" }}
+            >
+              Start Building Timeline
+            </button>
+
+            <label
+              style={{ padding: "10px 24px", background: "transparent", color: "#b8906a", border: "1px solid #b8906a", borderRadius: 6, fontSize: 14, fontWeight: 300, cursor: "pointer", textAlign: "center", width: "100%", maxWidth: 360, boxSizing: "border-box", fontFamily: "'Jost', sans-serif" }}
+            >
+              Load Existing Project
+              <input type="file" accept=".json" onChange={loadProject} style={{ display: "none" }} />
+            </label>
+          </div>
+        </div>
+      ) : (
+        /* ============ TIMELINE SCREEN ============ */
+        <>
+          {/* Names & date */}
+          <div style={{ textAlign: "center", marginBottom: 6 }}>
+            <div style={{ fontSize: "clamp(18px, 5vw, 26px)", fontWeight: 300, color: "#ddd0bc", lineHeight: 1.2, fontFamily: "'Cormorant Garamond', serif" }}>
+              {bride || groom ? [bride, groom].filter(Boolean).join(" & ") : "Wedding Timeline Builder"}
+            </div>
+            {date && (
+              <div style={{ fontSize: 14, color: "#6e6358", marginTop: 2, fontFamily: "'Jost', sans-serif", fontWeight: 200 }}>
+                {new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+              </div>
+            )}
+          </div>
+
+          {/* Controls row */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10, flexWrap: "wrap", background: "#0f0d0b", borderBottom: "1px solid #161310", padding: "8px 0", margin: "0 -10px 10px", paddingLeft: 10, paddingRight: 10 }}>
+            <a href="mailto:info@mediapotion.net" style={{ fontSize: 11, color: "#6e6358", textDecoration: "none", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}>Wedding Potion</a>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
               <button
                 onClick={saveProject}
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#2196F3",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 4,
-                  cursor: "pointer",
-                  fontSize: 14,
-                  fontWeight: "bold",
-                }}
+                style={{ padding: "6px 14px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
               >
                 Save Project
               </button>
               <label
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#FF9800",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 4,
-                  cursor: "pointer",
-                  fontSize: 14,
-                  fontWeight: "bold",
-                  display: "inline-block",
-                }}
+                style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, display: "inline-block", fontFamily: "'Jost', sans-serif" }}
               >
                 Load Project
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={loadProject}
-                  style={{ display: "none" }}
-                />
+                <input type="file" accept=".json" onChange={loadProject} style={{ display: "none" }} />
               </label>
               <button
                 onClick={exportTimeline}
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#FFD700",
-                  color: "black",
-                  border: "none",
-                  borderRadius: 4,
-                  cursor: "pointer",
-                  fontSize: 14,
-                  fontWeight: "bold",
-                }}
+                style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
               >
                 Export Timeline
               </button>
+              <button
+                onClick={copyTimeline}
+                style={{ padding: "6px 14px", backgroundColor: copyConfirm ? "#b8906a" : "transparent", color: copyConfirm ? "#060504" : "#ddd0bc", border: copyConfirm ? "1px solid #b8906a" : "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
+              >
+                {copyConfirm ? "Copied!" : "Copy Timeline"}
+              </button>
             </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button
+                onClick={() => { setWizardStep(1); setScreen("welcome"); }}
+                style={{ padding: "5px 12px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 6, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
+              >
+                New Timeline
+              </button>
+              <button
+                onClick={() => setShowSettingsModal(true)}
+                style={{ padding: "5px 12px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 6, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
+              >
+                Project Settings
+              </button>
+            </div>
+          </div>
+
+          {/* App shell: main content + (desktop) sidebar */}
+          <div className="wtb-shell">
+            {/* MAIN */}
+            <div>
+          {/* Timeline */}
+          <div
+            style={{
+              background: "#060504",
+              padding: 15,
+              borderRadius: 8,
+              border: "1px solid #161310",
+            }}
+          >
+            <h2
+              style={{
+                textAlign: "center",
+                margin: "0 0 15px 0",
+                fontSize: 14,
+                color: "#b8906a",
+                fontFamily: "'Jost', sans-serif",
+                fontWeight: 300,
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+              }}
+            >
+              Timeline Events
+            </h2>
 
             <div style={{ width: "100%" }}>
               {/* Top drop zone (before first row) */}
@@ -2772,31 +4396,15 @@ export default function MobileApp() {
               ))}
             </div>
 
-            {/* Add / Undo / Redo */}
+            {/* Add Event */}
             <div
               style={{
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
                 marginTop: 15,
-                gap: 12,
               }}
             >
-              <button
-                onClick={undo}
-                disabled={history.length === 0}
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: history.length > 0 ? "#9C27B0" : "#ccc",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 4,
-                  cursor: history.length > 0 ? "pointer" : "not-allowed",
-                  fontSize: 14,
-                }}
-              >
-                Undo
-              </button>
               <button
                 onClick={addRow}
                 style={{
@@ -2805,31 +4413,17 @@ export default function MobileApp() {
                   gap: '6px',
                   padding: '6px 12px',
                   borderRadius: '20px',
-                  border: '1px solid #2e7d32',
-                  background: '#4caf50',
-                  color: 'white',
+                  border: '1px dashed #b8906a',
+                  background: 'transparent',
+                  color: '#b8906a',
                   fontSize: '13px',
-                  fontWeight: 500,
+                  fontWeight: 300,
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
+                  fontFamily: "'Jost', sans-serif",
                 }}
               >
                 + Add Event
-              </button>
-              <button
-                onClick={redo}
-                disabled={redoStack.length === 0}
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: redoStack.length > 0 ? "#607D8B" : "#ccc",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 4,
-                  cursor: redoStack.length > 0 ? "pointer" : "not-allowed",
-                  fontSize: 14,
-                }}
-              >
-                Redo
               </button>
             </div>
           </div>
@@ -2852,9 +4446,54 @@ export default function MobileApp() {
         </div>
 
         {/* SIDEBAR (desktop only) */}
-        <EventSidebar />
+        <EventSidebar
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={history.length > 0}
+          canRedo={redoStack.length > 0}
+        />
       </div>
 
+          {/* Project Settings Modal */}
+          {showSettingsModal && (
+            <div
+              style={{
+                position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.75)",
+                display: "flex", alignItems: "flex-start", justifyContent: "center",
+                zIndex: 1000, overflowY: "auto", padding: "20px 10px 40px",
+              }}
+              onClick={(e) => { if (e.target === e.currentTarget) setShowSettingsModal(false); }}
+            >
+              <div style={{ background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 10, maxWidth: 680, width: "100%", padding: 24, position: "relative" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                  <h2 style={{ margin: 0, fontSize: 20, color: "#ddd0bc", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Project Settings</h2>
+                  <button
+                    onClick={() => setShowSettingsModal(false)}
+                    style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#6e6358", lineHeight: 1 }}
+                  >
+                    ✕
+                  </button>
+                </div>
+                {renderSettingsForm(true)}
+                <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 8 }}>
+                  <button
+                    onClick={() => setShowSettingsModal(false)}
+                    style={{ padding: "8px 20px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => setShowSettingsModal(false)}
+                    style={{ padding: "8px 20px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 400, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
+                  >
+                    Save Settings
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
