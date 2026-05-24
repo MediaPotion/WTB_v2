@@ -896,9 +896,9 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                 padding: 12,
                 margin: "4px 0",
                 backgroundColor: "#0f0d0b",
-                borderLeft: `3px solid ${getEventColor(label)}`,
+                borderLeft: `5px solid ${getEventColor(label)}`,
                 border: "1px solid #2a2520",
-                borderLeft: `3px solid ${getEventColor(label)}`,
+                borderLeft: `5px solid ${getEventColor(label)}`,
                 borderRadius: 8,
                 cursor: "pointer",
                 textAlign: "left",
@@ -1209,7 +1209,7 @@ function TimelineRow({
         marginBottom: 12,
         backgroundColor: isLocation ? "#1e1e1e" : isConstraint ? "transparent" : (dropping ? "rgba(184,144,106,0.08)" : "#0f0d0b"),
         backgroundImage: isConstraint ? "repeating-linear-gradient(45deg, #1a0505 0px, #1a0505 10px, #230808 10px, #230808 20px)" : "none",
-        borderLeft: isLocation ? "3px solid #c0c8d0" : isConstraint ? undefined : `4px solid ${rowBg}`,
+        borderLeft: isLocation ? "5px solid #c0c8d0" : isConstraint ? undefined : `6px solid ${rowBg}`,
         overflow: "hidden",
         width: "100%",
         position: "relative",
@@ -1773,7 +1773,7 @@ function EventSidebar({ onUndo, onRedo, canUndo, canRedo }) {
                 style={{
                   background: "#161310",
                   border: "1px solid #2a2520",
-                  borderLeft: `3px solid ${getEventColor(label)}`,
+                  borderLeft: `5px solid ${getEventColor(label)}`,
                   color: "#ddd0bc",
                 }}
                 title="Drag to timeline"
