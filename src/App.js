@@ -1916,7 +1916,9 @@ export default function MobileApp() {
   const [wiz_guestCount, setWiz_guestCount] = useState("");
   const [wiz_portraitLocations, setWiz_portraitLocations] = useState([]);
   const [wiz_brideReadyAddress, setWiz_brideReadyAddress] = useState("");
+  const [wiz_brideReadyStreet, setWiz_brideReadyStreet] = useState("");
   const [wiz_groomReadyAddress, setWiz_groomReadyAddress] = useState("");
+  const [wiz_groomReadyStreet, setWiz_groomReadyStreet] = useState("");
   const [wiz_distanceBetweenReady, setWiz_distanceBetweenReady] = useState("");
   const [wiz_distanceBrideToCeremony, setWiz_distanceBrideToCeremony] = useState("");
   const [wiz_distanceGroomToCeremony, setWiz_distanceGroomToCeremony] = useState("");
@@ -3277,53 +3279,79 @@ export default function MobileApp() {
             )}
           </div>
 
-          {wizSectionHeading("Getting Ready Locations")}
-          <div style={{ marginBottom: 16 }}>
-            <p style={{ fontSize: 14, fontWeight: 300, color: "#ddd0bc", margin: "0 0 10px 0", fontFamily: "'Jost', sans-serif" }}>Where will the {brideLabel} be getting ready?</p>
-            <label style={{ ...wizCheckRowStyle, marginBottom: 8 }} onClick={() => { setWiz_brideReadyAtCeremony(!wiz_brideReadyAtCeremony); if (!wiz_brideReadyAtCeremony) setWiz_brideReadyAtReception(false); }}>
-              <input type="checkbox" checked={wiz_brideReadyAtCeremony} onChange={() => {}} style={{ width: 20, height: 20, cursor: "pointer", flexShrink: 0 }} />
-              <span style={{ fontSize: 14, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Same as ceremony location</span>
+          {wizSectionHeading(`${brideLabel} Getting Ready`)}
+          <div style={mandatoryLocStyle}>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: wiz_brideReadyAtCeremony || wiz_brideReadyAtReception ? 6 : 12, cursor: "pointer" }}
+              onClick={() => { setWiz_brideReadyAtCeremony(!wiz_brideReadyAtCeremony); if (!wiz_brideReadyAtCeremony) setWiz_brideReadyAtReception(false); }}>
+              <input type="checkbox" checked={wiz_brideReadyAtCeremony} onChange={() => {}} style={{ width: 18, height: 18, cursor: "pointer", flexShrink: 0 }} />
+              <span style={{ fontSize: 14, color: "#555" }}>Same as ceremony location</span>
             </label>
-            <label style={{ ...wizCheckRowStyle, marginBottom: 8 }} onClick={() => { setWiz_brideReadyAtReception(!wiz_brideReadyAtReception); if (!wiz_brideReadyAtReception) setWiz_brideReadyAtCeremony(false); }}>
-              <input type="checkbox" checked={wiz_brideReadyAtReception} onChange={() => {}} style={{ width: 20, height: 20, cursor: "pointer", flexShrink: 0 }} />
-              <span style={{ fontSize: 14, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Same as reception location</span>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: wiz_brideReadyAtCeremony || wiz_brideReadyAtReception ? 0 : 12, cursor: "pointer" }}
+              onClick={() => { setWiz_brideReadyAtReception(!wiz_brideReadyAtReception); if (!wiz_brideReadyAtReception) setWiz_brideReadyAtCeremony(false); }}>
+              <input type="checkbox" checked={wiz_brideReadyAtReception} onChange={() => {}} style={{ width: 18, height: 18, cursor: "pointer", flexShrink: 0 }} />
+              <span style={{ fontSize: 14, color: "#555" }}>Same as reception location</span>
             </label>
             {!wiz_brideReadyAtCeremony && !wiz_brideReadyAtReception && (
-              <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Location</label>
-                <select
-                  value={wiz_brideReadyAddress}
-                  onChange={(e) => setWiz_brideReadyAddress(e.target.value)}
-                  style={{ width: "100%", padding: "10px 12px", border: "1px solid #2a2520", borderRadius: 8, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
-                >
-                  <option value="">Select a location…</option>
-                  {allWizLocations.map((name, i) => <option key={i} value={name}>{name}</option>)}
-                </select>
-              </div>
+              <>
+                <div style={{ marginBottom: 10 }}>
+                  <label style={mandatoryLabelStyle}>Venue Name</label>
+                  <input
+                    type="text"
+                    value={wiz_brideReadyAddress}
+                    onChange={(e) => setWiz_brideReadyAddress(e.target.value)}
+                    placeholder="e.g. The Bridal Suite, Hotel Grand"
+                    style={mandatoryInputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={mandatoryLabelStyle}>Address <span style={{ fontWeight: "normal", color: "#aaa" }}>(optional)</span></label>
+                  <input
+                    type="text"
+                    value={wiz_brideReadyStreet}
+                    onChange={(e) => setWiz_brideReadyStreet(e.target.value)}
+                    placeholder="e.g. 123 Main St, Springfield, MI"
+                    style={mandatoryInputStyle}
+                  />
+                </div>
+              </>
             )}
           </div>
-          <div style={{ marginBottom: 16 }}>
-            <p style={{ fontSize: 14, fontWeight: 300, color: "#ddd0bc", margin: "0 0 10px 0", fontFamily: "'Jost', sans-serif" }}>Where will the {groomLabel} be getting ready?</p>
-            <label style={{ ...wizCheckRowStyle, marginBottom: 8 }} onClick={() => { setWiz_groomReadyAtCeremony(!wiz_groomReadyAtCeremony); if (!wiz_groomReadyAtCeremony) setWiz_groomReadyAtReception(false); }}>
-              <input type="checkbox" checked={wiz_groomReadyAtCeremony} onChange={() => {}} style={{ width: 20, height: 20, cursor: "pointer", flexShrink: 0 }} />
-              <span style={{ fontSize: 14, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Same as ceremony location</span>
+
+          {wizSectionHeading(`${groomLabel} Getting Ready`)}
+          <div style={mandatoryLocStyle}>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: wiz_groomReadyAtCeremony || wiz_groomReadyAtReception ? 6 : 12, cursor: "pointer" }}
+              onClick={() => { setWiz_groomReadyAtCeremony(!wiz_groomReadyAtCeremony); if (!wiz_groomReadyAtCeremony) setWiz_groomReadyAtReception(false); }}>
+              <input type="checkbox" checked={wiz_groomReadyAtCeremony} onChange={() => {}} style={{ width: 18, height: 18, cursor: "pointer", flexShrink: 0 }} />
+              <span style={{ fontSize: 14, color: "#555" }}>Same as ceremony location</span>
             </label>
-            <label style={{ ...wizCheckRowStyle, marginBottom: 8 }} onClick={() => { setWiz_groomReadyAtReception(!wiz_groomReadyAtReception); if (!wiz_groomReadyAtReception) setWiz_groomReadyAtCeremony(false); }}>
-              <input type="checkbox" checked={wiz_groomReadyAtReception} onChange={() => {}} style={{ width: 20, height: 20, cursor: "pointer", flexShrink: 0 }} />
-              <span style={{ fontSize: 14, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Same as reception location</span>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: wiz_groomReadyAtCeremony || wiz_groomReadyAtReception ? 0 : 12, cursor: "pointer" }}
+              onClick={() => { setWiz_groomReadyAtReception(!wiz_groomReadyAtReception); if (!wiz_groomReadyAtReception) setWiz_groomReadyAtCeremony(false); }}>
+              <input type="checkbox" checked={wiz_groomReadyAtReception} onChange={() => {}} style={{ width: 18, height: 18, cursor: "pointer", flexShrink: 0 }} />
+              <span style={{ fontSize: 14, color: "#555" }}>Same as reception location</span>
             </label>
             {!wiz_groomReadyAtCeremony && !wiz_groomReadyAtReception && (
-              <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Location</label>
-                <select
-                  value={wiz_groomReadyAddress}
-                  onChange={(e) => setWiz_groomReadyAddress(e.target.value)}
-                  style={{ width: "100%", padding: "10px 12px", border: "1px solid #2a2520", borderRadius: 8, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
-                >
-                  <option value="">Select a location…</option>
-                  {allWizLocations.map((name, i) => <option key={i} value={name}>{name}</option>)}
-                </select>
-              </div>
+              <>
+                <div style={{ marginBottom: 10 }}>
+                  <label style={mandatoryLabelStyle}>Venue Name</label>
+                  <input
+                    type="text"
+                    value={wiz_groomReadyAddress}
+                    onChange={(e) => setWiz_groomReadyAddress(e.target.value)}
+                    placeholder="e.g. The Groomsmen Suite, Hotel Grand"
+                    style={mandatoryInputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={mandatoryLabelStyle}>Address <span style={{ fontWeight: "normal", color: "#aaa" }}>(optional)</span></label>
+                  <input
+                    type="text"
+                    value={wiz_groomReadyStreet}
+                    onChange={(e) => setWiz_groomReadyStreet(e.target.value)}
+                    placeholder="e.g. 123 Main St, Springfield, MI"
+                    style={mandatoryInputStyle}
+                  />
+                </div>
+              </>
             )}
           </div>
 
