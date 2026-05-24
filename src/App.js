@@ -3574,7 +3574,7 @@ export default function MobileApp() {
         <div>
           {wizSectionHeading("Pre-Ceremony Visibility")}
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Is the {brideLabel} okay with the {groomLabel} seeing them before the ceremony?</label>
+            <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Can the {brideLabel} be seen by the {groomLabel} before the Ceremony?</label>
             <div style={{ display: "flex", gap: 10 }}>
               <button style={wizToggleStyle(wiz_brideOkayBefore === true)} onClick={() => setWiz_brideOkayBefore(true)}>Yes</button>
               <button style={wizToggleStyle(wiz_brideOkayBefore === false)} onClick={() => setWiz_brideOkayBefore(false)}>No</button>
