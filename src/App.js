@@ -3264,7 +3264,7 @@ export default function MobileApp() {
               />
             </div>
             <div>
-              <label style={mandatoryLabelStyle}>Address <span style={{ fontWeight: "normal", color: "#aaa" }}>(optional)</span></label>
+              <label style={mandatoryLabelStyle}>Address</label>
               <input
                 type="text"
                 value={wiz_ceremonyAddress}
