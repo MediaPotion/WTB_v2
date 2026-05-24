@@ -629,6 +629,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
       event: customEvent.trim(),
       duration: parseInt(customDuration, 10),
       time: newTime,
+      type: "custom",
     });
   };
 
@@ -1449,13 +1450,15 @@ function TimelineRow({
                     />
                     Video
                   </label>
-                  <ColorPicker
-                    currentColor={row.color}
-                    onChange={(color) => {
-                      onChange(index, "color", color);
-                      onBlur(index);
-                    }}
-                  />
+                  {row.type === "custom" && (
+                    <ColorPicker
+                      currentColor={row.color}
+                      onChange={(color) => {
+                        onChange(index, "color", color);
+                        onBlur(index);
+                      }}
+                    />
+                  )}
                 </div>
               </div>
               {/* Event input (also accepts drops) */}
@@ -2189,6 +2192,7 @@ export default function MobileApp() {
         const newUserRows = [...userRows];
         newUserRows[userRowIndex].event = eventData.event;
         newUserRows[userRowIndex].duration = eventData.duration;
+        newUserRows[userRowIndex].type = eventData.type === "custom" ? "custom" : "event";
         
         // Update time if provided
         if (eventData.time !== undefined) {
