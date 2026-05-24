@@ -3520,27 +3520,8 @@ export default function MobileApp() {
         "Pre-Ceremony",
         "",
         <div>
-          {wizSectionHeading("Shot Types")}
-          <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 12px 0", fontFamily: "'Jost', sans-serif" }}>What types of shots do you want before the ceremony starts?</p>
-          {[
-            { key: "brideReady", label: `${brideLabel} Getting Ready`, sub: "Candid getting-ready moments", val: wiz_preCeremonyBrideReady, set: setWiz_preCeremonyBrideReady },
-            { key: "groomReady", label: `${groomLabel} Getting Ready`, sub: "Candid getting-ready moments", val: wiz_preCeremonyGroomReady, set: setWiz_preCeremonyGroomReady },
-            { key: "details", label: "Detail Shots", sub: "Rings, dress, bouquet, shoes, etc.", val: wiz_preCeremonyDetails, set: setWiz_preCeremonyDetails },
-            { key: "preDress", label: "Bridal Party Pre-Dress Portraits", sub: "Portraits of the Bridal Party before dresses are worn. Typically in robes or matching attire.", val: wiz_preCeremonyPreDress, set: setWiz_preCeremonyPreDress },
-            { key: "brideParty", label: `${brideLabel} & Party Portraits`, sub: "Bridal party group portraits", val: wiz_preCeremonyBrideParty, set: setWiz_preCeremonyBrideParty },
-            { key: "groomParty", label: `${groomLabel} & Party Portraits`, sub: "Groomsmen group portraits", val: wiz_preCeremonyGroomParty, set: setWiz_preCeremonyGroomParty },
-          ].map(({ key, label, sub, val, set }) => (
-            <label key={key} style={{ ...wizCheckRowStyle }} onClick={() => set(!val)}>
-              <input type="checkbox" checked={val} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{label}</div>
-                <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>{sub}</div>
-              </div>
-            </label>
-          ))}
-
           {wizSectionHeading("Hair & Makeup")}
-          <div>
+          <div style={{ marginBottom: 4 }}>
             <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#ddd0bc", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>
               When will hair &amp; make-up be completed for the {brideLabel} and bridesmaids?
             </label>
@@ -3559,6 +3540,25 @@ export default function MobileApp() {
             </div>
             <p style={{ fontSize: 12, color: "#6e6358", margin: 0, fontFamily: "'Jost', sans-serif", fontStyle: "italic" }}>Hair &amp; Makeup delays are the #1 reason for being behind schedule. Please have your hair/makeup artists arrive extra early so you have adequate time.</p>
           </div>
+
+          {wizSectionHeading("Shot Types")}
+          <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 12px 0", fontFamily: "'Jost', sans-serif" }}>What types of shots do you want before the ceremony starts?</p>
+          {[
+            { key: "brideReady", label: `${brideLabel} Getting Ready`, sub: "Candid getting-ready moments", val: wiz_preCeremonyBrideReady, set: setWiz_preCeremonyBrideReady },
+            { key: "groomReady", label: `${groomLabel} Getting Ready`, sub: "Candid getting-ready moments", val: wiz_preCeremonyGroomReady, set: setWiz_preCeremonyGroomReady },
+            { key: "details", label: "Detail Shots", sub: "Rings, dress, bouquet, shoes, etc.", val: wiz_preCeremonyDetails, set: setWiz_preCeremonyDetails },
+            { key: "preDress", label: "Bridal Party Pre-Dress Portraits", sub: "Portraits of the Bridal Party before dresses are worn. Typically in robes or matching attire.", val: wiz_preCeremonyPreDress, set: setWiz_preCeremonyPreDress },
+            { key: "brideParty", label: `${brideLabel} & Party Portraits`, sub: "Bridal party group portraits", val: wiz_preCeremonyBrideParty, set: setWiz_preCeremonyBrideParty },
+            { key: "groomParty", label: `${groomLabel} & Party Portraits`, sub: "Groomsmen group portraits", val: wiz_preCeremonyGroomParty, set: setWiz_preCeremonyGroomParty },
+          ].map(({ key, label, sub, val, set }) => (
+            <label key={key} style={{ ...wizCheckRowStyle }} onClick={() => set(!val)}>
+              <input type="checkbox" checked={val} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{label}</div>
+                <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>{sub}</div>
+              </div>
+            </label>
+          ))}
         </div>,
         () => setWizardStep(3),
         () => setWizardStep(5)
