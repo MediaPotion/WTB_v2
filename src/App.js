@@ -1987,6 +1987,7 @@ export default function MobileApp() {
   const [wiz_preCeremonyDetails, setWiz_preCeremonyDetails] = useState(true);
   const [wiz_preCeremonyBrideParty, setWiz_preCeremonyBrideParty] = useState(true);
   const [wiz_preCeremonyGroomParty, setWiz_preCeremonyGroomParty] = useState(true);
+  const [wiz_preCeremonyPreDress, setWiz_preCeremonyPreDress] = useState(false);
 
   // Step 5 — Ceremony special events notes
   const [wiz_ceremonyNotes, setWiz_ceremonyNotes] = useState("");
@@ -3527,6 +3528,7 @@ export default function MobileApp() {
             { key: "details", label: "Detail Shots", sub: "Rings, dress, bouquet, shoes, etc.", val: wiz_preCeremonyDetails, set: setWiz_preCeremonyDetails },
             { key: "brideParty", label: `${brideLabel} & Party Portraits`, sub: "Bridal party group portraits", val: wiz_preCeremonyBrideParty, set: setWiz_preCeremonyBrideParty },
             { key: "groomParty", label: `${groomLabel} & Party Portraits`, sub: "Groomsmen group portraits", val: wiz_preCeremonyGroomParty, set: setWiz_preCeremonyGroomParty },
+            { key: "preDress", label: "Bridal Party Pre-Dress Portraits", sub: "Portraits of the Bridal Party before dresses are worn. Typically in robes or matching attire.", val: wiz_preCeremonyPreDress, set: setWiz_preCeremonyPreDress },
           ].map(({ key, label, sub, val, set }) => (
             <label key={key} style={{ ...wizCheckRowStyle }} onClick={() => set(!val)}>
               <input type="checkbox" checked={val} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
