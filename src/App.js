@@ -3526,9 +3526,9 @@ export default function MobileApp() {
             { key: "brideReady", label: `${brideLabel} Getting Ready`, sub: "Candid getting-ready moments", val: wiz_preCeremonyBrideReady, set: setWiz_preCeremonyBrideReady },
             { key: "groomReady", label: `${groomLabel} Getting Ready`, sub: "Candid getting-ready moments", val: wiz_preCeremonyGroomReady, set: setWiz_preCeremonyGroomReady },
             { key: "details", label: "Detail Shots", sub: "Rings, dress, bouquet, shoes, etc.", val: wiz_preCeremonyDetails, set: setWiz_preCeremonyDetails },
+            { key: "preDress", label: "Bridal Party Pre-Dress Portraits", sub: "Portraits of the Bridal Party before dresses are worn. Typically in robes or matching attire.", val: wiz_preCeremonyPreDress, set: setWiz_preCeremonyPreDress },
             { key: "brideParty", label: `${brideLabel} & Party Portraits`, sub: "Bridal party group portraits", val: wiz_preCeremonyBrideParty, set: setWiz_preCeremonyBrideParty },
             { key: "groomParty", label: `${groomLabel} & Party Portraits`, sub: "Groomsmen group portraits", val: wiz_preCeremonyGroomParty, set: setWiz_preCeremonyGroomParty },
-            { key: "preDress", label: "Bridal Party Pre-Dress Portraits", sub: "Portraits of the Bridal Party before dresses are worn. Typically in robes or matching attire.", val: wiz_preCeremonyPreDress, set: setWiz_preCeremonyPreDress },
           ].map(({ key, label, sub, val, set }) => (
             <label key={key} style={{ ...wizCheckRowStyle }} onClick={() => set(!val)}>
               <input type="checkbox" checked={val} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
