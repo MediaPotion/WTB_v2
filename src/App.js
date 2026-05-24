@@ -1204,13 +1204,11 @@ function TimelineRow({
       onDrop={handleDrop}
       className={`wtb-row-card${dropping ? " wtb-dropping" : ""}`}
       style={{
-        border: dropping ? "2px dashed #b8906a" : isConstraint ? "2px solid #cc4444" : "1px solid #1e1c19",
+        border: dropping ? "2px dashed #b8906a" : isConstraint ? "2px solid #cc4444" : isLocation ? "2px solid #c0c8d0" : `2px solid ${rowBg}`,
         borderRadius: 8,
         marginBottom: 12,
         backgroundColor: isLocation ? "#1e1e1e" : isConstraint ? "transparent" : (dropping ? "rgba(184,144,106,0.08)" : "#0f0d0b"),
         backgroundImage: isConstraint ? "repeating-linear-gradient(45deg, #1a0505 0px, #1a0505 10px, #230808 10px, #230808 20px)" : "none",
-        borderLeft: isLocation ? "5px solid #c0c8d0" : isConstraint ? undefined : `6px solid ${rowBg}`,
-        borderBottom: isLocation ? "2px solid #c0c8d0" : isConstraint ? undefined : `2px solid ${rowBg}`,
         overflow: "hidden",
         width: "100%",
         position: "relative",
