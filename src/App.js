@@ -3557,7 +3557,7 @@ export default function MobileApp() {
                 <option value="PM">PM</option>
               </select>
             </div>
-            <p style={{ fontSize: 12, color: "#6e6358", margin: 0, fontFamily: "'Jost', sans-serif", fontStyle: "italic" }}>Hair &amp; Makeup delays are the #1 reason for being behind schedule. Please have your hair/makeup artists arrive extra early so you have plenty of adequate time.</p>
+            <p style={{ fontSize: 12, color: "#6e6358", margin: 0, fontFamily: "'Jost', sans-serif", fontStyle: "italic" }}>Hair &amp; Makeup delays are the #1 reason for being behind schedule. Please have your hair/makeup artists arrive extra early so you have adequate time.</p>
           </div>
         </div>,
         () => setWizardStep(3),
