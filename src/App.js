@@ -4345,11 +4345,7 @@ export default function MobileApp() {
             <h1 className="welcome-fade-up" style={{ fontSize: "clamp(36px,6vw,72px)", fontWeight: 300, color: "#ddd0bc", margin: "0 0 8px 0", fontFamily: "'Cormorant Garamond', serif", letterSpacing: "0.05em" }}>
               Wedding Timeline Builder
             </h1>
-            <div className="welcome-fade-up" style={{ fontSize: 16, color: "#6e6358", marginBottom: 48, fontFamily: "'Jost', sans-serif", fontWeight: 200 }}>
-              <a href="mailto:info@mediapotion.net" style={{ color: "#6e6358", textDecoration: "none" }}>by Wedding Potion</a>
-            </div>
-
-            <div className="welcome-fade-up" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div className="welcome-fade-up" style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 48 }}>
               <button
                 onClick={() => { setWizardStep(1); setScreen("wizard"); }}
                 style={{ padding: "18px 32px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 8, fontSize: 18, fontWeight: 300, cursor: "pointer", width: "100%", fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
@@ -4366,7 +4362,7 @@ export default function MobileApp() {
             </div>
 
             <div style={{ marginTop: 48, textAlign: "center" }}>
-              <img src={mediaPotionLogo} alt="Media Potion" style={{ width: 180, opacity: 0.35, display: "block", margin: "0 auto 6px" }} />
+              <img src={mediaPotionLogo} alt="Media Potion" style={{ width: 180, display: "block", margin: "0 auto 6px" }} />
               <div style={{ fontSize: 11, color: "#2a2520", fontFamily: "'Jost', sans-serif", fontWeight: 200 }}>
                 © {new Date().getFullYear()} Media Potion. All rights reserved.
               </div>
