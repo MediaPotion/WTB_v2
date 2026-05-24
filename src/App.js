@@ -3565,81 +3565,8 @@ export default function MobileApp() {
       );
     }
 
-    // Step 5 — Ceremony
+    // Step 5 — First Looks
     if (wizardStep === 5) {
-      const hourOptions = ["1","2","3","4","5","6","7","8","9","10","11","12"];
-      const minuteOptions = ["00","05","10","15","20","25","30","35","40","45","50","55"];
-      return stepCard(
-        "Ceremony",
-        "",
-        <div>
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Ceremony Start Time</label>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <select value={wiz_ceremonyHour} onChange={(e) => setWiz_ceremonyHour(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
-                {hourOptions.map((h) => <option key={h} value={h}>{h}</option>)}
-              </select>
-              <span style={{ fontSize: 18, fontWeight: "bold" }}>:</span>
-              <select value={wiz_ceremonyMinute} onChange={(e) => setWiz_ceremonyMinute(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
-                {minuteOptions.map((m) => <option key={m} value={m}>{m}</option>)}
-              </select>
-              <select value={wiz_ceremonyPeriod} onChange={(e) => setWiz_ceremonyPeriod(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
-                <option value="AM">AM</option>
-                <option value="PM">PM</option>
-              </select>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Ceremony Duration (minutes)</label>
-            <input
-              type="number"
-              value={wiz_ceremonyDuration}
-              min={5}
-              step={5}
-              onChange={(e) => setWiz_ceremonyDuration(parseInt(e.target.value, 10) || 30)}
-              style={{ padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, width: 100, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
-            />
-          </div>
-
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Anticipated Guest Count</label>
-            <input
-              type="number"
-              value={wiz_guestCount}
-              min={1}
-              onChange={(e) => setWiz_guestCount(e.target.value)}
-              placeholder="e.g. 150"
-              style={{ padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, width: 120, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
-            />
-          </div>
-
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Ceremony Setting</label>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button style={wizToggleStyle(!wiz_ceremonyOutdoor)} onClick={() => setWiz_ceremonyOutdoor(false)}>Indoors</button>
-              <button style={wizToggleStyle(wiz_ceremonyOutdoor)} onClick={() => setWiz_ceremonyOutdoor(true)}>Outdoor</button>
-            </div>
-          </div>
-
-          <div>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Any special events during the ceremony that the photographer/videographer should know about?</label>
-            <textarea
-              value={wiz_ceremonyNotes}
-              onChange={(e) => setWiz_ceremonyNotes(e.target.value)}
-              placeholder="e.g. Unity candle, ring warming, surprise song performance…"
-              rows={3}
-              style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif", resize: "vertical" }}
-            />
-          </div>
-        </div>,
-        () => setWizardStep(4),
-        () => setWizardStep(6)
-      );
-    }
-
-    // Step 6 — First Looks
-    if (wizardStep === 6) {
       return stepCard(
         "First Looks",
         "First looks affect the order of portraits and group photos in your timeline.",
@@ -3726,6 +3653,79 @@ export default function MobileApp() {
               </button>
             </div>
           )}
+        </div>,
+        () => setWizardStep(4),
+        () => setWizardStep(6)
+      );
+    }
+
+    // Step 6 — Ceremony
+    if (wizardStep === 6) {
+      const hourOptions = ["1","2","3","4","5","6","7","8","9","10","11","12"];
+      const minuteOptions = ["00","05","10","15","20","25","30","35","40","45","50","55"];
+      return stepCard(
+        "Ceremony",
+        "",
+        <div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Ceremony Start Time</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <select value={wiz_ceremonyHour} onChange={(e) => setWiz_ceremonyHour(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                {hourOptions.map((h) => <option key={h} value={h}>{h}</option>)}
+              </select>
+              <span style={{ fontSize: 18, fontWeight: "bold" }}>:</span>
+              <select value={wiz_ceremonyMinute} onChange={(e) => setWiz_ceremonyMinute(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                {minuteOptions.map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+              <select value={wiz_ceremonyPeriod} onChange={(e) => setWiz_ceremonyPeriod(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Ceremony Duration (minutes)</label>
+            <input
+              type="number"
+              value={wiz_ceremonyDuration}
+              min={5}
+              step={5}
+              onChange={(e) => setWiz_ceremonyDuration(parseInt(e.target.value, 10) || 30)}
+              style={{ padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, width: 100, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Anticipated Guest Count</label>
+            <input
+              type="number"
+              value={wiz_guestCount}
+              min={1}
+              onChange={(e) => setWiz_guestCount(e.target.value)}
+              placeholder="e.g. 150"
+              style={{ padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, width: 120, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Ceremony Setting</label>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button style={wizToggleStyle(!wiz_ceremonyOutdoor)} onClick={() => setWiz_ceremonyOutdoor(false)}>Indoors</button>
+              <button style={wizToggleStyle(wiz_ceremonyOutdoor)} onClick={() => setWiz_ceremonyOutdoor(true)}>Outdoor</button>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Any special events during the ceremony that the photographer/videographer should know about?</label>
+            <textarea
+              value={wiz_ceremonyNotes}
+              onChange={(e) => setWiz_ceremonyNotes(e.target.value)}
+              placeholder="e.g. Unity candle, ring warming, surprise song performance…"
+              rows={3}
+              style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif", resize: "vertical" }}
+            />
+          </div>
         </div>,
         () => setWizardStep(5),
         () => {
