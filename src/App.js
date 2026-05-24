@@ -4474,9 +4474,6 @@ export default function MobileApp() {
           <h1 style={{ textAlign: "center", margin: "20px 0 4px 0", fontSize: "clamp(18px, 5vw, 24px)", color: "#ddd0bc", fontWeight: 300, fontFamily: "'Cormorant Garamond', serif" }}>
             Wedding Timeline Builder
           </h1>
-          <div style={{ textAlign: "center", margin: "0 0 24px 0" }}>
-            <a href="mailto:info@mediapotion.net" style={{ fontSize: 14, color: "#6e6358", textDecoration: "none", fontFamily: "'Jost', sans-serif" }}>by Wedding Potion</a>
-          </div>
 
           <div style={{ background: "#0f0d0b", border: "1px solid #161310", borderRadius: 10, padding: "24px 24px 8px", marginBottom: 16 }}>
             <h2 style={{ margin: "0 0 6px 0", fontSize: 20, color: "#ddd0bc", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Project Settings</h2>
@@ -4537,7 +4534,6 @@ export default function MobileApp() {
 
           {/* Controls row */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10, flexWrap: "wrap", background: "#0f0d0b", borderBottom: "1px solid #161310", padding: "8px 0", margin: "0 -10px 10px", paddingLeft: 10, paddingRight: 10 }}>
-            <a href="mailto:info@mediapotion.net" style={{ fontSize: 11, color: "#6e6358", textDecoration: "none", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}>Wedding Potion</a>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
               <button
                 onClick={saveProject}
