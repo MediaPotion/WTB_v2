@@ -896,9 +896,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                 padding: 12,
                 margin: "4px 0",
                 backgroundColor: "#0f0d0b",
-                borderLeft: `5px solid ${getEventColor(label)}`,
-                border: "1px solid #2a2520",
-                borderLeft: `5px solid ${getEventColor(label)}`,
+                border: `2px solid ${getEventColor(label)}`,
                 borderRadius: 8,
                 cursor: "pointer",
                 textAlign: "left",
@@ -1771,8 +1769,7 @@ function EventSidebar({ onUndo, onRedo, canUndo, canRedo }) {
                 }}
                 style={{
                   background: "#161310",
-                  border: "1px solid #2a2520",
-                  borderLeft: `5px solid ${getEventColor(label)}`,
+                  border: `2px solid ${getEventColor(label)}`,
                   color: "#ddd0bc",
                 }}
                 title="Drag to timeline"
