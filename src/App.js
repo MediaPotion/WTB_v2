@@ -2866,6 +2866,28 @@ export default function MobileApp() {
     const groupShotsBeforeCeremony = wiz_firstLookGroom || wiz_brideOkayBefore === true;
     const parseTravelMin = (str) => { const n = parseInt(str, 10); return isNaN(n) ? 0 : n; };
 
+    // ---- Smart portrait scheduling: determine pre vs. post-ceremony placement ----
+    const ceremonyEndTime = ceremonyStartTime + ceremonyDurationMin;
+    // First fixed reception event the couple must attend determines available post-ceremony window
+    let firstFixedReceptionTime = receptionStartTime;
+    if (wiz_grandEntrance) {
+      firstFixedReceptionTime = receptionStartTime + 20; // Grand Entrance follows A/V setup (20 min)
+      if (wiz_dinner) {
+        const dinnerT = parseTimeInput(wiz_dinnerStartHour, wiz_dinnerStartMinute, wiz_dinnerStartPeriod);
+        if (dinnerT < firstFixedReceptionTime) firstFixedReceptionTime = dinnerT;
+      }
+    } else if (wiz_dinner) {
+      firstFixedReceptionTime = parseTimeInput(wiz_dinnerStartHour, wiz_dinnerStartMinute, wiz_dinnerStartPeriod);
+    }
+    const familyDuration = wiz_familyGroups === "5" ? 20 : wiz_familyGroups === "10" ? 45 : 0;
+    const availablePostCeremony = firstFixedReceptionTime - ceremonyEndTime;
+    const remainingAfterFamily = availablePostCeremony - familyDuration;
+    const neitherFitsPost = remainingAfterFamily < 15;
+    const bothFitPost     = remainingAfterFamily >= 35;
+    // Pre-ceremony flags: only when post-ceremony time is insufficient and couple can be seen before
+    const weddingPartyPre = neitherFitsPost && groupShotsBeforeCeremony;
+    const brideGroomPre   = !bothFitPost && groupShotsBeforeCeremony;
+
     // Golden hour by month (Northern Michigan, sunset − 45 min)
     const GOLDEN_HOUR_BY_MONTH = [990, 1035, 1125, 1170, 1200, 1230, 1215, 1170, 1125, 1080, 990, 960];
     let goldenHourTime = null;
@@ -2966,11 +2988,9 @@ export default function MobileApp() {
     });
     // First looks assigned to ceremony venue (happens before couple/party portraits)
     pushFLForPhase("ceremony", preBlocks);
-    // Wedding party + couple portraits (only if first look with groom occurred or bride approved)
-    if (groupShotsBeforeCeremony) {
-      preBlocks.push({ event: "Wedding Party: Group Shots",  duration: 15, isOutdoor: true });
-      preBlocks.push({ event: "Bride & Groom: Portraits",    duration: 20, isOutdoor: true });
-    }
+    // Pre-ceremony portraits only when post-ceremony time is insufficient
+    if (weddingPartyPre) preBlocks.push({ event: "Wedding Party: Group Shots", duration: 15, isOutdoor: true });
+    if (brideGroomPre)   preBlocks.push({ event: "Bride & Groom: Portraits",   duration: 20, isOutdoor: true });
     // A/V setup always immediately before ceremony — nothing between them
     preBlocks.push({ event: "Ceremony: Audio/Video Setup", duration: 20 });
 
@@ -2992,10 +3012,17 @@ export default function MobileApp() {
     // Family photos — always immediately after ceremony, before anything else
     if (wiz_familyGroups === "5")  pushPost({ event: "Group Photos: Family (5 Groups)",  duration: 20, notes: familyGroupNotes, isOutdoor: true });
     if (wiz_familyGroups === "10") pushPost({ event: "Group Photos: Family (10 Groups)", duration: 45, notes: familyGroupNotes, isOutdoor: true });
-    // Wedding party + portraits post-ceremony only if they didn't happen before
-    if (!groupShotsBeforeCeremony) {
+    // Wedding Party: post if time allows; TIME CONSTRAINT if neither fits and can't go pre-ceremony
+    if (!neitherFitsPost) {
       pushPost({ event: "Wedding Party: Group Shots", duration: 15, isOutdoor: true });
-      pushPost({ event: "Bride & Groom: Portraits",   duration: 20, isOutdoor: true });
+    } else if (!groupShotsBeforeCeremony) {
+      pushPost({ type: "constraint", event: "TIME CONSTRAINT", duration: 0, notes: "Not enough post-ceremony time for Wedding Party Group Shots. Consider a later reception start or fewer family groups." });
+    }
+    // B&G Portraits: post if both fit; TIME CONSTRAINT if can't fit and can't go pre-ceremony
+    if (bothFitPost) {
+      pushPost({ event: "Bride & Groom: Portraits", duration: 20, isOutdoor: true });
+    } else if (!groupShotsBeforeCeremony) {
+      pushPost({ type: "constraint", event: "TIME CONSTRAINT", duration: 0, notes: "Not enough post-ceremony time for Bride & Groom Portraits. Consider a later reception start, fewer family groups, a first look, or the couple being visible to each other before the ceremony." });
     }
 
     // === Phase 4: Portrait locations (visit each once in order) ===
