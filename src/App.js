@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import mediaPotionLogo from "./assets/mediapotion_logo.png";
 
 /* --------------------------------------
    Shared data (used by sidebar & popup)
@@ -4365,10 +4366,8 @@ export default function MobileApp() {
             </div>
 
             <div style={{ marginTop: 48, textAlign: "center" }}>
-              <div style={{ fontSize: 13, color: "#3a3530", fontFamily: "'Jost', sans-serif", fontWeight: 200, letterSpacing: "0.05em" }}>
-                Media Potion
-              </div>
-              <div style={{ fontSize: 11, color: "#2a2520", fontFamily: "'Jost', sans-serif", fontWeight: 200, marginTop: 4 }}>
+              <img src={mediaPotionLogo} alt="Media Potion" style={{ width: 180, opacity: 0.35, display: "block", margin: "0 auto 6px" }} />
+              <div style={{ fontSize: 11, color: "#2a2520", fontFamily: "'Jost', sans-serif", fontWeight: 200 }}>
                 © {new Date().getFullYear()} Media Potion. All rights reserved.
               </div>
             </div>
