@@ -1921,6 +1921,7 @@ export default function MobileApp() {
   const [wiz_distanceBetweenReady, setWiz_distanceBetweenReady] = useState("");
   const [wiz_distanceBrideToCeremony, setWiz_distanceBrideToCeremony] = useState("");
   const [wiz_distanceGroomToCeremony, setWiz_distanceGroomToCeremony] = useState("");
+  const [wiz_distanceReceptionToCeremony, setWiz_distanceReceptionToCeremony] = useState("");
   const [wiz_sameLocation, setWiz_sameLocation] = useState(null); // null | true | false
   const [wiz_portraitsAtReadyLocations, setWiz_portraitsAtReadyLocations] = useState(false);
   const [wiz_bridePortraitsAtReadyLocation, setWiz_bridePortraitsAtReadyLocation] = useState(false);
@@ -2646,7 +2647,7 @@ export default function MobileApp() {
 
   // Wizard location helpers
   const addWizLocation = () => {
-    setWiz_locations(prev => [...prev, { id: wiz_locationNextId, name: "", address: "" }]);
+    setWiz_locations(prev => [...prev, { id: wiz_locationNextId, name: "", address: "", distFromCeremony: "" }]);
     setWiz_locationNextId(n => n + 1);
   };
   const updateWizLocation = (id, field, value) => {
@@ -3049,6 +3050,14 @@ export default function MobileApp() {
       }
     }
 
+    // Travel from ceremony to reception (only when no portrait locations handle the transit)
+    if (wiz_portraitLocations.length === 0 && !wiz_receptionSameAsCeremony) {
+      const travelCeremonyToReception = parseTravelMin(wiz_distanceReceptionToCeremony);
+      if (travelCeremonyToReception > 0) {
+        pushPost({ type: "location", event: effectiveReceptionVenue, address: effectiveReceptionAddress, duration: travelCeremonyToReception, notes: `Travel from ${ceremonyVenueName} to ${effectiveReceptionVenue}` });
+      }
+    }
+
     // Time constraint if post-ceremony events run past reception start
     if (postT > receptionStartTime && postBlocks.length > 0) {
       const recFmt = formatTime(receptionStartTime);
@@ -3247,6 +3256,20 @@ export default function MobileApp() {
       const mandatoryLocStyle = { border: "1px solid #1e1c19", borderRadius: 8, padding: "14px 14px 12px", marginBottom: 16, background: "#161310" };
       const mandatoryLabelStyle = { display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" };
       const mandatoryInputStyle = { width: "100%", padding: 9, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" };
+      const travelStepper = (value, onChange) => {
+        const mins = parseInt(value) || 0;
+        return (
+          <div style={{ marginTop: 12 }}>
+            <label style={{ ...mandatoryLabelStyle, marginBottom: 6 }}>How far is this location to the ceremony location?</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <button onClick={() => onChange(String(Math.max(0, mins - 5)))} style={{ width: 32, height: 32, background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 6, color: "#ddd0bc", fontSize: 18, lineHeight: 1, cursor: "pointer", flexShrink: 0 }}>−</button>
+              <span style={{ minWidth: 28, textAlign: "center", fontSize: 16, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{mins}</span>
+              <button onClick={() => onChange(String(mins + 5))} style={{ width: 32, height: 32, background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 6, color: "#ddd0bc", fontSize: 18, lineHeight: 1, cursor: "pointer", flexShrink: 0 }}>+</button>
+              <span style={{ fontSize: 13, color: "#6e6358", fontFamily: "'Jost', sans-serif" }}>minutes</span>
+            </div>
+          </div>
+        );
+      };
       return stepCard(
         "Wedding Day Locations",
         "Enter the key venues for the wedding day. These are used to build travel blocks and keep your timeline organized.",
@@ -3304,6 +3327,7 @@ export default function MobileApp() {
                     style={mandatoryInputStyle}
                   />
                 </div>
+                {travelStepper(wiz_distanceReceptionToCeremony, setWiz_distanceReceptionToCeremony)}
               </>
             )}
           </div>
@@ -3342,6 +3366,7 @@ export default function MobileApp() {
                     style={mandatoryInputStyle}
                   />
                 </div>
+                {travelStepper(wiz_distanceBrideToCeremony, setWiz_distanceBrideToCeremony)}
               </>
             )}
           </div>
@@ -3380,6 +3405,7 @@ export default function MobileApp() {
                     style={mandatoryInputStyle}
                   />
                 </div>
+                {travelStepper(wiz_distanceGroomToCeremony, setWiz_distanceGroomToCeremony)}
               </>
             )}
           </div>
@@ -3417,6 +3443,7 @@ export default function MobileApp() {
                   style={{ width: "100%", padding: 9, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc" }}
                 />
               </div>
+              {travelStepper(loc.distFromCeremony, (val) => updateWizLocation(loc.id, "distFromCeremony", val))}
             </div>
           ))}
           <button
