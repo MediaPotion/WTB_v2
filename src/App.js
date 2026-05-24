@@ -3130,7 +3130,8 @@ export default function MobileApp() {
     setScreen("timeline");
   };  // ---- Wizard Rendering ----
   const renderWizard = () => {
-    const totalWizardSteps = wiz_firstLookGroom ? 9 : 10;
+    const totalWizardSteps = 8;
+    const displayStep = wizardStep > 7 ? wizardStep - 1 : wizardStep;
 
     // All named locations from Step 2 in display order: ceremony, reception (if different), then additional
     const allWizLocations = [
@@ -3181,10 +3182,10 @@ export default function MobileApp() {
             {/* Progress bar */}
             <div style={{ marginBottom: 24 }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif", letterSpacing: "0.1em" }}>
-                <span>Step {wizardStep} of {totalWizardSteps}</span>
+                <span>Step {displayStep} of {totalWizardSteps}</span>
               </div>
               <div style={{ height: 3, background: "#161310", borderRadius: 2, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${(wizardStep / totalWizardSteps) * 100}%`, background: "linear-gradient(90deg, #b8906a, #cfa882)", borderRadius: 2, transition: "width 0.3s ease" }} />
+                <div style={{ height: "100%", width: `${(displayStep / totalWizardSteps) * 100}%`, background: "linear-gradient(90deg, #b8906a, #cfa882)", borderRadius: 2, transition: "width 0.3s ease" }} />
               </div>
             </div>
 
@@ -3565,12 +3566,22 @@ export default function MobileApp() {
       );
     }
 
-    // Step 5 — First Looks
+    // Step 5 — First Looks + Pre-Ceremony Visibility
     if (wizardStep === 5) {
       return stepCard(
         "First Looks",
         "First looks affect the order of portraits and group photos in your timeline.",
         <div>
+          {wizSectionHeading("Pre-Ceremony Visibility")}
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Is the {brideLabel} okay with the {groomLabel} seeing them before the ceremony?</label>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button style={wizToggleStyle(wiz_brideOkayBefore === true)} onClick={() => setWiz_brideOkayBefore(true)}>Yes</button>
+              <button style={wizToggleStyle(wiz_brideOkayBefore === false)} onClick={() => setWiz_brideOkayBefore(false)}>No</button>
+            </div>
+          </div>
+
+          {wizSectionHeading("First Looks")}
           <div style={{ marginBottom: 20 }}>
             <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Will there be any first looks before the ceremony?</label>
             <div style={{ display: "flex", gap: 10 }}>
@@ -3728,29 +3739,6 @@ export default function MobileApp() {
           </div>
         </div>,
         () => setWizardStep(5),
-        () => {
-          if (wiz_firstLookGroom) {
-            setWizardStep(8);
-          } else {
-            setWizardStep(7);
-          }
-        }
-      );
-    }
-
-    // Step 7 — Pre-Ceremony Visibility (skipped if wiz_firstLookGroom)
-    if (wizardStep === 7) {
-      return stepCard(
-        "Pre-Ceremony Visibility",
-        "This affects whether couple and wedding party portraits can be taken before the ceremony.",
-        <div>
-          <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Is the bride okay with the groom seeing her before the ceremony?</label>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button style={wizToggleStyle(wiz_brideOkayBefore === true)} onClick={() => setWiz_brideOkayBefore(true)}>Yes</button>
-            <button style={wizToggleStyle(wiz_brideOkayBefore === false)} onClick={() => setWiz_brideOkayBefore(false)}>No</button>
-          </div>
-        </div>,
-        () => setWizardStep(6),
         () => setWizardStep(8)
       );
     }
@@ -3848,13 +3836,7 @@ export default function MobileApp() {
             <button style={wizToggleStyle(wiz_goldenHour === false)} onClick={() => setWiz_goldenHour(false)}>No</button>
           </div>
         </div>,
-        () => {
-          if (wiz_firstLookGroom) {
-            setWizardStep(6);
-          } else {
-            setWizardStep(7);
-          }
-        },
+        () => setWizardStep(6),
         () => setWizardStep(9)
       );
     }
