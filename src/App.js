@@ -1980,6 +1980,7 @@ export default function MobileApp() {
   const [wiz_brideReadyAtReception, setWiz_brideReadyAtReception] = useState(false);
   const [wiz_groomReadyAtCeremony, setWiz_groomReadyAtCeremony] = useState(false);
   const [wiz_groomReadyAtReception, setWiz_groomReadyAtReception] = useState(false);
+  const [wiz_groomReadyAtBride, setWiz_groomReadyAtBride] = useState(false);
 
   // Step 4 — Pre-ceremony shot types
   const [wiz_preCeremonyBrideReady, setWiz_preCeremonyBrideReady] = useState(true);
@@ -2905,7 +2906,7 @@ export default function MobileApp() {
       ? wiz_familyGroupNames.filter(Boolean).map((n, i) => `${i + 1}. ${n}`).join(", ")
       : "";
 
-    const differentLocations = wiz_sameLocation === false;
+    const differentLocations = !wiz_groomReadyAtCeremony && !wiz_groomReadyAtReception && !wiz_groomReadyAtBride && !!wiz_groomReadyAddress;
     const ceremonyVenueName = wiz_ceremonyVenue || "ceremony venue";
     const effectiveReceptionVenue = wiz_receptionSameAsCeremony ? ceremonyVenueName : (wiz_receptionVenue || "reception venue");
     const effectiveReceptionAddress = wiz_receptionSameAsCeremony ? (wiz_ceremonyAddress || "") : (wiz_receptionAddress || "");
@@ -3373,17 +3374,22 @@ export default function MobileApp() {
 
           {wizSectionHeading(`${groomLabel} Getting Ready`)}
           <div style={mandatoryLocStyle}>
-            <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: wiz_groomReadyAtCeremony || wiz_groomReadyAtReception ? 6 : 12, cursor: "pointer" }}
-              onClick={() => { setWiz_groomReadyAtCeremony(!wiz_groomReadyAtCeremony); if (!wiz_groomReadyAtCeremony) setWiz_groomReadyAtReception(false); }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, cursor: "pointer" }}
+              onClick={() => { setWiz_groomReadyAtCeremony(!wiz_groomReadyAtCeremony); if (!wiz_groomReadyAtCeremony) { setWiz_groomReadyAtReception(false); setWiz_groomReadyAtBride(false); } }}>
               <input type="checkbox" checked={wiz_groomReadyAtCeremony} onChange={() => {}} style={{ width: 18, height: 18, cursor: "pointer", flexShrink: 0 }} />
               <span style={{ fontSize: 14, color: "#555" }}>Same as ceremony location</span>
             </label>
-            <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: wiz_groomReadyAtCeremony || wiz_groomReadyAtReception ? 0 : 12, cursor: "pointer" }}
-              onClick={() => { setWiz_groomReadyAtReception(!wiz_groomReadyAtReception); if (!wiz_groomReadyAtReception) setWiz_groomReadyAtCeremony(false); }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, cursor: "pointer" }}
+              onClick={() => { setWiz_groomReadyAtReception(!wiz_groomReadyAtReception); if (!wiz_groomReadyAtReception) { setWiz_groomReadyAtCeremony(false); setWiz_groomReadyAtBride(false); } }}>
               <input type="checkbox" checked={wiz_groomReadyAtReception} onChange={() => {}} style={{ width: 18, height: 18, cursor: "pointer", flexShrink: 0 }} />
               <span style={{ fontSize: 14, color: "#555" }}>Same as reception location</span>
             </label>
-            {!wiz_groomReadyAtCeremony && !wiz_groomReadyAtReception && (
+            <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: wiz_groomReadyAtCeremony || wiz_groomReadyAtReception || wiz_groomReadyAtBride ? 0 : 12, cursor: "pointer" }}
+              onClick={() => { setWiz_groomReadyAtBride(!wiz_groomReadyAtBride); if (!wiz_groomReadyAtBride) { setWiz_groomReadyAtCeremony(false); setWiz_groomReadyAtReception(false); } }}>
+              <input type="checkbox" checked={wiz_groomReadyAtBride} onChange={() => {}} style={{ width: 18, height: 18, cursor: "pointer", flexShrink: 0 }} />
+              <span style={{ fontSize: 14, color: "#555" }}>Same as {brideLabel} Getting Ready location</span>
+            </label>
+            {!wiz_groomReadyAtCeremony && !wiz_groomReadyAtReception && !wiz_groomReadyAtBride && (
               <>
                 <div style={{ marginBottom: 10 }}>
                   <label style={mandatoryLabelStyle}>Venue Name</label>
@@ -3406,6 +3412,15 @@ export default function MobileApp() {
                   />
                 </div>
                 {travelStepper(wiz_distanceGroomToCeremony, setWiz_distanceGroomToCeremony)}
+                <div style={{ marginTop: 12 }}>
+                  <label style={{ ...mandatoryLabelStyle, marginBottom: 6 }}>How far is this location from the {brideLabel} Getting Ready location?</label>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <button onClick={() => setWiz_distanceBetweenReady(String(Math.max(0, (parseInt(wiz_distanceBetweenReady) || 0) - 5)))} style={{ width: 32, height: 32, background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 6, color: "#ddd0bc", fontSize: 18, lineHeight: 1, cursor: "pointer", flexShrink: 0 }}>−</button>
+                    <span style={{ minWidth: 28, textAlign: "center", fontSize: 16, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{parseInt(wiz_distanceBetweenReady) || 0}</span>
+                    <button onClick={() => setWiz_distanceBetweenReady(String((parseInt(wiz_distanceBetweenReady) || 0) + 5))} style={{ width: 32, height: 32, background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 6, color: "#ddd0bc", fontSize: 18, lineHeight: 1, cursor: "pointer", flexShrink: 0 }}>+</button>
+                    <span style={{ fontSize: 13, color: "#6e6358", fontFamily: "'Jost', sans-serif" }}>minutes</span>
+                  </div>
+                </div>
               </>
             )}
           </div>
