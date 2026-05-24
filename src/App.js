@@ -879,43 +879,36 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
           Or Select Preset Event:
         </div>
 
-        {EVENT_BLOCKS.map((block) => {
-          const [label, duration] = block.split("::");
-          return (
-            <button
-              key={block}
-              onClick={() => {
-                const newTime = parseTimeInput(timeHour, timeMinute, timePeriod);
-                onSelect({
-                  event: label,
-                  duration: parseInt(duration, 10),
-                  time: newTime,
-                });
-              }}
-              style={{
-                width: "100%",
-                padding: 12,
-                margin: "4px 0",
-                backgroundColor: "#0f0d0b",
-                border: `2px solid ${getEventColor(label)}`,
-                borderRadius: 8,
-                cursor: "pointer",
-                textAlign: "left",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                fontSize: 14,
-                fontWeight: 500,
-                color: "#ddd0bc",
-              }}
-            >
-              <span>{label}</span>
-              <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px" }}>
-                {duration} min
-              </span>
-            </button>
-          );
-        })}
+        {(() => {
+          const groups = [];
+          const groupMap = {};
+          EVENT_BLOCKS.forEach(block => {
+            const [label, duration] = block.split("::");
+            const sep = label.indexOf(": ");
+            const category   = sep !== -1 ? label.substring(0, sep) : label;
+            const shortLabel = sep !== -1 ? label.substring(sep + 2) : label;
+            if (!groupMap[category]) { groupMap[category] = []; groups.push(category); }
+            groupMap[category].push({ label, shortLabel, duration: parseInt(duration, 10), block });
+          });
+          return groups.map(category => (
+            <div key={category}>
+              <div style={{ fontSize: 10, color: getEventColor(groupMap[category][0].label), textTransform: "uppercase", letterSpacing: "0.12em", margin: "10px 0 4px", fontFamily: "'Jost', sans-serif", fontWeight: 400, borderTop: "1px solid #1e1c19", paddingTop: 8 }}>{category}</div>
+              {groupMap[category].map(({ label, shortLabel, duration, block }) => (
+                <button
+                  key={block}
+                  onClick={() => {
+                    const newTime = parseTimeInput(timeHour, timeMinute, timePeriod);
+                    onSelect({ event: label, duration, time: newTime });
+                  }}
+                  style={{ width: "100%", padding: 12, margin: "4px 0", backgroundColor: "#0f0d0b", border: `2px solid ${getEventColor(label)}`, borderRadius: 8, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14, fontWeight: 500, color: "#ddd0bc" }}
+                >
+                  <span>{shortLabel}</span>
+                  <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px" }}>{duration} min</span>
+                </button>
+              ))}
+            </div>
+          ));
+        })()}
       </div>
     </div>
   );
@@ -1710,6 +1703,7 @@ function EventSidebar({ onUndo, onRedo, canUndo, canRedo }) {
         <div className="wtb-side-note">Drag a block onto a row</div>
         <div className="wtb-palette">
           {/* Location / Travel block */}
+          <div style={{ fontSize: 10, color: "#ffffff", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 4, fontFamily: "'Jost', sans-serif", fontWeight: 400 }}>Travel</div>
           <button
             draggable
             onDragStart={(e) => {
@@ -1719,44 +1713,53 @@ function EventSidebar({ onUndo, onRedo, canUndo, canRedo }) {
                 JSON.stringify({ type: "location", event: "", duration: 15 })
               );
             }}
-            style={{ background: "#161310", border: "2px solid #ffffff", color: "#ddd0bc" }}
+            style={{ background: "#161310", border: "2px solid #ffffff", color: "#ddd0bc", marginBottom: 8 }}
             title="Drag to add a location / travel block"
           >
-            <span>📍 Location / Travel</span>
+            <span>Location / Travel</span>
             <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px" }}>
               15 min
             </span>
           </button>
-          {EVENT_BLOCKS.map((block) => {
-            const [label, duration] = block.split("::");
-            const dur = parseInt(duration, 10);
-            return (
-              <button
-                key={block}
-                draggable
-                onDragStart={(e) => {
-                  if (e.dataTransfer) {
-                    e.dataTransfer.effectAllowed = "copy";
-                  }
-                  e.dataTransfer.setData(
-                    "application/json",
-                    JSON.stringify({ event: label, duration: dur })
-                  );
-                }}
-                style={{
-                  background: "#161310",
-                  border: `2px solid ${getEventColor(label)}`,
-                  color: "#ddd0bc",
-                }}
-                title="Drag to timeline"
-              >
-                <span>{label}</span>
-                <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px" }}>
-                  {dur} min
-                </span>
-              </button>
-            );
-          })}
+          {(() => {
+            // Group EVENT_BLOCKS by category prefix (before the first ": ")
+            const groups = [];
+            const groupMap = {};
+            EVENT_BLOCKS.forEach(block => {
+              const [label, duration] = block.split("::");
+              const sep = label.indexOf(": ");
+              const category  = sep !== -1 ? label.substring(0, sep) : label;
+              const shortLabel = sep !== -1 ? label.substring(sep + 2) : label;
+              if (!groupMap[category]) {
+                groupMap[category] = [];
+                groups.push(category);
+              }
+              groupMap[category].push({ label, shortLabel, dur: parseInt(duration, 10), block });
+            });
+            return groups.map(category => {
+              const categoryColor = getEventColor(groupMap[category][0].label);
+              return (
+                <div key={category} style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: 10, color: categoryColor, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 4, paddingTop: 6, borderTop: "1px solid #1e1c19", fontFamily: "'Jost', sans-serif", fontWeight: 400 }}>{category}</div>
+                  {groupMap[category].map(({ label, shortLabel, dur, block }) => (
+                    <button
+                      key={block}
+                      draggable
+                      onDragStart={(e) => {
+                        if (e.dataTransfer) e.dataTransfer.effectAllowed = "copy";
+                        e.dataTransfer.setData("application/json", JSON.stringify({ event: label, duration: dur }));
+                      }}
+                      style={{ background: "#161310", border: `2px solid ${getEventColor(label)}`, color: "#ddd0bc" }}
+                      title="Drag to timeline"
+                    >
+                      <span>{shortLabel}</span>
+                      <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px" }}>{dur} min</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            });
+          })()}
         </div>
       </aside>
       <div style={{ display: "flex", gap: 8 }}>
