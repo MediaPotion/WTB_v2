@@ -3170,10 +3170,12 @@ export default function MobileApp() {
     const totalWizardSteps = 8;
     const displayStep = wizardStep > 7 ? wizardStep - 1 : wizardStep;
 
-    // All named locations from Step 2 in display order: ceremony, reception (if different), then additional
+    // All named locations from Step 2 in display order
     const allWizLocations = [
       ...(wiz_ceremonyVenue ? [wiz_ceremonyVenue] : []),
       ...(!wiz_receptionSameAsCeremony && wiz_receptionVenue ? [wiz_receptionVenue] : []),
+      ...(!wiz_brideReadyAtCeremony && !wiz_brideReadyAtReception && wiz_brideReadyAddress ? [wiz_brideReadyAddress] : []),
+      ...(!wiz_groomReadyAtCeremony && !wiz_groomReadyAtReception && !wiz_groomReadyAtBride && wiz_groomReadyAddress ? [wiz_groomReadyAddress] : []),
       ...wiz_locations.filter(l => l.name).map(l => l.name),
     ];
 
