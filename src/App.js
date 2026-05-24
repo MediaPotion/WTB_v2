@@ -3389,57 +3389,19 @@ export default function MobileApp() {
               style={{ padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
             />
           </div>
-          <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Person 1 Title</label>
-              <select
-                value={["Bride","Groom","Partner 1","Partner 2","Spouse 1","Spouse 2"].includes(brideLabel) ? brideLabel : "__custom__"}
-                onChange={(e) => { if (e.target.value !== "__custom__") setBrideLabel(e.target.value); else setBrideLabel(""); }}
-                style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
-              >
-                <option value="Bride">Bride</option>
-                <option value="Groom">Groom</option>
-                <option value="Partner 1">Partner 1</option>
-                <option value="Partner 2">Partner 2</option>
-                <option value="Spouse 1">Spouse 1</option>
-                <option value="Spouse 2">Spouse 2</option>
-                <option value="__custom__">Custom…</option>
-              </select>
-              {!["Bride","Groom","Partner 1","Partner 2","Spouse 1","Spouse 2"].includes(brideLabel) && (
-                <input
-                  type="text"
-                  value={brideLabel}
-                  onChange={(e) => setBrideLabel(e.target.value)}
-                  placeholder="Enter custom title"
-                  style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif", marginTop: 8 }}
-                />
-              )}
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Person 2 Title</label>
-              <select
-                value={["Bride","Groom","Partner 1","Partner 2","Spouse 1","Spouse 2"].includes(groomLabel) ? groomLabel : "__custom__"}
-                onChange={(e) => { if (e.target.value !== "__custom__") setGroomLabel(e.target.value); else setGroomLabel(""); }}
-                style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
-              >
-                <option value="Bride">Bride</option>
-                <option value="Groom">Groom</option>
-                <option value="Partner 1">Partner 1</option>
-                <option value="Partner 2">Partner 2</option>
-                <option value="Spouse 1">Spouse 1</option>
-                <option value="Spouse 2">Spouse 2</option>
-                <option value="__custom__">Custom…</option>
-              </select>
-              {!["Bride","Groom","Partner 1","Partner 2","Spouse 1","Spouse 2"].includes(groomLabel) && (
-                <input
-                  type="text"
-                  value={groomLabel}
-                  onChange={(e) => setGroomLabel(e.target.value)}
-                  placeholder="Enter custom title"
-                  style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif", marginTop: 8 }}
-                />
-              )}
-            </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Couple&apos;s Titles</label>
+            <select
+              value={brideLabel === "Bride" && groomLabel === "Groom" ? "bride-groom" : brideLabel === "Partner 1" && groomLabel === "Partner 2" ? "partner" : "bride-groom"}
+              onChange={(e) => {
+                if (e.target.value === "bride-groom") { setBrideLabel("Bride"); setGroomLabel("Groom"); }
+                else { setBrideLabel("Partner 1"); setGroomLabel("Partner 2"); }
+              }}
+              style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+            >
+              <option value="bride-groom">Bride &amp; Groom</option>
+              <option value="partner">Partner 1 &amp; Partner 2</option>
+            </select>
           </div>
           <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
             <div style={{ flex: 1 }}>
