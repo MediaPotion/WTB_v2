@@ -1202,7 +1202,7 @@ function TimelineRow({
       onDrop={handleDrop}
       className={`wtb-row-card${dropping ? " wtb-dropping" : ""}`}
       style={{
-        border: dropping ? "2px dashed #b8906a" : isConstraint ? "2px solid #cc4444" : isLocation ? "2px solid #c0c8d0" : `2px solid ${rowBg}`,
+        border: dropping ? "2px dashed #b8906a" : isConstraint ? "2px solid #cc4444" : isLocation ? "2px solid #ffffff" : `2px solid ${rowBg}`,
         borderRadius: 8,
         marginBottom: 12,
         backgroundColor: isLocation ? "#1e1e1e" : isConstraint ? "transparent" : (dropping ? "rgba(184,144,106,0.08)" : "#0f0d0b"),
@@ -1743,7 +1743,7 @@ function EventSidebar({ onUndo, onRedo, canUndo, canRedo }) {
                 JSON.stringify({ type: "location", event: "", duration: 15 })
               );
             }}
-            style={{ background: "#161310", border: "1px solid #2a2520", borderLeft: "3px solid #c0c8d0", color: "#ddd0bc" }}
+            style={{ background: "#161310", border: "2px solid #ffffff", color: "#ddd0bc" }}
             title="Drag to add a location / travel block"
           >
             <span>📍 Location / Travel</span>
