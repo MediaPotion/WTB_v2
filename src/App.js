@@ -3100,8 +3100,10 @@ export default function MobileApp() {
     let recT = receptionStartTime;
     const addRec = (block) => { block.time = recT; recT += block.duration; receptionBlocks.push(block); };
 
-    // Location marker at reception start (travel time captured in postBlocks if coming from portrait location)
-    addRec({ type: "location", event: effectiveReceptionVenue, address: effectiveReceptionAddress, duration: 0, notes: "" });
+    // Location marker at reception start — skip if same venue as ceremony (no travel needed)
+    if (!wiz_receptionSameAsCeremony) {
+      addRec({ type: "location", event: effectiveReceptionVenue, address: effectiveReceptionAddress, duration: 0, notes: "" });
+    }
     // A/V setup always first at reception, Grand Entrance always immediately after
     addRec({ event: "Reception: Audio/Video Setup", duration: 20 });
     if (wiz_grandEntrance) addRec({ event: "Reception: Grand Entrances", duration: 10 });
