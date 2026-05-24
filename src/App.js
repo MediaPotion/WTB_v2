@@ -1125,7 +1125,6 @@ function TimelineRow({
   photoEnabledGlobal,
   videoEnabledGlobal,
   onDropEventBlock,
-  onChainToPrevious,
   onDrop,
 }) {
   const t = formatTime(row.time);
@@ -1317,32 +1316,6 @@ function TimelineRow({
             >
               Time
             </label>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onChainToPrevious && onChainToPrevious(index);
-              }}
-              style={{
-                background: '#161310',
-                border: '1px solid #2a2520',
-                borderRadius: '3px',
-                cursor: 'pointer',
-                width: '15px',
-                height: '15px',
-                padding: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-              title="Chain to previous event"
-            >
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#6e6358" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-              </svg>
-            </button>
           </div>
           <button
             ref={timeBtnRef}
@@ -4694,7 +4667,6 @@ export default function MobileApp() {
                         }
                       }}
                       onDropEventBlock={(eventData) => handleDropEventBlockToRow(eventData, index)}
-                      onChainToPrevious={handleChainToPrevious}
                     />
                   </div>
 
