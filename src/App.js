@@ -3927,7 +3927,7 @@ export default function MobileApp() {
             {summaryRow("Ceremony Duration", `${wiz_ceremonyDuration} min`)}
             {wiz_ceremonyVenue && summaryRow("Ceremony Venue", wiz_ceremonyVenue)}
             {wiz_ceremonyAddress && summaryRow("Ceremony Address", wiz_ceremonyAddress)}
-            {summaryRow("Reception Venue", wiz_receptionSameAsCeremony ? `Same as ceremony (${ceremonyVenueName})` : (wiz_receptionVenue || "Not entered"))}
+            {summaryRow("Reception Venue", wiz_receptionSameAsCeremony ? `Same as ceremony (${wiz_ceremonyVenue || "ceremony venue"})` : (wiz_receptionVenue || "Not entered"))}
             {!wiz_receptionSameAsCeremony && wiz_receptionAddress && summaryRow("Reception Address", wiz_receptionAddress)}
             {summaryRow("Ceremony Setting", wiz_ceremonyOutdoor ? "Outdoor" : "Indoors")}
             {wiz_guestCount && summaryRow("Anticipated Guests", wiz_guestCount)}
