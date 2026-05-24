@@ -1972,6 +1972,35 @@ export default function MobileApp() {
   const [wiz_familyGroupNames, setWiz_familyGroupNames] = useState([]);
   const [wiz_goldenHour, setWiz_goldenHour] = useState(false);
 
+  // Step 2 — Getting ready location checkboxes
+  const [wiz_brideReadyAtCeremony, setWiz_brideReadyAtCeremony] = useState(false);
+  const [wiz_brideReadyAtReception, setWiz_brideReadyAtReception] = useState(false);
+  const [wiz_groomReadyAtCeremony, setWiz_groomReadyAtCeremony] = useState(false);
+  const [wiz_groomReadyAtReception, setWiz_groomReadyAtReception] = useState(false);
+
+  // Step 4 — Pre-ceremony shot types
+  const [wiz_preCeremonyBrideReady, setWiz_preCeremonyBrideReady] = useState(true);
+  const [wiz_preCeremonyGroomReady, setWiz_preCeremonyGroomReady] = useState(true);
+  const [wiz_preCeremonyDetails, setWiz_preCeremonyDetails] = useState(true);
+  const [wiz_preCeremonyBrideParty, setWiz_preCeremonyBrideParty] = useState(true);
+  const [wiz_preCeremonyGroomParty, setWiz_preCeremonyGroomParty] = useState(true);
+
+  // Step 5 — Ceremony special events notes
+  const [wiz_ceremonyNotes, setWiz_ceremonyNotes] = useState("");
+
+  // Step 6 — Custom first looks (array of {id, label, location})
+  const [wiz_customFirstLooks, setWiz_customFirstLooks] = useState([]);
+  const [wiz_customFirstLookNextId, setWiz_customFirstLookNextId] = useState(1);
+
+  // Step 8 — Portrait Sessions (array of {id, type, location})
+  const [wiz_portraitSessions, setWiz_portraitSessions] = useState([]);
+  const [wiz_portraitSessionNextId, setWiz_portraitSessionNextId] = useState(1);
+
+  // Step 9 — Reception additions
+  const [wiz_grandEntranceSub, setWiz_grandEntranceSub] = useState("couple"); // "full" | "couple"
+  const [wiz_customReceptionEvents, setWiz_customReceptionEvents] = useState([]);
+  const [wiz_customReceptionEventNextId, setWiz_customReceptionEventNextId] = useState(1);
+
   const rows = useMemo(() => {
     return [...userRows].sort((a, b) => a.time - b.time);
   }, [userRows]);
@@ -3234,7 +3263,7 @@ export default function MobileApp() {
                   />
                 </div>
                 <div>
-                  <label style={mandatoryLabelStyle}>Address <span style={{ fontWeight: "normal", color: "#aaa" }}>(optional)</span></label>
+                  <label style={mandatoryLabelStyle}>Address</label>
                   <input
                     type="text"
                     value={wiz_receptionAddress}
@@ -3247,8 +3276,58 @@ export default function MobileApp() {
             )}
           </div>
 
+          {wizSectionHeading("Getting Ready Locations")}
+          <div style={{ marginBottom: 16 }}>
+            <p style={{ fontSize: 14, fontWeight: 300, color: "#ddd0bc", margin: "0 0 10px 0", fontFamily: "'Jost', sans-serif" }}>Where will the {brideLabel} be getting ready?</p>
+            <label style={{ ...wizCheckRowStyle, marginBottom: 8 }} onClick={() => { setWiz_brideReadyAtCeremony(!wiz_brideReadyAtCeremony); if (!wiz_brideReadyAtCeremony) setWiz_brideReadyAtReception(false); }}>
+              <input type="checkbox" checked={wiz_brideReadyAtCeremony} onChange={() => {}} style={{ width: 20, height: 20, cursor: "pointer", flexShrink: 0 }} />
+              <span style={{ fontSize: 14, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Same as ceremony location</span>
+            </label>
+            <label style={{ ...wizCheckRowStyle, marginBottom: 8 }} onClick={() => { setWiz_brideReadyAtReception(!wiz_brideReadyAtReception); if (!wiz_brideReadyAtReception) setWiz_brideReadyAtCeremony(false); }}>
+              <input type="checkbox" checked={wiz_brideReadyAtReception} onChange={() => {}} style={{ width: 20, height: 20, cursor: "pointer", flexShrink: 0 }} />
+              <span style={{ fontSize: 14, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Same as reception location</span>
+            </label>
+            {!wiz_brideReadyAtCeremony && !wiz_brideReadyAtReception && (
+              <div>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Location</label>
+                <select
+                  value={wiz_brideReadyAddress}
+                  onChange={(e) => setWiz_brideReadyAddress(e.target.value)}
+                  style={{ width: "100%", padding: "10px 12px", border: "1px solid #2a2520", borderRadius: 8, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+                >
+                  <option value="">Select a location…</option>
+                  {allWizLocations.map((name, i) => <option key={i} value={name}>{name}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <p style={{ fontSize: 14, fontWeight: 300, color: "#ddd0bc", margin: "0 0 10px 0", fontFamily: "'Jost', sans-serif" }}>Where will the {groomLabel} be getting ready?</p>
+            <label style={{ ...wizCheckRowStyle, marginBottom: 8 }} onClick={() => { setWiz_groomReadyAtCeremony(!wiz_groomReadyAtCeremony); if (!wiz_groomReadyAtCeremony) setWiz_groomReadyAtReception(false); }}>
+              <input type="checkbox" checked={wiz_groomReadyAtCeremony} onChange={() => {}} style={{ width: 20, height: 20, cursor: "pointer", flexShrink: 0 }} />
+              <span style={{ fontSize: 14, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Same as ceremony location</span>
+            </label>
+            <label style={{ ...wizCheckRowStyle, marginBottom: 8 }} onClick={() => { setWiz_groomReadyAtReception(!wiz_groomReadyAtReception); if (!wiz_groomReadyAtReception) setWiz_groomReadyAtCeremony(false); }}>
+              <input type="checkbox" checked={wiz_groomReadyAtReception} onChange={() => {}} style={{ width: 20, height: 20, cursor: "pointer", flexShrink: 0 }} />
+              <span style={{ fontSize: 14, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Same as reception location</span>
+            </label>
+            {!wiz_groomReadyAtCeremony && !wiz_groomReadyAtReception && (
+              <div>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Location</label>
+                <select
+                  value={wiz_groomReadyAddress}
+                  onChange={(e) => setWiz_groomReadyAddress(e.target.value)}
+                  style={{ width: "100%", padding: "10px 12px", border: "1px solid #2a2520", borderRadius: 8, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+                >
+                  <option value="">Select a location…</option>
+                  {allWizLocations.map((name, i) => <option key={i} value={name}>{name}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
+
           {wizSectionHeading("Additional Locations")}
-          <p style={{ fontSize: 13, color: "#888", marginBottom: 12 }}>Any other venues you'll visit — portrait spots, getting ready locations, etc.</p>
+          <p style={{ fontSize: 13, color: "#888", marginBottom: 12 }}>Any other locations you&apos;ll be visiting — such as portrait spots or destinations?</p>
           {wiz_locations.map((loc, i) => (
             <div key={loc.id} style={{ border: "1px solid #1e1c19", borderRadius: 8, padding: "14px 14px 10px", marginBottom: 12, background: "#0f0d0b" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
@@ -3300,26 +3379,65 @@ export default function MobileApp() {
         "Wedding Details",
         "These details will appear in your timeline header and exported documents.",
         <div>
+          <div style={{ marginBottom: 20, textAlign: "center" }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Wedding Date</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              style={{ padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+            />
+          </div>
           <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>{brideLabel}&apos;s Title</label>
-              <input
-                type="text"
-                value={brideLabel}
-                onChange={(e) => setBrideLabel(e.target.value)}
-                placeholder="Bride"
+              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Person 1 Title</label>
+              <select
+                value={["Bride","Groom","Partner 1","Partner 2","Spouse 1","Spouse 2"].includes(brideLabel) ? brideLabel : "__custom__"}
+                onChange={(e) => { if (e.target.value !== "__custom__") setBrideLabel(e.target.value); else setBrideLabel(""); }}
                 style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
-              />
+              >
+                <option value="Bride">Bride</option>
+                <option value="Groom">Groom</option>
+                <option value="Partner 1">Partner 1</option>
+                <option value="Partner 2">Partner 2</option>
+                <option value="Spouse 1">Spouse 1</option>
+                <option value="Spouse 2">Spouse 2</option>
+                <option value="__custom__">Custom…</option>
+              </select>
+              {!["Bride","Groom","Partner 1","Partner 2","Spouse 1","Spouse 2"].includes(brideLabel) && (
+                <input
+                  type="text"
+                  value={brideLabel}
+                  onChange={(e) => setBrideLabel(e.target.value)}
+                  placeholder="Enter custom title"
+                  style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif", marginTop: 8 }}
+                />
+              )}
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>{groomLabel}&apos;s Title</label>
-              <input
-                type="text"
-                value={groomLabel}
-                onChange={(e) => setGroomLabel(e.target.value)}
-                placeholder="Groom"
+              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Person 2 Title</label>
+              <select
+                value={["Bride","Groom","Partner 1","Partner 2","Spouse 1","Spouse 2"].includes(groomLabel) ? groomLabel : "__custom__"}
+                onChange={(e) => { if (e.target.value !== "__custom__") setGroomLabel(e.target.value); else setGroomLabel(""); }}
                 style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
-              />
+              >
+                <option value="Bride">Bride</option>
+                <option value="Groom">Groom</option>
+                <option value="Partner 1">Partner 1</option>
+                <option value="Partner 2">Partner 2</option>
+                <option value="Spouse 1">Spouse 1</option>
+                <option value="Spouse 2">Spouse 2</option>
+                <option value="__custom__">Custom…</option>
+              </select>
+              {!["Bride","Groom","Partner 1","Partner 2","Spouse 1","Spouse 2"].includes(groomLabel) && (
+                <input
+                  type="text"
+                  value={groomLabel}
+                  onChange={(e) => setGroomLabel(e.target.value)}
+                  placeholder="Enter custom title"
+                  style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif", marginTop: 8 }}
+                />
+              )}
             </div>
           </div>
           <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
@@ -3344,15 +3462,6 @@ export default function MobileApp() {
               />
             </div>
           </div>
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Wedding Date</label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              style={{ padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
-            />
-          </div>
         </div>,
         () => setScreen("welcome"),
         () => setWizardStep(2)
@@ -3363,7 +3472,7 @@ export default function MobileApp() {
     if (wizardStep === 3) {
       return stepCard(
         "What's Included in Your Package?",
-        "Only check services that are part of your booked package — this ensures we only schedule what you're actually providing.",
+        "Only check services that are part of your booked package.",
         <div>
           <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
             <div style={{ flex: 1 }}>
@@ -3417,98 +3526,32 @@ export default function MobileApp() {
       const wizMinuteNote = <p style={{ fontSize: 12, color: "#aaa", margin: "4px 0 0 0" }}>Enter drive time in minutes, not miles</p>;
       return stepCard(
         "Pre-Ceremony",
-        "Getting ready locations help us plan travel time and schedule the first part of your day.",
+        "",
         <div>
-          {/* Same location question */}
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>
-              Are the bride and groom getting ready at the same location or venue?
+          {wizSectionHeading("Shot Types")}
+          <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 12px 0", fontFamily: "'Jost', sans-serif" }}>What types of shots do you want before the ceremony starts?</p>
+          {[
+            { key: "brideReady", label: `${brideLabel} Getting Ready`, sub: "Candid getting-ready moments", val: wiz_preCeremonyBrideReady, set: setWiz_preCeremonyBrideReady },
+            { key: "groomReady", label: `${groomLabel} Getting Ready`, sub: "Candid getting-ready moments", val: wiz_preCeremonyGroomReady, set: setWiz_preCeremonyGroomReady },
+            { key: "details", label: "Detail Shots", sub: "Rings, dress, bouquet, shoes, etc.", val: wiz_preCeremonyDetails, set: setWiz_preCeremonyDetails },
+            { key: "brideParty", label: `${brideLabel} & Party Portraits`, sub: "Bridal party group portraits", val: wiz_preCeremonyBrideParty, set: setWiz_preCeremonyBrideParty },
+            { key: "groomParty", label: `${groomLabel} & Party Portraits`, sub: "Groomsmen group portraits", val: wiz_preCeremonyGroomParty, set: setWiz_preCeremonyGroomParty },
+          ].map(({ key, label, sub, val, set }) => (
+            <label key={key} style={{ ...wizCheckRowStyle }} onClick={() => set(!val)}>
+              <input type="checkbox" checked={val} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{label}</div>
+                <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>{sub}</div>
+              </div>
             </label>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button style={wizToggleStyle(wiz_sameLocation === true)} onClick={() => setWiz_sameLocation(true)}>Yes</button>
-              <button style={wizToggleStyle(wiz_sameLocation === false)} onClick={() => setWiz_sameLocation(false)}>No</button>
-            </div>
-          </div>
+          ))}
 
-          {/* Same location: one shared address + one distance to ceremony */}
-          {wiz_sameLocation === true && (
-            <>
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Getting ready location <span style={{ color: "#3a3530" }}>(optional)</span></label>
-                <select value={wiz_brideReadyAddress} onChange={(e) => setWiz_brideReadyAddress(e.target.value)} style={wizInputStyle}>
-                  <option value="">Select a location…</option>
-                  {allWizLocations.map((name, i) => <option key={i} value={name}>{name}</option>)}
-                </select>
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Distance from getting ready location to ceremony <span style={{ color: "#3a3530" }}>(optional)</span></label>
-                <input type="text" value={wiz_distanceBrideToCeremony} onChange={(e) => setWiz_distanceBrideToCeremony(e.target.value)} placeholder="e.g. 20" style={wizInputStyle} />
-                {wizMinuteNote}
-              </div>
-            </>
-          )}
-
-          {/* Different locations: separate address fields + distances + portraits-at-location option */}
-          {wiz_sameLocation === false && (
-            <>
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Where is the {brideLabel} getting ready? <span style={{ color: "#3a3530" }}>(optional)</span></label>
-                <select value={wiz_brideReadyAddress} onChange={(e) => setWiz_brideReadyAddress(e.target.value)} style={wizInputStyle}>
-                  <option value="">Select a location…</option>
-                  {allWizLocations.map((name, i) => <option key={i} value={name}>{name}</option>)}
-                </select>
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Where is the {groomLabel} getting ready? <span style={{ color: "#3a3530" }}>(optional)</span></label>
-                <select value={wiz_groomReadyAddress} onChange={(e) => setWiz_groomReadyAddress(e.target.value)} style={wizInputStyle}>
-                  <option value="">Select a location…</option>
-                  {allWizLocations.map((name, i) => <option key={i} value={name}>{name}</option>)}
-                </select>
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Distance between the two getting ready locations <span style={{ color: "#3a3530" }}>(optional)</span></label>
-                <input type="text" value={wiz_distanceBetweenReady} onChange={(e) => setWiz_distanceBetweenReady(e.target.value)} placeholder="e.g. 20" style={wizInputStyle} />
-                {wizMinuteNote}
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Distance from bride's getting ready location to ceremony <span style={{ color: "#3a3530" }}>(optional)</span></label>
-                <input type="text" value={wiz_distanceBrideToCeremony} onChange={(e) => setWiz_distanceBrideToCeremony(e.target.value)} placeholder="e.g. 20" style={wizInputStyle} />
-                {wizMinuteNote}
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Distance from groom's getting ready location to ceremony <span style={{ color: "#3a3530" }}>(optional)</span></label>
-                <input type="text" value={wiz_distanceGroomToCeremony} onChange={(e) => setWiz_distanceGroomToCeremony(e.target.value)} placeholder="e.g. 15" style={wizInputStyle} />
-                {wizMinuteNote}
-              </div>
-              {/* Portraits at each getting ready location */}
-              <label style={{ ...wizCheckRowStyle, marginBottom: 8 }} onClick={() => { setWiz_portraitsAtReadyLocations(!wiz_portraitsAtReadyLocations); if (wiz_portraitsAtReadyLocations) { setWiz_bridePortraitsAtReadyLocation(false); setWiz_groomPortraitsAtReadyLocation(false); } }}>
-                <input type="checkbox" checked={wiz_portraitsAtReadyLocations} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Will portraits be done at each person's getting ready location?</div>
-                </div>
-              </label>
-              {wiz_portraitsAtReadyLocations && (
-                <div style={{ paddingLeft: 34, marginBottom: 12 }} onClick={(e) => e.stopPropagation()}>
-                  <label style={{ ...wizCheckRowStyle, marginBottom: 6 }} onClick={() => setWiz_bridePortraitsAtReadyLocation(!wiz_bridePortraitsAtReadyLocation)}>
-                    <input type="checkbox" checked={wiz_bridePortraitsAtReadyLocation} onChange={() => {}} style={{ width: 20, height: 20, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
-                    <div style={{ fontSize: 14, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Bride &amp; bridesmaids portraits at bride's getting ready location</div>
-                  </label>
-                  <label style={{ ...wizCheckRowStyle }} onClick={() => setWiz_groomPortraitsAtReadyLocation(!wiz_groomPortraitsAtReadyLocation)}>
-                    <input type="checkbox" checked={wiz_groomPortraitsAtReadyLocation} onChange={() => {}} style={{ width: 20, height: 20, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
-                    <div style={{ fontSize: 14, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Groom &amp; groomsmen portraits at groom's getting ready location</div>
-                  </label>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Hair & makeup done-by time — always shown */}
+          {wizSectionHeading("Hair & Makeup")}
           <div>
             <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#ddd0bc", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>
-              When should hair &amp; make-up be done by? <span style={{ color: "#3a3530" }}>(optional)</span>
+              When will hair &amp; make-up be completed for the {brideLabel} and bridesmaids?
             </label>
-            <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 10px 0", fontFamily: "'Jost', sans-serif" }}>Target time for the bride and bridesmaids to be fully ready.</p>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <select value={wiz_hairMakeupDoneHour} onChange={(e) => setWiz_hairMakeupDoneHour(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
                 {["1","2","3","4","5","6","7","8","9","10","11","12"].map(h => <option key={h} value={h}>{h}</option>)}
               </select>
@@ -3521,6 +3564,7 @@ export default function MobileApp() {
                 <option value="PM">PM</option>
               </select>
             </div>
+            <p style={{ fontSize: 12, color: "#6e6358", margin: 0, fontFamily: "'Jost', sans-serif", fontStyle: "italic" }}>Hair &amp; Makeup delays are the #1 reason for being behind schedule. Please have your hair/makeup artists arrive extra early so you have plenty of adequate time.</p>
           </div>
         </div>,
         () => setWizardStep(3),
@@ -3534,7 +3578,7 @@ export default function MobileApp() {
       const minuteOptions = ["00","05","10","15","20","25","30","35","40","45","50","55"];
       return stepCard(
         "Ceremony",
-        "Ceremony time and type help us schedule everything before and after accurately.",
+        "",
         <div>
           <div style={{ marginBottom: 20 }}>
             <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Ceremony Start Time</label>
@@ -3566,7 +3610,7 @@ export default function MobileApp() {
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Anticipated Guest Count <span style={{ color: "#3a3530" }}>(optional)</span></label>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Anticipated Guest Count</label>
             <input
               type="number"
               value={wiz_guestCount}
@@ -3577,12 +3621,23 @@ export default function MobileApp() {
             />
           </div>
 
-          <div>
+          <div style={{ marginBottom: 20 }}>
             <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Ceremony Setting</label>
             <div style={{ display: "flex", gap: 10 }}>
               <button style={wizToggleStyle(!wiz_ceremonyOutdoor)} onClick={() => setWiz_ceremonyOutdoor(false)}>Indoors</button>
               <button style={wizToggleStyle(wiz_ceremonyOutdoor)} onClick={() => setWiz_ceremonyOutdoor(true)}>Outdoor</button>
             </div>
+          </div>
+
+          <div>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Any special events during the ceremony that the photographer/videographer should know about?</label>
+            <textarea
+              value={wiz_ceremonyNotes}
+              onChange={(e) => setWiz_ceremonyNotes(e.target.value)}
+              placeholder="e.g. Unity candle, ring warming, surprise song performance…"
+              rows={3}
+              style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif", resize: "vertical" }}
+            />
           </div>
         </div>,
         () => setWizardStep(4),
@@ -3608,9 +3663,8 @@ export default function MobileApp() {
               <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Who are the first looks with?</label>
               {[
                 { key: "groom", label: "Groom", sub: "Couple's first look before the ceremony", val: wiz_firstLookGroom, set: setWiz_firstLookGroom, locVal: wiz_firstLookGroomLocation, setLoc: setWiz_firstLookGroomLocation },
-                { key: "parent", label: "Parent(s)", sub: "Bride sees parent(s) for the first time", val: wiz_firstLookParent, set: setWiz_firstLookParent, locVal: wiz_firstLookParentLocation, setLoc: setWiz_firstLookParentLocation },
-                { key: "bridesmaids", label: "Bridesmaids", sub: "Bride reveals look to the bridal party", val: wiz_firstLookBridesmaids, set: setWiz_firstLookBridesmaids, locVal: wiz_firstLookBridsmaidsLocation, setLoc: setWiz_firstLookBridsmaidsLocation },
-                { key: "other", label: "Other", sub: "Any other first look moments", val: wiz_firstLookOther, set: setWiz_firstLookOther, locVal: wiz_firstLookOtherLocation, setLoc: setWiz_firstLookOtherLocation },
+                { key: "parent", label: "Parent(s)", sub: `${brideLabel} sees parent(s) for the first time`, val: wiz_firstLookParent, set: setWiz_firstLookParent, locVal: wiz_firstLookParentLocation, setLoc: setWiz_firstLookParentLocation },
+                { key: "bridesmaids", label: "Bridesmaids", sub: `${brideLabel} reveals look to the bridal party`, val: wiz_firstLookBridesmaids, set: setWiz_firstLookBridesmaids, locVal: wiz_firstLookBridsmaidsLocation, setLoc: setWiz_firstLookBridsmaidsLocation },
               ].map(({ key, label, sub, val, set, locVal, setLoc }) => (
                 <label key={key} style={{ ...wizCheckRowStyle }} onClick={() => set(!val)}>
                   <input type="checkbox" checked={val} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
@@ -3635,6 +3689,48 @@ export default function MobileApp() {
                   </div>
                 </label>
               ))}
+
+              {wizSectionHeading("Additional First Looks")}
+              {wiz_customFirstLooks.map((fl, i) => (
+                <div key={fl.id} style={{ border: "1px solid #1e1c19", borderRadius: 8, padding: "14px 14px 10px", marginBottom: 10, background: "#0f0d0b" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <span style={{ fontSize: 13, color: "#6e6358", fontFamily: "'Jost', sans-serif" }}>Custom First Look {i + 1}</span>
+                    <button
+                      onClick={() => setWiz_customFirstLooks(prev => prev.filter((_, idx) => idx !== i))}
+                      style={{ background: "none", border: "1px solid #2a2520", borderRadius: 4, padding: "3px 10px", fontSize: 12, color: "#6e6358", cursor: "pointer" }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div style={{ marginBottom: 8 }}>
+                    <label style={{ display: "block", fontSize: 12, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Label</label>
+                    <input
+                      type="text"
+                      value={fl.label}
+                      onChange={(e) => setWiz_customFirstLooks(prev => { const next = [...prev]; next[i] = { ...next[i], label: e.target.value }; return next; })}
+                      placeholder="e.g. Bride & Flower Girl"
+                      style={{ width: "100%", padding: "8px 10px", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 12, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Location</label>
+                    <select
+                      value={fl.location}
+                      onChange={(e) => setWiz_customFirstLooks(prev => { const next = [...prev]; next[i] = { ...next[i], location: e.target.value }; return next; })}
+                      style={{ width: "100%", padding: "8px 10px", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, background: "#0f0d0b", color: "#ddd0bc" }}
+                    >
+                      <option value="">Select a location…</option>
+                      {allWizLocations.map((name, j) => <option key={j} value={name}>{name}</option>)}
+                    </select>
+                  </div>
+                </div>
+              ))}
+              <button
+                onClick={() => { setWiz_customFirstLooks(prev => [...prev, { id: wiz_customFirstLookNextId, label: "", location: "" }]); setWiz_customFirstLookNextId(n => n + 1); }}
+                style={{ padding: "9px 18px", background: "#161310", color: "#b8906a", border: "1px solid #b8906a", borderRadius: 8, fontSize: 13, fontWeight: 300, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
+              >
+                + Add First Look
+              </button>
             </div>
           )}
         </div>,
@@ -3670,10 +3766,11 @@ export default function MobileApp() {
     if (wizardStep === 8) {
       const groupCount = wiz_familyGroups === "none" ? 0 : parseInt(wiz_familyGroups, 10);
       return stepCard(
-        "Post-Ceremony",
-        "Tell us about group photos, portrait locations, and golden hour after the ceremony.",
+        "Portraits",
+        "Tell us about group photos, portrait sessions, and golden hour after the ceremony.",
         <div>
           {wizSectionHeading("Family Group Photos")}
+          <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 6px 0", fontFamily: "'Jost', sans-serif" }}>Family and Group Photos typically follow directly after the ceremony while your guests are still present.</p>
           <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 10px 0", fontFamily: "'Jost', sans-serif" }}>How many family groupings will be photographed after the ceremony?</p>
           <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
             <button style={wizToggleStyle(wiz_familyGroups === "5")} onClick={() => setWiz_familyGroups("5")}>5 Groups (~20 min)</button>
@@ -3702,52 +3799,53 @@ export default function MobileApp() {
             </div>
           )}
 
-          {wizSectionHeading("Portrait Locations")}
-          <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 12px 0", fontFamily: "'Jost', sans-serif" }}>Add each location where portraits will be taken after the ceremony.</p>
-          {wiz_portraitLocations.map((loc, i) => (
-            <div key={i} style={{ border: "1px solid #1e1c19", borderRadius: 8, padding: "14px 14px 6px", marginBottom: 12, background: "#0f0d0b" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                <span style={{ fontSize: 14, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Location {i + 1}</span>
+          {wizSectionHeading("Portrait Sessions")}
+          <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 12px 0", fontFamily: "'Jost', sans-serif" }}>Add each portrait session that will happen after the ceremony.</p>
+          {wiz_portraitSessions.map((session, i) => (
+            <div key={session.id} style={{ border: "1px solid #1e1c19", borderRadius: 8, padding: "14px 14px 10px", marginBottom: 10, background: "#0f0d0b" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Portrait Session {i + 1}</span>
                 <button
-                  onClick={() => setWiz_portraitLocations(prev => prev.filter((_, idx) => idx !== i))}
+                  onClick={() => setWiz_portraitSessions(prev => prev.filter((_, idx) => idx !== i))}
                   style={{ background: "none", border: "1px solid #2a2520", borderRadius: 4, padding: "3px 10px", fontSize: 12, color: "#6e6358", cursor: "pointer" }}
                 >
                   Remove
                 </button>
               </div>
-              {[
-                { field: "name", label: "Location Name", placeholder: "e.g. Riverside Park" },
-                { field: "address", label: "Address", placeholder: "e.g. 123 River Rd, Springfield" },
-                { field: "distFromCeremony", label: "Distance from Ceremony Venue", placeholder: "e.g. 10" },
-                { field: "distFromReception", label: "Distance from Reception Venue", placeholder: "e.g. 5" },
-              ].map(({ field, label, placeholder }) => (
-                <div key={field} style={{ marginBottom: 10 }}>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>
-                    {label} <span style={{ color: "#3a3530" }}>(optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={loc[field] || ""}
-                    onChange={(e) => setWiz_portraitLocations(prev => {
-                      const next = [...prev];
-                      next[i] = { ...next[i], [field]: e.target.value };
-                      return next;
-                    })}
-                    placeholder={placeholder}
-                    style={{ width: "100%", padding: 9, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
-                  />
-                  {(field === "distFromCeremony" || field === "distFromReception") && (
-                    <p style={{ fontSize: 12, color: "#6e6358", margin: "4px 0 0 0", fontFamily: "'Jost', sans-serif" }}>Enter drive time in minutes, not miles</p>
-                  )}
-                </div>
-              ))}
+              <div style={{ marginBottom: 8 }}>
+                <label style={{ display: "block", fontSize: 12, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Session Type</label>
+                <select
+                  value={session.type}
+                  onChange={(e) => setWiz_portraitSessions(prev => { const next = [...prev]; next[i] = { ...next[i], type: e.target.value }; return next; })}
+                  style={{ width: "100%", padding: "8px 10px", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, background: "#0f0d0b", color: "#ddd0bc" }}
+                >
+                  <option value="">Select type…</option>
+                  <option value="Bride & Groom">Bride &amp; Groom</option>
+                  <option value="Bride & Bridesmaids">Bride &amp; Bridesmaids</option>
+                  <option value="Groom & Groomsmen">Groom &amp; Groomsmen</option>
+                  <option value="Full Wedding Party">Full Wedding Party</option>
+                  <option value="Extended Family">Extended Family</option>
+                  <option value="Golden Hour">Golden Hour</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 12, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Location</label>
+                <select
+                  value={session.location}
+                  onChange={(e) => setWiz_portraitSessions(prev => { const next = [...prev]; next[i] = { ...next[i], location: e.target.value }; return next; })}
+                  style={{ width: "100%", padding: "8px 10px", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, background: "#0f0d0b", color: "#ddd0bc" }}
+                >
+                  <option value="">Select a location…</option>
+                  {allWizLocations.map((name, j) => <option key={j} value={name}>{name}</option>)}
+                </select>
+              </div>
             </div>
           ))}
           <button
-            onClick={() => setWiz_portraitLocations(prev => [...prev, { name: "", address: "", distFromCeremony: "", distFromReception: "" }])}
+            onClick={() => { setWiz_portraitSessions(prev => [...prev, { id: wiz_portraitSessionNextId, type: "", location: "" }]); setWiz_portraitSessionNextId(n => n + 1); }}
             style={{ padding: "9px 18px", background: "#161310", color: "#b8906a", border: "1px solid #b8906a", borderRadius: 8, fontSize: 13, fontWeight: 300, cursor: "pointer", marginBottom: 20, fontFamily: "'Jost', sans-serif" }}
           >
-            + Add Portrait Location
+            + Add Portrait Session
           </button>
 
           {wizSectionHeading("Golden Hour")}
@@ -3772,17 +3870,6 @@ export default function MobileApp() {
     if (wizardStep === 9) {
       const hourOptions = ["1","2","3","4","5","6","7","8","9","10","11","12"];
       const minuteOptions = ["00","05","10","15","20","25","30","35","40","45","50","55"];
-      const receptionEvents = [
-        { label: "Grand Entrance", sub: "Couple introduced to the reception", val: wiz_grandEntrance, set: setWiz_grandEntrance },
-        { label: "Cake Cutting", sub: "", val: wiz_cakeCutting, set: setWiz_cakeCutting },
-        { label: "First Dance", sub: "Bride & Groom first dance", val: wiz_firstDance, set: setWiz_firstDance },
-        { label: "Bride & Parent Dance", sub: "", val: wiz_brideParentDance, set: setWiz_brideParentDance },
-        { label: "Groom & Parent Dance", sub: "", val: wiz_groomParentDance, set: setWiz_groomParentDance },
-        { label: "Special Dance", sub: "Any other special dance moments", val: wiz_specialDance, set: setWiz_specialDance },
-        { label: "Open Dance Floor", sub: "", val: wiz_openDanceFloor, set: setWiz_openDanceFloor },
-        { label: "Garter Toss", sub: "", val: wiz_garterToss, set: setWiz_garterToss },
-        { label: "Bouquet Toss", sub: "", val: wiz_bouquetToss, set: setWiz_bouquetToss },
-      ];
       return stepCard(
         "Reception",
         "Select what's happening at the reception so we can build out that part of your timeline.",
@@ -3805,16 +3892,35 @@ export default function MobileApp() {
           </div>
 
           {wizSectionHeading("Reception Events")}
-          {receptionEvents.map(({ label, sub, val, set }) => (
-            <label key={label} style={{ ...wizCheckRowStyle }} onClick={() => set(!val)}>
-              <input type="checkbox" checked={val} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{label}</div>
-                {sub && <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>{sub}</div>}
-              </div>
-            </label>
-          ))}
 
+          {/* Grand Entrance */}
+          <label style={{ ...wizCheckRowStyle }} onClick={() => setWiz_grandEntrance(!wiz_grandEntrance)}>
+            <input type="checkbox" checked={wiz_grandEntrance} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Grand Entrance</div>
+              <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>Couple introduced to the reception</div>
+              {wiz_grandEntrance && (
+                <div style={{ marginTop: 10 }} onClick={(e) => e.stopPropagation()}>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => setWiz_grandEntranceSub("couple")}
+                      style={wizToggleStyle(wiz_grandEntranceSub === "couple")}
+                    >
+                      Just {brideLabel} &amp; {groomLabel}
+                    </button>
+                    <button
+                      onClick={() => setWiz_grandEntranceSub("full")}
+                      style={wizToggleStyle(wiz_grandEntranceSub === "full")}
+                    >
+                      Full wedding party
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </label>
+
+          {/* Dinner */}
           <label style={{ ...wizCheckRowStyle }} onClick={() => setWiz_dinner(!wiz_dinner)}>
             <input type="checkbox" checked={wiz_dinner} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
@@ -3841,13 +3947,13 @@ export default function MobileApp() {
                   <div>
                     <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Dinner Style</label>
                     <div style={{ display: "flex", gap: 10 }}>
-                      {["Plated", "Buffet"].map((style) => (
+                      {["Plated", "Buffet"].map((s) => (
                         <button
-                          key={style}
-                          onClick={() => setWiz_dinnerStyle(style)}
-                          style={wizToggleStyle(wiz_dinnerStyle === style)}
+                          key={s}
+                          onClick={() => setWiz_dinnerStyle(s)}
+                          style={wizToggleStyle(wiz_dinnerStyle === s)}
                         >
-                          {style}
+                          {s}
                         </button>
                       ))}
                     </div>
@@ -3857,6 +3963,26 @@ export default function MobileApp() {
             </div>
           </label>
 
+          {/* Remaining reception events (no Special Dance) */}
+          {[
+            { label: "Cake Cutting", sub: "", val: wiz_cakeCutting, set: setWiz_cakeCutting },
+            { label: "First Dance", sub: `${brideLabel} & ${groomLabel} first dance`, val: wiz_firstDance, set: setWiz_firstDance },
+            { label: `${brideLabel} & Parent Dance`, sub: "", val: wiz_brideParentDance, set: setWiz_brideParentDance },
+            { label: `${groomLabel} & Parent Dance`, sub: "", val: wiz_groomParentDance, set: setWiz_groomParentDance },
+            { label: "Open Dance Floor", sub: "", val: wiz_openDanceFloor, set: setWiz_openDanceFloor },
+            { label: "Garter Toss", sub: "", val: wiz_garterToss, set: setWiz_garterToss },
+            { label: "Bouquet Toss", sub: "", val: wiz_bouquetToss, set: setWiz_bouquetToss },
+          ].map(({ label, sub, val, set }) => (
+            <label key={label} style={{ ...wizCheckRowStyle }} onClick={() => set(!val)}>
+              <input type="checkbox" checked={val} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{label}</div>
+                {sub && <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>{sub}</div>}
+              </div>
+            </label>
+          ))}
+
+          {/* Speeches */}
           <label style={{ ...wizCheckRowStyle }} onClick={() => setWiz_speeches(!wiz_speeches)}>
             <input type="checkbox" checked={wiz_speeches} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
@@ -3875,10 +4001,56 @@ export default function MobileApp() {
                     />
                   </div>
                   <p style={{ fontSize: 12, color: "#6e6358", margin: "6px 0 0 0", fontFamily: "'Jost', sans-serif" }}>Include anyone doing a blessing or prayer in this count.</p>
+                  <p style={{ fontSize: 12, color: "#6e6358", margin: "4px 0 0 0", fontFamily: "'Jost', sans-serif" }}>Typically 10 minutes per speaker is enough. You can change this to be longer or shorter in your first draft.</p>
                 </div>
               )}
             </div>
           </label>
+
+          {/* Custom Events */}
+          {wizSectionHeading("Custom Events")}
+          {wiz_customReceptionEvents.map((ev, i) => (
+            <div key={ev.id} style={{ border: "1px solid #1e1c19", borderRadius: 8, padding: "14px 14px 10px", marginBottom: 10, background: "#0f0d0b" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <span style={{ fontSize: 13, color: "#6e6358", fontFamily: "'Jost', sans-serif" }}>Custom Event {i + 1}</span>
+                <button
+                  onClick={() => setWiz_customReceptionEvents(prev => prev.filter((_, idx) => idx !== i))}
+                  style={{ background: "none", border: "1px solid #2a2520", borderRadius: 4, padding: "3px 10px", fontSize: 12, color: "#6e6358", cursor: "pointer" }}
+                >
+                  Remove
+                </button>
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", fontSize: 12, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Label</label>
+                  <input
+                    type="text"
+                    value={ev.label}
+                    onChange={(e) => setWiz_customReceptionEvents(prev => { const next = [...prev]; next[i] = { ...next[i], label: e.target.value }; return next; })}
+                    placeholder="Event name"
+                    style={{ width: "100%", padding: "8px 10px", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+                  />
+                </div>
+                <div style={{ width: 80 }}>
+                  <label style={{ display: "block", fontSize: 12, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Minutes</label>
+                  <input
+                    type="number"
+                    value={ev.duration}
+                    min={5}
+                    step={5}
+                    onChange={(e) => setWiz_customReceptionEvents(prev => { const next = [...prev]; next[i] = { ...next[i], duration: parseInt(e.target.value, 10) || 15 }; return next; })}
+                    style={{ width: "100%", padding: "8px 10px", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", textAlign: "center" }}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+          <button
+            onClick={() => { setWiz_customReceptionEvents(prev => [...prev, { id: wiz_customReceptionEventNextId, label: "", duration: 15 }]); setWiz_customReceptionEventNextId(n => n + 1); }}
+            style={{ padding: "9px 18px", background: "#161310", color: "#b8906a", border: "1px solid #b8906a", borderRadius: 8, fontSize: 13, fontWeight: 300, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
+          >
+            + Add Custom Event
+          </button>
         </div>,
         () => setWizardStep(8),
         () => setWizardStep(99),
@@ -3894,7 +4066,6 @@ export default function MobileApp() {
       if (wiz_firstLookGroom) firstLooksList.push("Groom");
       if (wiz_firstLookParent) firstLooksList.push("Parent(s)");
       if (wiz_firstLookBridesmaids) firstLooksList.push("Bridesmaids");
-      if (wiz_firstLookOther) firstLooksList.push("Other");
       const groupShotsBeforeCeremony = wiz_firstLookGroom || wiz_brideOkayBefore === true;
 
       const summaryRow = (label, value) => (
@@ -3949,7 +4120,6 @@ export default function MobileApp() {
               wiz_firstDance && "First Dance",
               wiz_brideParentDance && "Bride & Parent Dance",
               wiz_groomParentDance && "Groom & Parent Dance",
-              wiz_specialDance && "Special Dance",
               wiz_dinner && "Dinner",
               wiz_dinner && wiz_dinnerStyle && `(${wiz_dinnerStyle})`,
               wiz_speeches && `Speeches (${wiz_speechCount})`,
@@ -4192,6 +4362,15 @@ export default function MobileApp() {
                 Load Existing Timeline
                 <input type="file" accept=".json" onChange={loadProject} style={{ display: "none" }} />
               </label>
+            </div>
+
+            <div style={{ marginTop: 48, textAlign: "center" }}>
+              <div style={{ fontSize: 13, color: "#3a3530", fontFamily: "'Jost', sans-serif", fontWeight: 200, letterSpacing: "0.05em" }}>
+                Media Potion
+              </div>
+              <div style={{ fontSize: 11, color: "#2a2520", fontFamily: "'Jost', sans-serif", fontWeight: 200, marginTop: 4 }}>
+                © {new Date().getFullYear()} Media Potion. All rights reserved.
+              </div>
             </div>
           </div>
         </div>
