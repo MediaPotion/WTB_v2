@@ -2103,6 +2103,36 @@ export default function MobileApp() {
     }
   };
 
+  // Cascade all pre- or post-ceremony blocks around the ceremony anchor.
+  // insertedRowTime determines which side to cascade; only that side is recalculated.
+  const applyCeremonyAnchorCascade = (rows, insertedRowTime) => {
+    const isCeremony = (r) => r.event === "Ceremony: Average" || r.event === "Ceremony: Catholic";
+    const ceremonyRow = rows.find(isCeremony);
+    if (!ceremonyRow) return rows; // no anchor — return unchanged
+
+    const ceremonyTime = ceremonyRow.time;
+    const ceremonyEnd  = ceremonyTime + ceremonyRow.duration;
+    const sorted = [...rows].sort((a, b) => a.time - b.time);
+
+    if (insertedRowTime < ceremonyTime) {
+      // Pre-ceremony: cascade backwards from ceremony start (day starts earlier)
+      const pre  = sorted.filter(r => r.id !== ceremonyRow.id && r.time < ceremonyTime);
+      const rest = sorted.filter(r => r.id === ceremonyRow.id || r.time >= ceremonyTime);
+      let t = ceremonyTime;
+      const newPre = [...pre].reverse().map(r => { t -= r.duration; return { ...r, time: t }; }).reverse();
+      const result = [...newPre, ...rest];
+      return rows.map(r => result.find(u => u.id === r.id) || r);
+    } else {
+      // Post-ceremony: cascade forwards from ceremony end (blocks shift later)
+      const preAndCeremony = sorted.filter(r => r.id === ceremonyRow.id || r.time <= ceremonyTime);
+      const post = sorted.filter(r => r.id !== ceremonyRow.id && r.time > ceremonyTime);
+      let t = ceremonyEnd;
+      const newPost = post.map(r => { const u = { ...r, time: t }; t += r.duration; return u; });
+      const result = [...preAndCeremony, ...newPost];
+      return rows.map(r => result.find(u => u.id === r.id) || r);
+    }
+  };
+
   // Chain current row's time to previous row's end time
   const handleChainToPrevious = (index) => {
     console.log('[Chain] handleChainToPrevious called for index', index);
@@ -2315,11 +2345,11 @@ export default function MobileApp() {
     
     // Insert the new row at the calculated position
     newUserRows.splice(insertPosition, 0, newRow);
-    
+
     console.log('[AddRow] UserRows after insert:', newUserRows.map(r => ({id: r.id, time: r.time})));
-    
+
     setNextId(nextId + 1);
-    saveToHistory(newUserRows);
+    saveToHistory(applyCeremonyAnchorCascade(newUserRows, newRow.time));
   };
 
   // Append a new row at the end of the list
@@ -2383,11 +2413,10 @@ export default function MobileApp() {
       setNextId(nextId + 1);
     }
 
-    // Recalculate times starting from the modified user row index
-    const recalculated = recalculateTimes(newUserRows, userRowIndex);
-    console.log("[DnD] MobileApp: recalculated rows (preview)", recalculated.slice(Math.max(0, userRowIndex - 1), userRowIndex + 2));
-    setUserRows(recalculated);
-    saveToHistory(recalculated);
+    const cascaded = applyCeremonyAnchorCascade(newUserRows, targetRow.time);
+    console.log("[DnD] MobileApp: cascaded rows (preview)", cascaded.slice(Math.max(0, userRowIndex - 1), userRowIndex + 2));
+    setUserRows(cascaded);
+    saveToHistory(cascaded);
   };
 
   // Drag and drop handlers for row reordering
