@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { PROJECT_VERSION, AUTOSAVE_KEY } from "../constants/wizard";
+import { normalizeTimelineRow } from "../lib/rowTier";
 
 export function useProjectStorage(state) {
   const {
@@ -160,14 +161,16 @@ export function useProjectStorage(state) {
     const loadedRows = projectData.userRows;
     setUserRows(
       loadedRows && loadedRows.length > 0
-        ? loadedRows.map((r) => ({
-            photo: true,
-            video: true,
-            notes: "",
-            ...r,
-          }))
+        ? loadedRows.map((r) =>
+            normalizeTimelineRow({
+              photo: true,
+              video: true,
+              notes: "",
+              ...r,
+            })
+          )
         : [
-            {
+            normalizeTimelineRow({
               id: 1,
               location: "",
               time: 12 * 60,
@@ -178,7 +181,7 @@ export function useProjectStorage(state) {
               video: true,
               notes: "",
               isTimeLocked: false,
-            },
+            }),
           ]
     );
 

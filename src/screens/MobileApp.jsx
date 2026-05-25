@@ -5,6 +5,8 @@ import { THEME_CSS } from "../constants/theme";
 import { useTheme } from "../hooks/useTheme";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { SETTINGS_WIZARD_TABS, PROJECT_VERSION, AUTOSAVE_KEY, DESKTOP_MIN_WIDTH } from "../constants/wizard";
+import { DEFAULT_ROW_TIER_FIELDS } from "../constants/tiers";
+import { getDefaultTierForEvent } from "../lib/rowTier";
 import { defaultIsOutdoorForEvent } from "../constants/colors";
 import { formatTime, parseTimeInput, computeTimelineCoverage, TimelineCoverageCounter, useMediaQuery } from "../lib/time";
 import { computeOverlaps } from "../lib/overlaps";
@@ -76,6 +78,7 @@ export default function MobileApp() {
       notes: "",
       isTimeLocked: false,
       color: "",
+      ...DEFAULT_ROW_TIER_FIELDS,
     },
   ]);
   const latestUserRowsRef = useRef(null);
@@ -180,6 +183,8 @@ export default function MobileApp() {
   const [wiz_dinnerStartMinute, setWiz_dinnerStartMinute] = useState("00");
   const [wiz_dinnerStartPeriod, setWiz_dinnerStartPeriod] = useState("PM");
   const [wiz_dinnerStyle, setWiz_dinnerStyle] = useState(null);
+  const [wiz_dinnerFlexibility, setWiz_dinnerFlexibility] = useState(0);
+  const [wiz_receptionStartFlexibility, setWiz_receptionStartFlexibility] = useState(0);
   const [wiz_openDanceFloor, setWiz_openDanceFloor] = useState(true);
   const [wiz_garterToss, setWiz_garterToss] = useState(false);
   const [wiz_bouquetToss, setWiz_bouquetToss] = useState(false);
@@ -691,6 +696,7 @@ export default function MobileApp() {
       isTimeLocked: false,
       type: "event",
       address: "",
+      ...DEFAULT_ROW_TIER_FIELDS,
     };
 
     // Insert the new row at the correct position based on time order
@@ -752,6 +758,8 @@ export default function MobileApp() {
           type: "event",
           event: eventData.event,
           duration: eventData.duration,
+          tier: getDefaultTierForEvent(eventData.event),
+          flexibilityMinutes: 0,
           ...(outdoorDefault !== undefined ? { isOutdoor: outdoorDefault } : {}),
         };
 
@@ -774,6 +782,7 @@ export default function MobileApp() {
         isTimeLocked: false,
         type: "event",
         address: "",
+        ...DEFAULT_ROW_TIER_FIELDS,
       });
       setNextId(nextId + 1);
     }
@@ -1006,6 +1015,11 @@ export default function MobileApp() {
       receptionAddress: wiz_receptionAddress,
       ceremonyAddress: wiz_ceremonyAddress,
       brideReadyAddress: wiz_brideReadyAddress,
+      brideReadyStreet: wiz_brideReadyStreet,
+      brideReadyAtCeremony: wiz_brideReadyAtCeremony,
+      brideReadyAtReception: wiz_brideReadyAtReception,
+      groomReadyStreet: wiz_groomReadyStreet,
+      locations: wiz_locations,
       firstLookParent: wiz_firstLookParent,
       firstLookBridesmaids: wiz_firstLookBridesmaids,
       firstLookOther: wiz_firstLookOther,
@@ -1031,6 +1045,14 @@ export default function MobileApp() {
       openDanceFloor: wiz_openDanceFloor,
       garterToss: wiz_garterToss,
       bouquetToss: wiz_bouquetToss,
+      preCeremonyBrideReady: wiz_preCeremonyBrideReady,
+      preCeremonyPreDress: wiz_preCeremonyPreDress,
+      preCeremonyDetails: wiz_preCeremonyDetails,
+      preCeremonyBrideParty: wiz_preCeremonyBrideParty,
+      preCeremonyGroomReady: wiz_preCeremonyGroomReady,
+      preCeremonyGroomParty: wiz_preCeremonyGroomParty,
+      dinnerFlexibility: wiz_dinnerFlexibility,
+      receptionStartFlexibility: wiz_receptionStartFlexibility,
     });
     setUserRows(rows);
     setNextId(rows.length + 1);
@@ -1095,7 +1117,9 @@ export default function MobileApp() {
     wiz_brideParentDance, setWiz_brideParentDance, wiz_groomParentDance, setWiz_groomParentDance, wiz_specialDance, setWiz_specialDance,
     wiz_speeches, setWiz_speeches, wiz_speechCount, setWiz_speechCount, wiz_dinner, setWiz_dinner,
     wiz_dinnerStartHour, setWiz_dinnerStartHour, wiz_dinnerStartMinute, setWiz_dinnerStartMinute, wiz_dinnerStartPeriod, setWiz_dinnerStartPeriod,
-    wiz_dinnerStyle, setWiz_dinnerStyle, wiz_openDanceFloor, setWiz_openDanceFloor, wiz_garterToss, setWiz_garterToss, wiz_bouquetToss, setWiz_bouquetToss,
+    wiz_dinnerStyle, setWiz_dinnerStyle, wiz_dinnerFlexibility, setWiz_dinnerFlexibility,
+    wiz_receptionStartFlexibility, setWiz_receptionStartFlexibility,
+    wiz_openDanceFloor, setWiz_openDanceFloor, wiz_garterToss, setWiz_garterToss, wiz_bouquetToss, setWiz_bouquetToss,
     wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames,
     wiz_brideReadyAtCeremony, setWiz_brideReadyAtCeremony, wiz_brideReadyAtReception, setWiz_brideReadyAtReception,
     wiz_groomReadyAtCeremony, setWiz_groomReadyAtCeremony, wiz_groomReadyAtReception, setWiz_groomReadyAtReception, wiz_groomReadyAtBride, setWiz_groomReadyAtBride,
@@ -1334,6 +1358,8 @@ export default function MobileApp() {
                     notes: "",
                     isTimeLocked: true,
                     color: "",
+                    tier: getDefaultTierForEvent(fe.event),
+                    flexibilityMinutes: 0,
                   }));
                   setUserRows(newRows);
                   setNextId(fixedEvents.length + 1);

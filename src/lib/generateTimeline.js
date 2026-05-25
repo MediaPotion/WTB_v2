@@ -1,4 +1,6 @@
 import { formatTime, parseTimeInput } from "./time";
+import { resolveWeddingLocations } from "./weddingLocations";
+import { resolveRowTierFields } from "./rowTier";
 
 /**
  * Build timeline rows from wizard answers. Pure function — no React state or side effects.
@@ -33,7 +35,11 @@ import { formatTime, parseTimeInput } from "./time";
  * @param {string} wizardAnswers.receptionVenue — Reception venue name
  * @param {string} wizardAnswers.receptionAddress — Reception address
  * @param {string} wizardAnswers.ceremonyAddress — Ceremony address
- * @param {string} wizardAnswers.brideReadyAddress — Bride getting-ready address/name
+ * @param {string} wizardAnswers.brideReadyAddress — Bride getting-ready venue name
+ * @param {string} wizardAnswers.brideReadyStreet — Bride getting-ready street address
+ * @param {boolean} wizardAnswers.brideReadyAtCeremony — Bride ready at ceremony venue
+ * @param {boolean} wizardAnswers.brideReadyAtReception — Bride ready at reception venue
+ * @param {string} wizardAnswers.groomReadyStreet — Groom getting-ready street address
  * @param {boolean} wizardAnswers.firstLookParent — Parent first look
  * @param {boolean} wizardAnswers.firstLookBridesmaids — Bridesmaids first look
  * @param {boolean} wizardAnswers.firstLookOther — Other first look
@@ -59,6 +65,12 @@ import { formatTime, parseTimeInput } from "./time";
  * @param {boolean} wizardAnswers.openDanceFloor — Open dancing
  * @param {boolean} wizardAnswers.garterToss — Garter toss
  * @param {boolean} wizardAnswers.bouquetToss — Bouquet toss
+ * @param {boolean} [wizardAnswers.preCeremonyBrideReady=true] — Bride getting-ready coverage (hair/makeup, dress on)
+ * @param {boolean} [wizardAnswers.preCeremonyPreDress=false] — Bridal party pre-dress portraits
+ * @param {boolean} [wizardAnswers.preCeremonyDetails=true] — Detail shots before ceremony
+ * @param {boolean} [wizardAnswers.preCeremonyBrideParty=true] — Bride (dress on) bridal party portraits
+ * @param {boolean} [wizardAnswers.preCeremonyGroomReady=true] — Groom getting-ready coverage
+ * @param {boolean} [wizardAnswers.preCeremonyGroomParty=true] — Groom & party portraits
  * @returns {object[]} Timeline row objects
  */
 export function generateTimeline(wizardAnswers) {
@@ -93,6 +105,10 @@ export function generateTimeline(wizardAnswers) {
     receptionAddress: wiz_receptionAddress,
     ceremonyAddress: wiz_ceremonyAddress,
     brideReadyAddress: wiz_brideReadyAddress,
+    brideReadyStreet: wiz_brideReadyStreet,
+    brideReadyAtCeremony: wiz_brideReadyAtCeremony,
+    brideReadyAtReception: wiz_brideReadyAtReception,
+    groomReadyStreet: wiz_groomReadyStreet,
     firstLookParent: wiz_firstLookParent,
     firstLookBridesmaids: wiz_firstLookBridesmaids,
     firstLookOther: wiz_firstLookOther,
@@ -118,7 +134,23 @@ export function generateTimeline(wizardAnswers) {
     openDanceFloor: wiz_openDanceFloor,
     garterToss: wiz_garterToss,
     bouquetToss: wiz_bouquetToss,
+    preCeremonyBrideReady: wiz_preCeremonyBrideReady,
+    preCeremonyPreDress: wiz_preCeremonyPreDress,
+    preCeremonyDetails: wiz_preCeremonyDetails,
+    preCeremonyBrideParty: wiz_preCeremonyBrideParty,
+    preCeremonyGroomReady: wiz_preCeremonyGroomReady,
+    preCeremonyGroomParty: wiz_preCeremonyGroomParty,
+    locations: wiz_locations,
+    dinnerFlexibility: wiz_dinnerFlexibility = 0,
+    receptionStartFlexibility: wiz_receptionStartFlexibility = 0,
   } = wizardAnswers;
+
+  const includePreCeremonyDetails = wiz_preCeremonyDetails !== false;
+  const includePreCeremonyBrideReady = wiz_preCeremonyBrideReady === true;
+  const includePreCeremonyPreDress = wiz_preCeremonyPreDress === true;
+  const includePreCeremonyBrideParty = wiz_preCeremonyBrideParty !== false;
+  const includePreCeremonyGroomReady = wiz_preCeremonyGroomReady !== false;
+  const includePreCeremonyGroomParty = wiz_preCeremonyGroomParty !== false;
 
   // ---- Setup ----
     const ceremonyDurationMin = wiz_ceremonyDuration || 30;
@@ -153,12 +185,21 @@ export function generateTimeline(wizardAnswers) {
       ? wiz_familyGroupNames.filter(Boolean).map((n, i) => `${i + 1}. ${n}`).join(", ")
       : "";
 
-    const differentLocations = !wiz_groomReadyAtCeremony && !wiz_groomReadyAtReception && !wiz_groomReadyAtBride && !!wiz_groomReadyAddress;
-    const ceremonyVenueName = wiz_ceremonyVenue || "ceremony venue";
-    const effectiveReceptionVenue = wiz_receptionSameAsCeremony ? ceremonyVenueName : (wiz_receptionVenue || "reception venue");
-    const effectiveReceptionAddress = wiz_receptionSameAsCeremony ? (wiz_ceremonyAddress || "") : (wiz_receptionAddress || "");
-    const brideLoc = wiz_brideReadyAddress || "Getting Ready Location";
-    const groomLoc = differentLocations ? (wiz_groomReadyAddress || "Groom's Getting Ready Location") : brideLoc;
+    const {
+      ceremony,
+      reception,
+      brideReady,
+      groomReady,
+      differentReadyLocations: differentLocations,
+      addressByName,
+    } = resolveWeddingLocations(wizardAnswers);
+    const ceremonyVenueName = ceremony.name;
+    const effectiveReceptionVenue = reception.name;
+    const effectiveReceptionAddress = reception.address;
+    const brideLoc = brideReady.name;
+    const brideLocAddress = brideReady.address;
+    const groomLoc = groomReady.name;
+    const groomLocAddress = groomReady.address;
 
     // ---- Classify each first look into the phase where it will occur ----
     // Phase = "bride" | "groom" | "ceremony"
@@ -172,14 +213,18 @@ export function generateTimeline(wizardAnswers) {
     };
     const flGroomPhase    = wiz_firstLookGroom       ? classifyFL(wiz_firstLookGroomLocation)       : null;
     const flParentPhase   = wiz_firstLookParent      ? classifyFL(wiz_firstLookParentLocation)      : null;
-    const flBmaidsPhase   = wiz_firstLookBridesmaids ? classifyFL(wiz_firstLookBridesmaidsLocation)  : null;
     const flOtherPhase    = wiz_firstLookOther       ? classifyFL(wiz_firstLookOtherLocation)       : null;
 
-    const pushFLForPhase = (phase, arr) => {
-      if (flGroomPhase  === phase) arr.push({ event: "First Look: with Groom",      duration: 10, isOutdoor: true });
-      if (flParentPhase === phase) arr.push({ event: "First Look: with Parent",     duration: 10, isOutdoor: true });
-      if (flBmaidsPhase === phase) arr.push({ event: "First Look: with Bridesmaids", duration: 10, isOutdoor: true });
-      if (flOtherPhase  === phase) arr.push({ event: "First Look: Other",           duration: 10, isOutdoor: true });
+    const pushFLForPhaseExceptBridesmaids = (phase, arr) => {
+      if (flGroomPhase  === phase) arr.push({ event: "First Look: with Groom",   duration: 10, isOutdoor: true });
+      if (flParentPhase === phase) arr.push({ event: "First Look: with Parent",  duration: 10, isOutdoor: true });
+      if (flOtherPhase  === phase) arr.push({ event: "First Look: Other",        duration: 10, isOutdoor: true });
+    };
+    // Bridesmaids first look always follows Putting Dress On and precedes bridesmaids portrait blocks
+    const pushBridesmaidsFirstLook = (arr) => {
+      if (wiz_firstLookBridesmaids) {
+        arr.push({ event: "First Look: with Bridesmaids", duration: 10, isOutdoor: true });
+      }
     };
 
     // ---- Build pre-ceremony blocks (scheduled backwards from ceremony start) ----
@@ -187,41 +232,59 @@ export function generateTimeline(wizardAnswers) {
 
     // === Phase 1: Bride's getting ready location ===
     // First block of the day — duration 0, establishes starting location
-    preBlocks.push({ type: "location", event: brideLoc, address: "", duration: 0, notes: "Start of day" });
+    preBlocks.push({ type: "location", event: brideLoc, address: brideLocAddress, duration: 0, notes: "Start of day" });
     // Detail shots (earliest in the day)
-    if (wiz_drone) preBlocks.push({ event: "Details: Drone & Venue Shots", duration: 30, isOutdoor: true });
-    preBlocks.push({ event: "Details: Rings, Invitations, & Accessories", duration: 20 });
-    preBlocks.push({ event: "Details: Dress Shots", duration: 10 });
+    if (includePreCeremonyDetails) {
+      if (wiz_drone) preBlocks.push({ event: "Details: Drone & Venue Shots", duration: 30, isOutdoor: true });
+      preBlocks.push({ event: "Details: Rings, Invitations, & Accessories", duration: 20 });
+      preBlocks.push({ event: "Details: Dress Shots", duration: 10 });
+    }
     // Bride narration before portrait blocks
     if (wiz_narration) preBlocks.push({ event: "Narration: Bride Record Narration", duration: 15 });
-    // Bride pre-dress
-    preBlocks.push({ event: "Bride (Pre-Dress): Bridesmaids Group Shots",    duration: 10, isOutdoor: false });
-    preBlocks.push({ event: "Bride (Pre-Dress): Bridesmaids Individual Shots", duration: 10, isOutdoor: false });
-    preBlocks.push({ event: "Bride (Pre-Dress): Hair & Makeup Details",     duration: 10, isOutdoor: false });
-    preBlocks.push({ event: "Bride (Pre-Dress): Putting Dress On",          duration: 10, isOutdoor: false });
-    // Bride dress on (first looks can only occur after Putting Dress On)
-    preBlocks.push({ event: "Bride (Dress On): Accessory Shots",            duration: 10 });
-    preBlocks.push({ event: "Bride (Dress On): Bride Portraits",            duration: 15, isOutdoor: true });
-    preBlocks.push({ event: "Bride (Dress On): Bridesmaids Group Shots",     duration: 10, isOutdoor: true });
-    preBlocks.push({ event: "Bride (Dress On): Bridesmaids Individual Shots",duration: 10, isOutdoor: true });
-    // First looks assigned to bride's getting ready location
-    pushFLForPhase("bride", preBlocks);
+    if (includePreCeremonyPreDress) {
+      preBlocks.push({ event: "Bride (Pre-Dress): Bridesmaids Group Shots", duration: 10, isOutdoor: false });
+      preBlocks.push({ event: "Bride (Pre-Dress): Bridesmaids Individual Shots", duration: 10, isOutdoor: false });
+    }
+    if (includePreCeremonyBrideReady) {
+      preBlocks.push({ event: "Bride (Pre-Dress): Hair & Makeup Details", duration: 10, isOutdoor: false });
+      preBlocks.push({ event: "Bride (Pre-Dress): Putting Dress On", duration: 10, isOutdoor: false });
+    }
+    // First looks after Putting Dress On when scheduled; otherwise assume bride is already dressed
+    pushFLForPhaseExceptBridesmaids("bride", preBlocks);
+    pushBridesmaidsFirstLook(preBlocks);
+    preBlocks.push({ event: "Bride (Dress On): Accessory Shots", duration: 10 });
+    preBlocks.push({ event: "Bride (Dress On): Bride Portraits", duration: 15, isOutdoor: true });
+    if (includePreCeremonyBrideParty) {
+      preBlocks.push({ event: "Bride (Dress On): Bridesmaids Group Shots", duration: 10, isOutdoor: true });
+      preBlocks.push({ event: "Bride (Dress On): Bridesmaids Individual Shots", duration: 10, isOutdoor: true });
+    }
 
     // === Phase 2 / 2b: Groom events ===
     if (differentLocations) {
       // Phase 2: different location — travel block to groom's location
       const travelBrideToGroom = parseTravelMin(wiz_distanceBetweenReady) || 15;
-      preBlocks.push({ type: "location", event: groomLoc, address: "", duration: travelBrideToGroom, notes: `Travel from ${brideLoc} to ${groomLoc}` });
+      preBlocks.push({
+        type: "location",
+        event: groomLoc,
+        address: groomLocAddress,
+        duration: travelBrideToGroom,
+        notes: `Travel from ${brideLoc} to ${groomLoc}`,
+      });
     }
-    // Groom narration before groom portrait blocks
-    if (wiz_narration) preBlocks.push({ event: "Narration: Groom Record Narration", duration: 15 });
-    preBlocks.push({ event: "Groom: Assisted with Tie & Jacket",  duration: 10 });
-    preBlocks.push({ event: "Groom: Portraits",                   duration: 15, isOutdoor: true });
-    preBlocks.push({ event: "Groom: Groomsmen Group Shots",       duration: 10, isOutdoor: true });
-    preBlocks.push({ event: "Groom: Groomsmen Individual Shots",  duration: 10, isOutdoor: true });
+    if (includePreCeremonyGroomReady || includePreCeremonyGroomParty) {
+      if (wiz_narration) preBlocks.push({ event: "Narration: Groom Record Narration", duration: 15 });
+      if (includePreCeremonyGroomReady) {
+        preBlocks.push({ event: "Groom: Assisted with Tie & Jacket", duration: 10 });
+        preBlocks.push({ event: "Groom: Portraits", duration: 15, isOutdoor: true });
+      }
+      if (includePreCeremonyGroomParty) {
+        preBlocks.push({ event: "Groom: Groomsmen Group Shots", duration: 10, isOutdoor: true });
+        preBlocks.push({ event: "Groom: Groomsmen Individual Shots", duration: 10, isOutdoor: true });
+      }
+    }
     // First looks assigned to groom's location (only applies when differentLocations; otherwise
     // groomLoc === brideLoc so classifyFL returns "bride" and they were already pushed above)
-    if (differentLocations) pushFLForPhase("groom", preBlocks);
+    if (differentLocations) pushFLForPhaseExceptBridesmaids("groom", preBlocks);
 
     // === Phase 3: Ceremony venue ===
     const lastPreLocName = differentLocations ? groomLoc : brideLoc;
@@ -231,12 +294,12 @@ export function generateTimeline(wizardAnswers) {
     preBlocks.push({
       type: "location",
       event: ceremonyVenueName,
-      address: wiz_ceremonyAddress || "",
+      address: ceremony.address,
       duration: toCeremonyMin,
-      notes: toCeremonyMin > 0 ? `Travel from ${lastPreLocName} to ${ceremonyVenueName}` : ""
+      notes: toCeremonyMin > 0 ? `Travel from ${lastPreLocName} to ${ceremonyVenueName}` : "",
     });
     // First looks assigned to ceremony venue (happens before couple/party portraits)
-    pushFLForPhase("ceremony", preBlocks);
+    pushFLForPhaseExceptBridesmaids("ceremony", preBlocks);
     // Pre-ceremony portraits only when post-ceremony time is insufficient
     if (weddingPartyPre) preBlocks.push({ event: "Wedding Party: Group Shots", duration: 15, isOutdoor: true });
     if (brideGroomPre)   preBlocks.push({ event: "Bride & Groom: Portraits",   duration: 20, isOutdoor: true });
@@ -281,12 +344,13 @@ export function generateTimeline(wizardAnswers) {
           ? ceremonyVenueName
           : (wiz_portraitLocations[i - 1].name || `Portrait Location ${i}`);
         const travelMin = i === 0 ? parseTravelMin(loc.distFromCeremony) : 0;
+        const portraitName = loc.name || `Portrait Location ${i + 1}`;
         pushPost({
           type: "location",
-          event: loc.name || `Portrait Location ${i + 1}`,
-          address: loc.address || "",
+          event: portraitName,
+          address: loc.address || addressByName.get(portraitName) || "",
           duration: travelMin,
-          notes: travelMin > 0 ? `Travel from ${fromName} to ${loc.name || `Portrait Location ${i + 1}`}` : ""
+          notes: travelMin > 0 ? `Travel from ${fromName} to ${portraitName}` : "",
         });
         pushPost({ event: "Bride & Groom: Portraits", duration: 20, location: loc.name || "", isOutdoor: true });
       });
@@ -352,19 +416,40 @@ export function generateTimeline(wizardAnswers) {
       ...receptionBlocks,
     ];
 
-  return allBlocks.map((block, idx) => ({
-    id: idx + 1,
-    event: block.event,
-    time: block.time,
-    duration: block.duration,
-    location: block.location || "",
-    isOutdoor: block.isOutdoor || false,
-    photo: photoEnabled,
-    video: videoEnabled,
-    notes: block.notes || "",
-    isTimeLocked: false,
-    color: block.color || "",
-    type: block.type || "event",
-    address: block.address || "",
-  }));
+  const flexibility = {
+    dinnerFlexibility: wiz_dinnerFlexibility,
+    receptionStartFlexibility: wiz_receptionStartFlexibility,
+  };
+  let receptionStartFlexTagged = false;
+
+  return allBlocks.map((block, idx) => {
+    const isReceptionStart =
+      !receptionStartFlexTagged &&
+      block.time === receptionStartTime &&
+      (block.event === "Reception: Audio/Video Setup" ||
+        (block.type === "location" && block.event === effectiveReceptionVenue));
+    if (isReceptionStart) receptionStartFlexTagged = true;
+
+    const { tier, flexibilityMinutes } = resolveRowTierFields(block, flexibility, {
+      isReceptionStart,
+    });
+
+    return {
+      id: idx + 1,
+      event: block.event,
+      time: block.time,
+      duration: block.duration,
+      location: block.location || "",
+      isOutdoor: block.isOutdoor || false,
+      photo: photoEnabled,
+      video: videoEnabled,
+      notes: block.notes || "",
+      isTimeLocked: false,
+      color: block.color || "",
+      type: block.type || "event",
+      address: block.address || "",
+      tier,
+      flexibilityMinutes,
+    };
+  });
 }
