@@ -176,20 +176,19 @@ const MOBILE_TWEAKS = `
     .wtb-shell {
       grid-template-columns: 1fr 1fr;
       gap: 16px;
-      align-items: start;
+      align-items: stretch;
     }
     .wtb-sidebar-wrap {
       min-width: 0;
-      position: sticky;
-      top: 10px;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      max-height: calc(100vh - 20px);
+      min-height: 0;
+      overflow: hidden;
     }
     .wtb-sidebar {
-      display: block;
-      overflow: auto;
+      display: flex;
+      flex-direction: column;
       border: 1px solid #1e1c19;
       background: #0f0d0b;
       border-radius: 8px;
@@ -1579,13 +1578,13 @@ function TimelineRow({
             position: "absolute",
             top: 4,
             right: 4,
-            width: 24,
-            height: 24,
+            width: 22,
+            height: 22,
             padding: 0,
-            fontSize: 16,
-            border: "none",
+            fontSize: 18,
+            border: deleteHovered ? "1px solid #e05252" : "1px solid transparent",
             background: "none",
-            color: deleteHovered ? "#e05252" : (isLocation ? "#c8bfb0" : "#3a3530"),
+            color: "#e05252",
             cursor: deletePending ? "default" : "pointer",
             borderRadius: 4,
             lineHeight: 1,
@@ -2067,9 +2066,6 @@ function TimelinePreview({ rows, bride, groom, date, photoStartHour, photoStartM
         <button style={toolBtn()} onClick={() => setUserZoom(z => Math.max(0.4, +(z - 0.15).toFixed(2)))}>−</button>
         <span style={{ fontSize: 11, color: '#6e6358', fontFamily: "'Jost', sans-serif", minWidth: 38, textAlign: 'center' }}>{Math.round(userZoom * 100)}%</span>
         <button style={toolBtn()} onClick={() => setUserZoom(z => Math.min(2.5, +(z + 0.15).toFixed(2)))}>+</button>
-        <button style={toolBtn({ marginLeft: 'auto', background: exporting ? '#6e6358' : '#b8906a', color: '#060504', border: 'none' })} onClick={handleExport} disabled={exporting || isEmpty}>
-          {exporting ? 'Exporting…' : 'Export PDF'}
-        </button>
       </div>
       <div ref={containerRef} style={{ flex: 1, minHeight: 0, overflow: 'auto', background: '#f0ece6', borderRadius: 6, padding: '16px 16px 32px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
@@ -2230,6 +2226,10 @@ export default function MobileApp() {
   const [history, setHistory] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
   const [copyConfirm, setCopyConfirm] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef(null);
+  const mainScrollRef = useRef(null);
   const [draggedRowId, setDraggedRowId] = useState(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [showEventSelector, setShowEventSelector] = useState(false);
@@ -2654,14 +2654,13 @@ export default function MobileApp() {
       const userRowIndex = userRows.findIndex((u) => u.id === displayRow.id);
       if (userRowIndex !== -1) {
         const newUserRows = [...userRows];
-        newUserRows[userRowIndex].event = eventData.event;
-        newUserRows[userRowIndex].duration = eventData.duration;
-        newUserRows[userRowIndex].type = eventData.type === "custom" ? "custom" : "event";
-        
-        // Update time if provided
-        if (eventData.time !== undefined) {
-          newUserRows[userRowIndex].time = eventData.time;
-        }
+        newUserRows[userRowIndex] = {
+          ...newUserRows[userRowIndex],
+          event: eventData.event,
+          duration: eventData.duration,
+          type: eventData.type === "custom" ? "custom" : "event",
+          ...(eventData.time !== undefined ? { time: eventData.time } : {}),
+        };
 
         // Recalculate subsequent times starting from this row in display order
         const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
@@ -3087,6 +3086,112 @@ export default function MobileApp() {
   };
   const removeWizLocation = (id) => {
     setWiz_locations(prev => prev.filter(l => l.id !== id));
+  };
+
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handler = (e) => { if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) setShowExportMenu(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const exportPDF = async () => {
+    setExporting(true);
+    setShowExportMenu(false);
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+      const allPages = layoutPreviewPages(userRows);
+      const brideFirst = (bride || 'Bride').trim().split(/\s+/)[0];
+      const groomFirst = (groom || 'Groom').trim().split(/\s+/)[0];
+
+      allPages.forEach((pageRows, pi) => {
+        if (pi > 0) doc.addPage();
+        if (pi === 0) {
+          let hy = MY_TOP + 14;
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(184, 144, 106);
+          doc.text('WEDDING POTION', PW / 2, hy, { align: 'center', charSpace: 1.5 });
+          hy += 24;
+          doc.setFont('times', 'normal'); doc.setFontSize(24); doc.setTextColor(26, 26, 26);
+          doc.text(`${bride || 'Bride'} & ${groom || 'Groom'}`, PW / 2, hy, { align: 'center' });
+          hy += 18;
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(90, 90, 90);
+          doc.text(fmtDateLong(date), PW / 2, hy, { align: 'center', charSpace: 0.5 });
+          hy += 13;
+          const covParts = [];
+          if (photoEnabled) covParts.push(`Photo: ${photoStartHour}:${photoStartMinute} ${photoStartPeriod} - ${photoEndHour}:${photoEndMinute} ${photoEndPeriod}`);
+          if (videoEnabled) covParts.push(`Video: ${videoStartHour}:${videoStartMinute} ${videoStartPeriod} - ${videoEndHour}:${videoEndMinute} ${videoEndPeriod}`);
+          if (covParts.length > 0) { doc.setFontSize(7.5); doc.setTextColor(140, 140, 140); doc.text(covParts.join('   -   '), PW / 2, hy, { align: 'center' }); }
+          doc.setDrawColor(184, 144, 106); doc.setLineWidth(0.75);
+          doc.line(MX, MY_TOP + HDR_H - 6, PW - MX, MY_TOP + HDR_H - 6);
+        }
+        const csY = pi === 0 ? MY_TOP + HDR_H : MY_TOP;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(184, 144, 106);
+        doc.text('TIME', MX, csY + 13);
+        doc.text('EVENT', MX + COL_TIME, csY + 13);
+        doc.text('MIN', PW - MX - COL_SET - 2, csY + 13, { align: 'right' });
+        doc.text('SETTING', PW - MX - COL_SET / 2, csY + 13, { align: 'center' });
+        doc.setDrawColor(184, 144, 106); doc.setLineWidth(0.5);
+        doc.line(MX, csY + RH_COL, PW - MX, csY + RH_COL);
+        let y = csY + RH_COL + 4;
+        for (const row of pageRows) {
+          const t = formatTime(row.time);
+          const ts = `${t.hour}:${t.minute} ${t.period}`;
+          if (row.type === 'location') {
+            doc.setFillColor(248, 246, 243); doc.rect(MX, y, CW, RH_LOC, 'F');
+            doc.setFillColor(184, 144, 106); doc.rect(MX, y, 3, RH_LOC, 'F');
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(160, 160, 160);
+            doc.text(ts, MX + 8, y + 11);
+            doc.setFontSize(10); doc.setTextColor(26, 26, 26);
+            doc.text(row.event || '(Travel)', MX + 8, y + 23, { maxWidth: CW - 16 });
+            if (row.address && row.address.trim()) { doc.setFontSize(8); doc.setTextColor(100, 100, 100); doc.text(row.address.trim(), MX + 8, y + 34, { maxWidth: CW - 16 }); }
+            doc.setFontSize(7.5); doc.setTextColor(150, 150, 150);
+            doc.text(`Travel: ${row.duration} min`, MX + 8, y + RH_LOC - 5);
+            y += RH_LOC + RH_GAP;
+          } else if (row.type === 'constraint') {
+            doc.setFillColor(255, 245, 245); doc.rect(MX, y, CW, RH_CON, 'F');
+            doc.setFillColor(204, 68, 68); doc.rect(MX, y, 3, RH_CON, 'F');
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(150, 150, 150);
+            doc.text(ts, MX + 8, y + RH_CON / 2 + 3);
+            doc.setTextColor(204, 68, 68); doc.setFontSize(9);
+            doc.text('[!] TIME CONSTRAINT', MX + COL_TIME, y + RH_CON / 2 + 3);
+            y += RH_CON + RH_GAP;
+          } else {
+            const [ar, ag, ab] = hexToRgb(getEventColor(row.event));
+            doc.setFillColor(ar, ag, ab); doc.rect(MX, y, 2.5, RH_EVT, 'F');
+            doc.setDrawColor(240, 237, 232); doc.setLineWidth(0.4);
+            doc.line(MX, y + RH_EVT, PW - MX, y + RH_EVT);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(50, 50, 50);
+            doc.text(ts, MX + 5, y + 14);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(26, 26, 26);
+            doc.text(row.event || '(empty)', MX + COL_TIME, y + 14, { maxWidth: CW - COL_TIME - COL_DUR - COL_SET - 4 });
+            doc.setFontSize(8.5); doc.setTextColor(110, 110, 110);
+            doc.text(String(row.duration), PW - MX - COL_SET - 4, y + 14, { align: 'right' });
+            doc.setFontSize(8); doc.setTextColor(80, 80, 80);
+            doc.text(row.isOutdoor ? 'OUT' : 'IN', PW - MX - COL_SET / 2, y + 14, { align: 'center' });
+            y += RH_EVT;
+            if (row.notes && row.notes.trim()) {
+              doc.setFont('times', 'italic'); doc.setFontSize(8); doc.setTextColor(130, 130, 130);
+              const wrapped = doc.splitTextToSize(row.notes.trim(), CW - COL_TIME - COL_DUR - COL_SET - 8);
+              doc.text(wrapped, MX + COL_TIME, y + 10);
+              y += wrapped.length * RH_NOTE;
+            }
+            y += RH_GAP;
+          }
+        }
+        const ftrY = PH - MY_BOT + 4;
+        doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.4);
+        doc.line(MX, ftrY - 6, PW - MX, ftrY - 6);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(180, 180, 180);
+        doc.text(`${bride || 'Bride'} & ${groom || 'Groom'} - ${fmtDateLong(date)}`, MX, ftrY);
+        doc.text(`${pi + 1} of ${allPages.length}`, PW - MX, ftrY, { align: 'right' });
+      });
+      doc.save(`${brideFirst}-${groomFirst}-Wedding-Timeline.pdf`);
+    } catch (err) {
+      console.error('PDF export failed:', err);
+    } finally {
+      setExporting(false);
+    }
   };
 
   const exportTimeline = () => {
@@ -3599,7 +3704,7 @@ export default function MobileApp() {
 
     setScreen("timeline");
     setShowSettingsModal(false);
-    window.scrollTo(0, 0);
+    if (mainScrollRef.current) mainScrollRef.current.scrollTop = 0;
   };  // ---- Wizard Rendering ----
   const renderWizard = (inModal = false, overrideStep = null) => {
     const effectiveStep = overrideStep !== null ? overrideStep : wizardStep;
@@ -5015,7 +5120,7 @@ export default function MobileApp() {
                   setNextId(fixedEvents.length + 1);
                 }
                 setScreen("timeline");
-                window.scrollTo(0, 0);
+                if (mainScrollRef.current) mainScrollRef.current.scrollTop = 0;
               }}
               style={{ padding: "12px 32px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 6, fontSize: 16, fontWeight: 300, cursor: "pointer", width: "100%", maxWidth: 360, fontFamily: "'Jost', sans-serif" }}
             >
@@ -5032,9 +5137,9 @@ export default function MobileApp() {
         </div>
       ) : (
         /* ============ TIMELINE SCREEN ============ */
-        <>
-          {/* Sticky header: names/date + controls */}
-          <div style={{ position: "sticky", top: 0, zIndex: 100, background: "#060504", margin: "0 -10px", padding: "4px 10px 0" }}>
+        <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", background: "#060504", zIndex: 1, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>
+          {/* Header: names/date + controls */}
+          <div style={{ flexShrink: 0, background: "#060504", padding: "4px 10px 0" }}>
             {/* Names & date */}
             <div style={{ textAlign: "center", marginBottom: 6 }}>
               <div style={{ fontSize: "clamp(18px, 5vw, 26px)", fontWeight: 300, color: "#ddd0bc", lineHeight: 1.2, fontFamily: "'Cormorant Garamond', serif" }}>
@@ -5101,12 +5206,31 @@ export default function MobileApp() {
                 >
                   {copyConfirm ? "Copied!" : "Copy Timeline"}
                 </button>
-                <button
-                  onClick={exportTimeline}
-                  style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
-                >
-                  Export Timeline
-                </button>
+                <div ref={exportMenuRef} style={{ position: "relative" }}>
+                  <button
+                    onClick={() => setShowExportMenu(v => !v)}
+                    style={{ padding: "6px 14px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
+                  >
+                    Export Timeline ▾
+                  </button>
+                  {showExportMenu && (
+                    <div style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", background: "#1a1714", border: "1px solid #2a2520", borderRadius: 4, zIndex: 200, minWidth: 150, overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.4)" }}>
+                      <button
+                        onClick={exportPDF}
+                        disabled={exporting}
+                        style={{ display: "block", width: "100%", padding: "9px 14px", background: "none", border: "none", color: exporting ? "#6e6358" : "#ddd0bc", textAlign: "left", fontSize: 13, fontFamily: "'Jost', sans-serif", cursor: exporting ? "not-allowed" : "pointer", borderBottom: "1px solid #2a2520" }}
+                      >
+                        {exporting ? "Exporting…" : "Save as PDF"}
+                      </button>
+                      <button
+                        onClick={() => { exportTimeline(); setShowExportMenu(false); }}
+                        style={{ display: "block", width: "100%", padding: "9px 14px", background: "none", border: "none", color: "#ddd0bc", textAlign: "left", fontSize: 13, fontFamily: "'Jost', sans-serif", cursor: "pointer" }}
+                      >
+                        Save as TXT
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             {/* Padding below sticky header */}
@@ -5114,9 +5238,9 @@ export default function MobileApp() {
           </div>
 
           {/* App shell: main content + (desktop) sidebar */}
-          <div className="wtb-shell">
-            {/* MAIN */}
-            <div>
+          <div className="wtb-shell" style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+            {/* MAIN — scrolls independently */}
+            <div ref={mainScrollRef} style={{ overflowY: "auto", height: "100%", padding: "0 10px 20px" }}>
           {/* Timeline */}
           <div
             style={{
@@ -5334,7 +5458,7 @@ export default function MobileApp() {
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );
