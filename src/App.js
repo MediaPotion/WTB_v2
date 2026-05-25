@@ -122,7 +122,6 @@ function RowDropZone({ index, onDropBetween, onAddRow, isLast }) {
         if (e.dataTransfer?.types?.includes('text/plain')) {
           e.preventDefault();
           setOver(false);
-          console.log(`[DnD] RowDropZone: drop fired for index ${index}`);
           onDropBetween?.(e, index);
         }
       }}
@@ -1541,7 +1540,6 @@ function TimelineRow({
         try {
           const data = JSON.parse(jsonData);
           if (data && typeof data.duration === "number") {
-            console.log("[DnD] TimelineRow: dropping event block", { rowIndex: index, data });
             onDropEventBlock?.(data);
             return;
           }
@@ -2873,7 +2871,6 @@ export default function MobileApp() {
 
   // Chain current row's time to previous row's end time
   const handleChainToPrevious = (index) => {
-    console.log('[Chain] handleChainToPrevious called for index', index);
     if (index === 0) {
       console.warn('[Chain] First row has no previous row to chain to');
       return; // nothing to chain to
@@ -2889,7 +2886,6 @@ export default function MobileApp() {
     if (userRowIndex !== -1) {
       // Update the current row's time
       newUserRows[userRowIndex].time = newTime;
-      console.log('[Chain] Updated row id', currentRow.id, 'time ->', newTime);
       
       // Update all subsequent rows in display order
       let runningTime = newTime + currentRow.duration;
@@ -2899,12 +2895,10 @@ export default function MobileApp() {
         
         if (subsequentUserIndex !== -1) {
           newUserRows[subsequentUserIndex].time = runningTime;
-          console.log('[Chain] Updated subsequent row id', subsequentRow.id, 'time ->', runningTime);
           runningTime += subsequentRow.duration;
         }
       }
       
-      console.log('[Chain] Saving new state preview:', newUserRows.map(r => ({id: r.id, time: r.time, event: r.event})));
       setUserRows(newUserRows); // Force immediate UI update
       saveToHistory(newUserRows);
     }
@@ -3008,8 +3002,6 @@ export default function MobileApp() {
 
   // Add a new row at a specific display index
   const addRowAtIndex = (insertIndex) => {
-    console.log('[AddRow] insertIndex:', insertIndex, 'rows.length:', rows.length);
-    console.log('[AddRow] Current rows:', rows.map(r => ({id: r.id, time: r.time, event: r.event})));
     
     // Determine the intended time for the new row based on display order
     let newTime;
@@ -3033,15 +3025,7 @@ export default function MobileApp() {
         // If overlapping, place it halfway between prev start and next start
         newTime = Math.floor((prevRow.time + nextStartTime) / 2);
       }
-      
-      console.log('[AddRow] Inserting between rows:', {
-        prevRow: {id: prevRow.id, time: prevRow.time, duration: prevRow.duration, endTime: prevEndTime},
-        nextRow: {id: nextRow.id, time: nextRow.time},
-        calculatedTime: newTime
-      });
     }
-    
-    console.log('[AddRow] Calculated newTime:', newTime);
 
     const aboveRow = insertIndex > 0 ? rows[insertIndex - 1] : null;
 
@@ -3079,13 +3063,10 @@ export default function MobileApp() {
       }
     }
     
-    console.log('[AddRow] Insert position in userRows:', insertPosition, 'of', newUserRows.length);
-    console.log('[AddRow] UserRows before insert:', newUserRows.map(r => ({id: r.id, time: r.time})));
     
     // Insert the new row at the calculated position
     newUserRows.splice(insertPosition, 0, newRow);
 
-    console.log('[AddRow] UserRows after insert:', newUserRows.map(r => ({id: r.id, time: r.time})));
 
     setNextId(nextId + 1);
     saveToHistory(applyCeremonyAnchorCascade(newUserRows, newRow.time));
@@ -3107,7 +3088,6 @@ export default function MobileApp() {
 
   // Handle drops from the sidebar onto a specific row (by display index)
   const handleDropEventBlockToRow = (eventData, displayIndex) => {
-    console.log("[DnD] MobileApp: handleDropEventBlockToRow", { eventData, displayIndex });
     if (!eventData || typeof eventData.duration !== "number") return;
 
     // Translate display index (from rows) to actual userRows index using id mapping
@@ -3153,7 +3133,6 @@ export default function MobileApp() {
     e.dataTransfer.setData('text/plain', rowId);
     // Normalize to string so UI comparisons are consistent
     setDraggedRowId(String(rowId));
-    console.log('[DnD] Row dragStart', { rowId });
     // Add a small delay to ensure the drag image is set
     setTimeout(() => {
       e.target.style.opacity = '0.4';
@@ -3206,8 +3185,6 @@ export default function MobileApp() {
     const sourceRowId = e.dataTransfer.getData('text/plain');
     if (!sourceRowId) return;
 
-    console.log(`[DnD] handleDropBetween: drop of row ${sourceRowId} at index ${insertIndex}`);
-    console.log('[DnD] State before move:', JSON.parse(JSON.stringify(userRows.map(r => ({id: r.id, time: r.time, event: r.event})))));
 
     const working = [...userRows];
     const sourceIndex = working.findIndex((r) => r.id.toString() === sourceRowId);
@@ -3222,11 +3199,9 @@ export default function MobileApp() {
     let targetIndex = insertIndex;
     if (sourceIndex < insertIndex) targetIndex = Math.max(0, insertIndex - 1);
 
-    console.log(`[DnD] Indices: source ${sourceIndex}, target ${targetIndex}`);
 
     // Insert at the drop zone's index
     working.splice(targetIndex, 0, moved);
-    console.log('[DnD] State after splice:', JSON.parse(JSON.stringify(working.map(r => ({id: r.id, time: r.time, event: r.event})))));
 
     const recalculated = cascadeTimesByOrder(working);
     saveToHistory(recalculated);
