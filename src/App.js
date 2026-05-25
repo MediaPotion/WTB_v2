@@ -479,6 +479,17 @@ function computeOverlaps(rows) {
   return result;
 }
 
+const SETTINGS_WIZARD_TABS = [
+  { label: "Wedding Details", step: 1 },
+  { label: "Locations",       step: 2 },
+  { label: "Package",         step: 3 },
+  { label: "Pre-Ceremony",    step: 4 },
+  { label: "First Looks",     step: 5 },
+  { label: "Ceremony",        step: 6 },
+  { label: "Portraits",       step: 8 },
+  { label: "Reception",       step: 9 },
+];
+
 /* ---------------- Time Popover ---------------- */
 function TimePopover({ open, value, onSet, onClose }) {
   const [hh, setHh] = useState("12");
@@ -1252,16 +1263,24 @@ function TimelineRow({
       }}
       title={dropping ? "Drop here to add event" : ""}
     >
-      {/* Overlap warning badge */}
+      {/* Overlap warning badge — centered at top of card */}
       {overlapWith && (
         <div
-          style={{ position: "absolute", top: 8, right: 8, zIndex: 20 }}
+          style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 20 }}
           onMouseEnter={() => setShowOverlapTip(true)}
           onMouseLeave={() => setShowOverlapTip(false)}
         >
+          <div style={{
+            width: 36, height: 36, borderRadius: "50%",
+            background: "#cc2222", color: "#fff",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 22, fontWeight: "bold", cursor: "default",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.45)",
+            userSelect: "none", lineHeight: 1,
+          }}>!</div>
           {showOverlapTip && (
             <div style={{
-              position: "absolute", right: 26, top: 0,
+              position: "absolute", top: 40, left: "50%", transform: "translateX(-50%)",
               background: "#1c1816", color: "#f0ece6",
               fontSize: 11, padding: "5px 9px", borderRadius: 4,
               width: 210, lineHeight: 1.5,
@@ -1272,14 +1291,6 @@ function TimelineRow({
               Overlaps with &ldquo;{overlapWith}&rdquo;. Overlapping events are allowed but may indicate a scheduling conflict.
             </div>
           )}
-          <div style={{
-            width: 18, height: 18, borderRadius: "50%",
-            background: "#cc2222", color: "#fff",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 12, fontWeight: "bold", cursor: "default",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.45)",
-            userSelect: "none", lineHeight: 1,
-          }}>!</div>
         </div>
       )}
       {/* TOP row: Buttons (left) | Time (middle) | Event (+photo/video) (right) */}
@@ -2158,6 +2169,7 @@ export default function MobileApp() {
   // Screen & modal state
   const [screen, setScreen] = useState("welcome"); // "welcome" | "wizard" | "settings" | "timeline"
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [settingsTab, setSettingsTab] = useState(0);
 
   // Fixed-time events (Project Settings)
   const [fixedEvents, setFixedEvents] = useState([
@@ -3528,9 +3540,10 @@ export default function MobileApp() {
 
     setScreen("timeline");
   };  // ---- Wizard Rendering ----
-  const renderWizard = () => {
+  const renderWizard = (inModal = false, overrideStep = null) => {
+    const effectiveStep = overrideStep !== null ? overrideStep : wizardStep;
     const totalWizardSteps = 8;
-    const displayStep = wizardStep > 7 ? wizardStep - 1 : wizardStep;
+    const displayStep = effectiveStep > 7 ? effectiveStep - 1 : effectiveStep;
 
     // All named locations from Step 2 in display order
     const allWizLocations = [
@@ -3576,7 +3589,16 @@ export default function MobileApp() {
       <div style={{ fontFamily: "'Jost', sans-serif", fontSize: 11, fontWeight: 300, letterSpacing: "0.18em", textTransform: "uppercase", color: "#b8906a", margin: "20px 0 10px" }}>{text}</div>
     );
 
-    const stepCard = (title, subtitle, content, backFn, nextFn, nextLabel = "Next") => (
+    const stepCard = (title, subtitle, content, backFn, nextFn, nextLabel = "Next") => {
+      if (inModal) {
+        return (
+          <div style={{ paddingBottom: 8 }}>
+            {subtitle && <p style={{ margin: "0 0 16px", fontSize: 13, color: "#6e6358", fontFamily: "'Jost', sans-serif", lineHeight: 1.5 }}>{subtitle}</p>}
+            {content}
+          </div>
+        );
+      }
+      return (
       <div className="wiz-layout" style={{ padding: "16px 0", background: "#060504", minHeight: "100vh", fontFamily: "'Jost', sans-serif" }}>
         <div className="wiz-step-col">
           <div style={{ maxWidth: 600, margin: "0 auto", padding: "24px 16px 40px" }}>
@@ -3615,9 +3637,10 @@ export default function MobileApp() {
         </div>
       </div>
     );
+    };
 
     // Step 2 — Locations
-    if (wizardStep === 2) {
+    if (effectiveStep === 2) {
       const mandatoryLocStyle = { border: "1px solid #1e1c19", borderRadius: 8, padding: "14px 14px 12px", marginBottom: 16, background: "#161310" };
       const mandatoryLabelStyle = { display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" };
       const mandatoryInputStyle = { width: "100%", padding: 9, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" };
@@ -3838,7 +3861,7 @@ export default function MobileApp() {
     }
 
     // Step 1 — Wedding Details
-    if (wizardStep === 1) {
+    if (effectiveStep === 1) {
       return stepCard(
         "Wedding Details",
         "These details will appear in your timeline header and exported documents.",
@@ -3895,7 +3918,7 @@ export default function MobileApp() {
     }
 
     // Step 3 — Package Inclusions
-    if (wizardStep === 3) {
+    if (effectiveStep === 3) {
       return stepCard(
         "What's Included in Your Package?",
         "Only check services that are part of your booked package.",
@@ -3947,7 +3970,7 @@ export default function MobileApp() {
     }
 
     // Step 4 — Pre-Ceremony
-    if (wizardStep === 4) {
+    if (effectiveStep === 4) {
       const wizInputStyle = { width: "100%", padding: "10px 12px", border: "1px solid #2a2520", borderRadius: 8, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" };
       const wizMinuteNote = <p style={{ fontSize: 12, color: "#aaa", margin: "4px 0 0 0" }}>Enter drive time in minutes, not miles</p>;
       return stepCard(
@@ -4000,7 +4023,7 @@ export default function MobileApp() {
     }
 
     // Step 5 — First Looks + Pre-Ceremony Visibility
-    if (wizardStep === 5) {
+    if (effectiveStep === 5) {
       return stepCard(
         "First Looks",
         "First looks affect the order of portraits and group photos in your timeline.",
@@ -4104,7 +4127,7 @@ export default function MobileApp() {
     }
 
     // Step 6 — Ceremony
-    if (wizardStep === 6) {
+    if (effectiveStep === 6) {
       const hourOptions = ["1","2","3","4","5","6","7","8","9","10","11","12"];
       const minuteOptions = ["00","05","10","15","20","25","30","35","40","45","50","55"];
       return stepCard(
@@ -4177,7 +4200,7 @@ export default function MobileApp() {
     }
 
     // Step 8 — Post-Ceremony
-    if (wizardStep === 8) {
+    if (effectiveStep === 8) {
       const groupCount = wiz_familyGroups === "none" ? 0 : parseInt(wiz_familyGroups, 10);
       return stepCard(
         "Portraits",
@@ -4275,7 +4298,7 @@ export default function MobileApp() {
     }
 
     // Step 9 — Reception
-    if (wizardStep === 9) {
+    if (effectiveStep === 9) {
       const hourOptions = ["1","2","3","4","5","6","7","8","9","10","11","12"];
       const minuteOptions = ["00","05","10","15","20","25","30","35","40","45","50","55"];
       return stepCard(
@@ -4467,7 +4490,7 @@ export default function MobileApp() {
     }
 
     // Step 99 — Confirmation
-    if (wizardStep === 99) {
+    if (effectiveStep === 99) {
       const cardStyle = { background: "#0f0d0b", border: "1px solid #1e1c19", borderRadius: 8, padding: "20px", marginBottom: 12 };
       const sectionHeading = (label) => (
         <h3 style={{ margin: "0 0 14px 0", fontSize: 12, color: "#b8906a", fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase" }}>{label}</h3>
@@ -4940,12 +4963,12 @@ export default function MobileApp() {
 
           {/* Controls row */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10, flexWrap: "wrap", background: "#0f0d0b", borderBottom: "1px solid #161310", padding: "8px 0", margin: "0 -10px 10px", paddingLeft: 10, paddingRight: 10 }}>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button
-                onClick={saveProject}
-                style={{ padding: "6px 14px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
+                onClick={() => { setWizardStep(1); setScreen("welcome"); }}
+                style={{ padding: "5px 12px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 6, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
               >
-                Save Project
+                New Timeline
               </button>
               <label
                 style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, display: "inline-block", fontFamily: "'Jost', sans-serif" }}
@@ -4954,30 +4977,30 @@ export default function MobileApp() {
                 <input type="file" accept=".json" onChange={loadProject} style={{ display: "none" }} />
               </label>
               <button
-                onClick={exportTimeline}
-                style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
+                onClick={saveProject}
+                style={{ padding: "6px 14px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
               >
-                Export Timeline
-              </button>
-              <button
-                onClick={copyTimeline}
-                style={{ padding: "6px 14px", backgroundColor: copyConfirm ? "#b8906a" : "transparent", color: copyConfirm ? "#060504" : "#ddd0bc", border: copyConfirm ? "1px solid #b8906a" : "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
-              >
-                {copyConfirm ? "Copied!" : "Copy Timeline"}
-              </button>
-            </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button
-                onClick={() => { setWizardStep(1); setScreen("welcome"); }}
-                style={{ padding: "5px 12px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 6, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
-              >
-                New Timeline
+                Save Project
               </button>
               <button
                 onClick={() => setShowSettingsModal(true)}
                 style={{ padding: "5px 12px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 6, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
               >
                 Project Settings
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button
+                onClick={copyTimeline}
+                style={{ padding: "6px 14px", backgroundColor: copyConfirm ? "#b8906a" : "transparent", color: copyConfirm ? "#060504" : "#ddd0bc", border: copyConfirm ? "1px solid #b8906a" : "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
+              >
+                {copyConfirm ? "Copied!" : "Copy Timeline"}
+              </button>
+              <button
+                onClick={exportTimeline}
+                style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
+              >
+                Export Timeline
               </button>
             </div>
           </div>
@@ -5154,8 +5177,9 @@ export default function MobileApp() {
               }}
               onClick={(e) => { if (e.target === e.currentTarget) setShowSettingsModal(false); }}
             >
-              <div style={{ background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 10, maxWidth: 680, width: "100%", padding: 24, position: "relative" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+              <div style={{ background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 10, maxWidth: 720, width: "100%", padding: 24, position: "relative" }}>
+                {/* Header */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                   <h2 style={{ margin: 0, fontSize: 20, color: "#ddd0bc", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Project Settings</h2>
                   <button
                     onClick={() => setShowSettingsModal(false)}
@@ -5164,19 +5188,39 @@ export default function MobileApp() {
                     ✕
                   </button>
                 </div>
-                {renderSettingsForm(true)}
-                <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 8 }}>
-                  <button
-                    onClick={() => setShowSettingsModal(false)}
-                    style={{ padding: "8px 20px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}
-                  >
-                    Cancel
-                  </button>
+
+                {/* Tab bar */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 20, borderBottom: "1px solid #2a2520", paddingBottom: 12 }}>
+                  {SETTINGS_WIZARD_TABS.map((tab, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setSettingsTab(i)}
+                      style={{
+                        padding: "5px 12px",
+                        background: settingsTab === i ? "#b8906a" : "transparent",
+                        color: settingsTab === i ? "#060504" : "#6e6358",
+                        border: settingsTab === i ? "1px solid #b8906a" : "1px solid #2a2520",
+                        borderRadius: 4, fontSize: 12, cursor: "pointer",
+                        fontFamily: "'Jost', sans-serif", fontWeight: 300, letterSpacing: "0.05em",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tab content */}
+                <div style={{ maxHeight: "62vh", overflowY: "auto", paddingRight: 4 }}>
+                  {renderWizard(true, SETTINGS_WIZARD_TABS[settingsTab].step)}
+                </div>
+
+                <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 16 }}>
                   <button
                     onClick={() => setShowSettingsModal(false)}
                     style={{ padding: "8px 20px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 400, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
                   >
-                    Save Settings
+                    Done
                   </button>
                 </div>
               </div>
