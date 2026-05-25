@@ -2832,7 +2832,6 @@ export default function MobileApp() {
     const recalculated = recalculateTimes(working, Math.min(sourceIndex, targetIndex));
     console.log('[DnD] Final recalculated state:', JSON.parse(JSON.stringify(recalculated.map(r => ({id: r.id, time: r.time, event: r.event})))));
 
-    setUserRows(recalculated);
     saveToHistory(recalculated);
     setDraggedRowId(null);
     setIsDraggingOver(false);
