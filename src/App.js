@@ -806,6 +806,7 @@ const SETTINGS_WIZARD_TABS = [
   { label: "Draft",           step: 99 },
 ];
 
+const PROJECT_VERSION = 2;
 const AUTOSAVE_KEY = "wtb_autosave";
 
 /* ---------------- Time Popover ---------------- */
@@ -2544,6 +2545,7 @@ export default function MobileApp() {
   const [isDirty, setIsDirty] = useState(false);
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
   const [showAutosaveBanner, setShowAutosaveBanner] = useState(false);
+  const [versionNotice, setVersionNotice] = useState(null);
   const isDirtyRef = useRef(false);
   const isApplyingProjectRef = useRef(false);
   const dirtyTrackingEnabledRef = useRef(false);
@@ -3353,6 +3355,7 @@ export default function MobileApp() {
   };
 
   const buildProjectData = () => ({
+    version: PROJECT_VERSION,
     date,
     bride,
     groom,
@@ -3465,6 +3468,14 @@ export default function MobileApp() {
         const projectData = JSON.parse(e.target.result);
         isApplyingProjectRef.current = true;
         applyProjectData(projectData);
+        const version = projectData.version;
+        if (!version || version < PROJECT_VERSION) {
+          setVersionNotice(
+            "This project was saved with an older version of the app. Some features may not be available."
+          );
+        } else {
+          setVersionNotice(null);
+        }
         clearDirty();
         clearAutosave();
         setScreen("timeline");
@@ -3499,6 +3510,7 @@ export default function MobileApp() {
     clearAutosave();
     clearDirty();
     setShowUnsavedConfirm(false);
+    setVersionNotice(null);
     setWizardStep(1);
     setScreen("welcome");
     setShowMobileMenu(false);
@@ -5649,6 +5661,11 @@ export default function MobileApp() {
       ) : (
         /* ============ TIMELINE SCREEN ============ */
         <div className="wtb-timeline-screen" style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", background: "#060504", zIndex: 1, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>
+          {versionNotice && (
+            <div style={{ flexShrink: 0, padding: "8px 12px", background: "#161310", borderBottom: "1px solid #2a2520", fontSize: 13, color: "#6e6358", textAlign: "center", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>
+              {versionNotice}
+            </div>
+          )}
           {/* Header: names/date + controls */}
           <div style={{ flexShrink: 0, background: "#060504", padding: isDesktop ? "4px 10px 0" : "4px 8px 0" }}>
             {/* Names & date (+ mobile gear top-right) */}
