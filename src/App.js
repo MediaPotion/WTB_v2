@@ -1621,12 +1621,14 @@ function TimelineRow({
           className="wtb-bottom"
           style={{
             display: "grid",
-            gridTemplateColumns: "auto 1fr",
-            padding: 8,
-            gap: 4,
+            gridTemplateColumns: "auto auto 1fr",
+            padding: "8px 8px 8px 6px",
+            gap: 9,
             alignItems: "start",
           }}
         >
+          {/* Spacer — aligns with drag handle above */}
+          <div style={{ width: 18 }} />
           {/* Duration */}
           <div style={{ width: "auto" }}>
             <label
