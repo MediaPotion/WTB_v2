@@ -214,6 +214,32 @@ export default function MobileApp() {
   const [wiz_customReceptionEvents, setWiz_customReceptionEvents] = useState([]);
   const [wiz_customReceptionEventNextId, setWiz_customReceptionEventNextId] = useState(1);
 
+  const isTimelineEmpty = () => {
+    const hasRowContent = userRows.some(
+      (r) =>
+        (r.event && r.event.trim()) ||
+        (r.location && r.location.trim()) ||
+        (r.notes && r.notes.trim())
+    );
+    const hasMeta = !!(
+      String(date || "").trim() ||
+      String(bride || "").trim() ||
+      String(groom || "").trim()
+    );
+    return !hasRowContent && !hasMeta;
+  };
+
+  const markDirty = () => {
+    if (!isTimelineEmpty()) {
+      setIsDirty(true);
+      isDirtyRef.current = true;
+    }
+  };
+
+  const clearDirty = () => {
+    setIsDirty(false);
+    isDirtyRef.current = false;
+  };
 
   const { buildDefaultFilename, clearAutosave, saveProject, loadProject, restoreAutosave } = useProjectStorage({
     date, bride, groom, brideLabel, groomLabel,
@@ -269,33 +295,6 @@ export default function MobileApp() {
       setShowExportMenu(false);
     }
   }, [isDesktop]);
-
-  const isTimelineEmpty = () => {
-    const hasRowContent = userRows.some(
-      (r) =>
-        (r.event && r.event.trim()) ||
-        (r.location && r.location.trim()) ||
-        (r.notes && r.notes.trim())
-    );
-    const hasMeta = !!(
-      String(date || "").trim() ||
-      String(bride || "").trim() ||
-      String(groom || "").trim()
-    );
-    return !hasRowContent && !hasMeta;
-  };
-
-  const markDirty = () => {
-    if (!isTimelineEmpty()) {
-      setIsDirty(true);
-      isDirtyRef.current = true;
-    }
-  };
-
-  const clearDirty = () => {
-    setIsDirty(false);
-    isDirtyRef.current = false;
-  };
 
   useEffect(() => {
     if (screen !== "welcome") {
