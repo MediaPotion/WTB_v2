@@ -415,6 +415,29 @@ const MOBILE_TWEAKS = `
     .wiz-bob, .wiz-shake, .wiz-hop, .wiz-pulse, .wiz-spin,
     .generate-btn, .welcome-fade-up { animation: none !important; transform: none !important; }
   }
+
+  .wtb-tabs {
+    display: flex;
+    border-bottom: 1px solid #1e1c19;
+    margin: -12px -12px 8px;
+  }
+  .wtb-tab-btn {
+    flex: 1;
+    padding: 9px 4px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #6e6358;
+    font-size: 10px;
+    font-family: 'Jost', sans-serif;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .wtb-tab-btn.active { color: #b8906a; border-bottom-color: #b8906a; }
+  .wtb-tab-btn:hover:not(.active) { color: #ddd0bc; }
 `;
 
 /* ---------------- helpers ---------------- */
@@ -891,8 +914,8 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
             groupMap[category].push({ label, shortLabel, duration: parseInt(duration, 10), block });
           });
           return groups.map(category => (
-            <div key={category}>
-              <div style={{ fontSize: 10, color: getEventColor(groupMap[category][0].label), textTransform: "uppercase", letterSpacing: "0.12em", margin: "10px 0 4px", fontFamily: "'Jost', sans-serif", fontWeight: 400, borderTop: "1px solid #1e1c19", paddingTop: 8 }}>{category}</div>
+            <div key={category} style={{ breakInside: "avoid", WebkitColumnBreakInside: "avoid" }}>
+              <div style={{ fontSize: 10, color: getEventColor(groupMap[category][0].label), textTransform: "uppercase", letterSpacing: "0.12em", margin: "10px 0 4px", fontFamily: "'Jost', sans-serif", fontWeight: 400, borderTop: "1px solid #1e1c19", paddingTop: 8, textAlign: "center" }}>{category}</div>
               {groupMap[category].map(({ label, shortLabel, duration, block }) => (
                 <button
                   key={block}
@@ -903,7 +926,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                   style={{ width: "100%", padding: 12, margin: "4px 0", backgroundColor: "#0f0d0b", border: `2px solid ${getEventColor(label)}`, borderRadius: 8, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14, fontWeight: 500, color: "#ddd0bc" }}
                 >
                   <span>{shortLabel}</span>
-                  <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px" }}>{duration} min</span>
+                  <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px", whiteSpace: "nowrap" }}>{duration} min</span>
                 </button>
               ))}
             </div>
@@ -1694,109 +1717,382 @@ function TimelineRow({
   );
 }
 
+/* ─── Timeline Preview ────────────────────────────────────────────── */
+// All measurements in PDF points (72 pt = 1 inch) so the HTML preview
+// and jsPDF output share the same coordinate system.
+const PW = 612, PH = 792;          // US Letter
+const MX = 38, MY_TOP = 48, MY_BOT = 36;
+const CW = PW - 2 * MX;           // 536
+const RH_COL  = 18;  // column-header row
+const RH_EVT  = 22;  // event row (no notes)
+const RH_NOTE = 13;  // per wrapped note line
+const RH_LOC  = 46;  // location block
+const RH_CON  = 32;  // constraint block
+const RH_GAP  = 3;   // gap after each row
+const HDR_H   = 122; // first-page header height
+const FTR_H   = 22;  // footer height
+const COL_TIME = 66, COL_DUR = 34, COL_SET = 28;
+
+function previewRowH(row) {
+  if (!row) return RH_EVT + RH_GAP;
+  if (row.type === 'location') return RH_LOC + RH_GAP;
+  if (row.type === 'constraint') return RH_CON + RH_GAP;
+  const noteLines = row.notes && row.notes.trim()
+    ? Math.ceil(row.notes.trim().length / 58) : 0;
+  return RH_EVT + noteLines * RH_NOTE + RH_GAP;
+}
+
+function layoutPreviewPages(rows) {
+  const firstAvail = PH - MY_TOP - HDR_H - RH_COL - MY_BOT - FTR_H - 8;
+  const otherAvail = PH - MY_TOP - RH_COL  - MY_BOT - FTR_H - 8;
+  const pages = [];
+  let curr = [], used = 0;
+  for (const row of rows) {
+    const h = previewRowH(row);
+    const avail = pages.length === 0 ? firstAvail : otherAvail;
+    if (curr.length > 0 && used + h > avail) { pages.push(curr); curr = []; used = 0; }
+    curr.push(row); used += h;
+  }
+  pages.push(curr);
+  return pages;
+}
+
+function fmtDateLong(dateStr) {
+  if (!dateStr) return '';
+  const dt = new Date(dateStr.includes('-') && !dateStr.includes('T') ? dateStr + 'T00:00:00' : dateStr);
+  if (isNaN(dt.getTime())) return dateStr;
+  return dt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function hexToRgb(hex) {
+  const h = (hex || '#ffffff').replace('#', '').padEnd(6, '0');
+  return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+}
+
+// ── Preview sub-components ────────────────────────────────────────
+function PvHeader({ sc, bride, groom, date, photoStartHour, photoStartMinute, photoStartPeriod, photoEndHour, photoEndMinute, photoEndPeriod, videoStartHour, videoStartMinute, videoStartPeriod, videoEndHour, videoEndMinute, videoEndPeriod, photoEnabled, videoEnabled }) {
+  const s = v => v * sc;
+  const covParts = [];
+  if (photoEnabled) covParts.push(`Photo: ${photoStartHour}:${photoStartMinute} ${photoStartPeriod} – ${photoEndHour}:${photoEndMinute} ${photoEndPeriod}`);
+  if (videoEnabled) covParts.push(`Video: ${videoStartHour}:${videoStartMinute} ${videoStartPeriod} – ${videoEndHour}:${videoEndMinute} ${videoEndPeriod}`);
+  return (
+    <div style={{ height: s(HDR_H), flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: s(5) }}>
+      <div style={{ fontSize: s(7.5), letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: "'Jost', sans-serif", color: '#b8906a', fontWeight: 300 }}>Wedding Potion</div>
+      <div style={{ fontSize: s(24), fontFamily: "'Cormorant Garamond', serif", color: '#1a1a1a', fontWeight: 300, lineHeight: 1 }}>{bride || 'Bride'} &amp; {groom || 'Groom'}</div>
+      <div style={{ fontSize: s(9), fontFamily: "'Jost', sans-serif", color: '#555', fontWeight: 300, letterSpacing: '0.08em' }}>{fmtDateLong(date)}</div>
+      {covParts.length > 0 && <div style={{ fontSize: s(7.5), fontFamily: "'Jost', sans-serif", color: '#888', fontWeight: 300 }}>{covParts.join('  ·  ')}</div>}
+      <div style={{ width: '100%', height: s(0.75), background: '#b8906a', marginTop: s(4) }} />
+    </div>
+  );
+}
+
+function PvColHeaders({ sc }) {
+  const s = v => v * sc;
+  const lbl = { fontSize: s(6.5), fontFamily: "'Jost', sans-serif", fontWeight: 400, color: '#b8906a', textTransform: 'uppercase', letterSpacing: '0.1em' };
+  return (
+    <div style={{ display: 'flex', height: s(RH_COL), flexShrink: 0, alignItems: 'center', borderBottom: `${s(0.5)}px solid #b8906a`, marginBottom: s(3) }}>
+      <div style={{ ...lbl, width: s(COL_TIME) }}>Time</div>
+      <div style={{ ...lbl, flex: 1 }}>Event</div>
+      <div style={{ ...lbl, width: s(COL_DUR), textAlign: 'right' }}>Min</div>
+      <div style={{ ...lbl, width: s(COL_SET), textAlign: 'center' }}>Setting</div>
+    </div>
+  );
+}
+
+function PvRow({ row, sc }) {
+  const s = v => v * sc;
+  const t = formatTime(row.time);
+  const timeStr = `${t.hour}:${t.minute} ${t.period}`;
+  if (row.type === 'location') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: s(RH_LOC), flexShrink: 0, marginBottom: s(RH_GAP), paddingLeft: s(7), paddingRight: s(4), background: '#f8f6f3', borderLeft: `${s(3)}px solid #b8906a` }}>
+        <div style={{ fontSize: s(7.5), color: '#aaa', fontFamily: "'Jost', sans-serif", marginBottom: s(2) }}>{timeStr}</div>
+        <div style={{ fontSize: s(10), color: '#1a1a1a', fontFamily: "'Jost', sans-serif", fontWeight: 500 }}>📍 {row.event || '(Travel)'}</div>
+        {row.address && row.address.trim() && <div style={{ fontSize: s(8), color: '#666', fontFamily: "'Jost', sans-serif", marginTop: s(2) }}>{row.address}</div>}
+        <div style={{ fontSize: s(7.5), color: '#aaa', fontFamily: "'Jost', sans-serif", marginTop: s(2) }}>Travel time: {row.duration} min</div>
+      </div>
+    );
+  }
+  if (row.type === 'constraint') {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', height: s(RH_CON), flexShrink: 0, marginBottom: s(RH_GAP), paddingLeft: s(7), paddingRight: s(4), background: 'repeating-linear-gradient(45deg,#fff8f8,#fff8f8 6px,#fff2f2 6px,#fff2f2 12px)', borderLeft: `${s(3)}px solid #cc4444`, gap: s(10) }}>
+        <div style={{ fontSize: s(8), color: '#999', fontFamily: "'Jost', sans-serif", flexShrink: 0 }}>{timeStr}</div>
+        <div style={{ fontSize: s(8.5), color: '#cc4444', fontFamily: "'Jost', sans-serif", fontWeight: 500 }}>⚠ Time Constraint</div>
+        {row.notes && row.notes.trim() && <div style={{ fontSize: s(7.5), color: '#888', fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', marginLeft: 'auto' }}>{row.notes}</div>}
+      </div>
+    );
+  }
+  const accent = getEventColor(row.event);
+  const noteLines = row.notes && row.notes.trim() ? Math.ceil(row.notes.trim().length / 58) : 0;
+  const rowH = RH_EVT + noteLines * RH_NOTE;
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', height: s(rowH), flexShrink: 0, marginBottom: s(RH_GAP), paddingTop: s(4), paddingLeft: s(5), paddingRight: s(4), borderLeft: `${s(2.5)}px solid ${accent}`, borderBottom: `${s(0.4)}px solid #f0ede8` }}>
+      <div style={{ width: s(COL_TIME - 5), fontSize: s(8.5), fontFamily: "'Jost', sans-serif", color: '#333', fontWeight: 500, flexShrink: 0 }}>{timeStr}</div>
+      <div style={{ flex: 1, overflow: 'hidden' }}>
+        <div style={{ fontSize: s(9), fontFamily: "'Jost', sans-serif", color: '#1a1a1a', lineHeight: 1.25 }}>{row.event || '(empty)'}</div>
+        {row.notes && row.notes.trim() && <div style={{ fontSize: s(8), fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', color: '#777', marginTop: s(2), lineHeight: 1.2 }}>{row.notes}</div>}
+      </div>
+      <div style={{ width: s(COL_DUR), fontSize: s(8.5), fontFamily: "'Jost', sans-serif", color: '#666', textAlign: 'right', flexShrink: 0 }}>{row.duration}</div>
+      <div style={{ width: s(COL_SET), fontSize: s(9), textAlign: 'center', flexShrink: 0 }}>{row.isOutdoor ? '☀' : '⌂'}</div>
+    </div>
+  );
+}
+
+function PvFooter({ sc, pageNum, totalPages, bride, groom, date }) {
+  const s = v => v * sc;
+  return (
+    <div style={{ position: 'absolute', bottom: s(10), left: s(MX), right: s(MX), display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `${s(0.4)}px solid #ddd`, paddingTop: s(5) }}>
+      <div style={{ fontSize: s(7), fontFamily: "'Jost', sans-serif", color: '#bbb' }}>{bride || 'Bride'} &amp; {groom || 'Groom'} · {fmtDateLong(date)}</div>
+      <div style={{ fontSize: s(7), fontFamily: "'Jost', sans-serif", color: '#bbb' }}>{pageNum} of {totalPages}</div>
+    </div>
+  );
+}
+
+function PreviewPage({ items, isFirst, pageNum, totalPages, sc, bride, groom, date, photoStartHour, photoStartMinute, photoStartPeriod, photoEndHour, photoEndMinute, photoEndPeriod, videoStartHour, videoStartMinute, videoStartPeriod, videoEndHour, videoEndMinute, videoEndPeriod, photoEnabled, videoEnabled }) {
+  const s = v => v * sc;
+  return (
+    <div style={{ width: s(PW), height: s(PH), background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.18)', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', left: s(MX), right: s(MX), top: s(MY_TOP), bottom: s(MY_BOT + FTR_H + 4), overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {isFirst && <PvHeader sc={sc} bride={bride} groom={groom} date={date} photoStartHour={photoStartHour} photoStartMinute={photoStartMinute} photoStartPeriod={photoStartPeriod} photoEndHour={photoEndHour} photoEndMinute={photoEndMinute} photoEndPeriod={photoEndPeriod} videoStartHour={videoStartHour} videoStartMinute={videoStartMinute} videoStartPeriod={videoStartPeriod} videoEndHour={videoEndHour} videoEndMinute={videoEndMinute} videoEndPeriod={videoEndPeriod} photoEnabled={photoEnabled} videoEnabled={videoEnabled} />}
+        <PvColHeaders sc={sc} />
+        {items.map((row, i) => <PvRow key={row.id ?? i} row={row} sc={sc} />)}
+      </div>
+      <PvFooter sc={sc} pageNum={pageNum} totalPages={totalPages} bride={bride} groom={groom} date={date} />
+    </div>
+  );
+}
+
+function TimelinePreview({ rows, bride, groom, date, photoStartHour, photoStartMinute, photoStartPeriod, photoEndHour, photoEndMinute, photoEndPeriod, videoStartHour, videoStartMinute, videoStartPeriod, videoEndHour, videoEndMinute, videoEndPeriod, photoEnabled, videoEnabled }) {
+  const containerRef = useRef(null);
+  const [panelW, setPanelW] = useState(500);
+  const [userZoom, setUserZoom] = useState(1);
+  const [exporting, setExporting] = useState(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver(entries => setPanelW(entries[0].contentRect.width));
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const baseScale = Math.max(0.2, (panelW - 32) / PW);
+  const sc = baseScale * userZoom;
+  const pages = layoutPreviewPages(rows);
+
+  const brideFirst = (bride || 'Bride').trim().split(/\s+/)[0];
+  const groomFirst = (groom || 'Groom').trim().split(/\s+/)[0];
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+      const allPages = layoutPreviewPages(rows);
+
+      allPages.forEach((pageRows, pi) => {
+        if (pi > 0) doc.addPage();
+
+        if (pi === 0) {
+          let hy = MY_TOP + 14;
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(184, 144, 106);
+          doc.text('WEDDING POTION', PW / 2, hy, { align: 'center', charSpace: 1.5 });
+          hy += 24;
+          doc.setFont('times', 'normal'); doc.setFontSize(24); doc.setTextColor(26, 26, 26);
+          doc.text(`${bride || 'Bride'} & ${groom || 'Groom'}`, PW / 2, hy, { align: 'center' });
+          hy += 18;
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(90, 90, 90);
+          doc.text(fmtDateLong(date), PW / 2, hy, { align: 'center', charSpace: 0.5 });
+          hy += 13;
+          const covParts = [];
+          if (photoEnabled) covParts.push(`Photo: ${photoStartHour}:${photoStartMinute} ${photoStartPeriod} - ${photoEndHour}:${photoEndMinute} ${photoEndPeriod}`);
+          if (videoEnabled) covParts.push(`Video: ${videoStartHour}:${videoStartMinute} ${videoStartPeriod} - ${videoEndHour}:${videoEndMinute} ${videoEndPeriod}`);
+          if (covParts.length > 0) { doc.setFontSize(7.5); doc.setTextColor(140, 140, 140); doc.text(covParts.join('   -   '), PW / 2, hy, { align: 'center' }); }
+          doc.setDrawColor(184, 144, 106); doc.setLineWidth(0.75);
+          doc.line(MX, MY_TOP + HDR_H - 6, PW - MX, MY_TOP + HDR_H - 6);
+        }
+
+        const csY = pi === 0 ? MY_TOP + HDR_H : MY_TOP;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(184, 144, 106);
+        doc.text('TIME', MX, csY + 13);
+        doc.text('EVENT', MX + COL_TIME, csY + 13);
+        doc.text('MIN', PW - MX - COL_SET - 2, csY + 13, { align: 'right' });
+        doc.text('SETTING', PW - MX - COL_SET / 2, csY + 13, { align: 'center' });
+        doc.setDrawColor(184, 144, 106); doc.setLineWidth(0.5);
+        doc.line(MX, csY + RH_COL, PW - MX, csY + RH_COL);
+
+        let y = csY + RH_COL + 4;
+        for (const row of pageRows) {
+          const t = formatTime(row.time);
+          const ts = `${t.hour}:${t.minute} ${t.period}`;
+          if (row.type === 'location') {
+            doc.setFillColor(248, 246, 243); doc.rect(MX, y, CW, RH_LOC, 'F');
+            doc.setFillColor(184, 144, 106); doc.rect(MX, y, 3, RH_LOC, 'F');
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(160, 160, 160);
+            doc.text(ts, MX + 8, y + 11);
+            doc.setFontSize(10); doc.setTextColor(26, 26, 26);
+            doc.text(row.event || '(Travel)', MX + 8, y + 23, { maxWidth: CW - 16 });
+            if (row.address && row.address.trim()) { doc.setFontSize(8); doc.setTextColor(100, 100, 100); doc.text(row.address.trim(), MX + 8, y + 34, { maxWidth: CW - 16 }); }
+            doc.setFontSize(7.5); doc.setTextColor(150, 150, 150);
+            doc.text(`Travel: ${row.duration} min`, MX + 8, y + RH_LOC - 5);
+            y += RH_LOC + RH_GAP;
+          } else if (row.type === 'constraint') {
+            doc.setFillColor(255, 245, 245); doc.rect(MX, y, CW, RH_CON, 'F');
+            doc.setFillColor(204, 68, 68); doc.rect(MX, y, 3, RH_CON, 'F');
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(150, 150, 150);
+            doc.text(ts, MX + 8, y + RH_CON / 2 + 3);
+            doc.setTextColor(204, 68, 68); doc.setFontSize(9);
+            doc.text('[!] TIME CONSTRAINT', MX + COL_TIME, y + RH_CON / 2 + 3);
+            y += RH_CON + RH_GAP;
+          } else {
+            const [ar, ag, ab] = hexToRgb(getEventColor(row.event));
+            doc.setFillColor(ar, ag, ab); doc.rect(MX, y, 2.5, RH_EVT, 'F');
+            doc.setDrawColor(240, 237, 232); doc.setLineWidth(0.4);
+            doc.line(MX, y + RH_EVT, PW - MX, y + RH_EVT);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(50, 50, 50);
+            doc.text(ts, MX + 5, y + 14);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(26, 26, 26);
+            doc.text(row.event || '(empty)', MX + COL_TIME, y + 14, { maxWidth: CW - COL_TIME - COL_DUR - COL_SET - 4 });
+            doc.setFontSize(8.5); doc.setTextColor(110, 110, 110);
+            doc.text(String(row.duration), PW - MX - COL_SET - 4, y + 14, { align: 'right' });
+            doc.setFontSize(8); doc.setTextColor(80, 80, 80);
+            doc.text(row.isOutdoor ? 'OUT' : 'IN', PW - MX - COL_SET / 2, y + 14, { align: 'center' });
+            y += RH_EVT;
+            if (row.notes && row.notes.trim()) {
+              doc.setFont('times', 'italic'); doc.setFontSize(8); doc.setTextColor(130, 130, 130);
+              const wrapped = doc.splitTextToSize(row.notes.trim(), CW - COL_TIME - COL_DUR - COL_SET - 8);
+              doc.text(wrapped, MX + COL_TIME, y + 10);
+              y += wrapped.length * RH_NOTE;
+            }
+            y += RH_GAP;
+          }
+        }
+
+        const ftrY = PH - MY_BOT + 4;
+        doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.4);
+        doc.line(MX, ftrY - 6, PW - MX, ftrY - 6);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(180, 180, 180);
+        doc.text(`${bride || 'Bride'} & ${groom || 'Groom'} - ${fmtDateLong(date)}`, MX, ftrY);
+        doc.text(`${pi + 1} of ${allPages.length}`, PW - MX, ftrY, { align: 'right' });
+      });
+
+      doc.save(`${brideFirst}-${groomFirst}-Wedding-Timeline.pdf`);
+    } catch (err) {
+      console.error('PDF export failed:', err);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const toolBtn = (extra = {}) => ({ padding: '4px 10px', background: 'transparent', border: '1px solid #2a2520', borderRadius: 4, color: '#b8906a', fontSize: 11, fontFamily: "'Jost', sans-serif", cursor: 'pointer', ...extra });
+  const isEmpty = pages.length === 0 || (pages.length === 1 && pages[0].length === 0);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingBottom: 8, flexShrink: 0 }}>
+        <button style={toolBtn()} onClick={() => setUserZoom(z => Math.max(0.4, +(z - 0.15).toFixed(2)))}>−</button>
+        <span style={{ fontSize: 11, color: '#6e6358', fontFamily: "'Jost', sans-serif", minWidth: 38, textAlign: 'center' }}>{Math.round(userZoom * 100)}%</span>
+        <button style={toolBtn()} onClick={() => setUserZoom(z => Math.min(2.5, +(z + 0.15).toFixed(2)))}>+</button>
+        <button style={toolBtn({ marginLeft: 'auto', background: exporting ? '#6e6358' : '#b8906a', color: '#060504', border: 'none' })} onClick={handleExport} disabled={exporting || isEmpty}>
+          {exporting ? 'Exporting…' : 'Export PDF'}
+        </button>
+      </div>
+      <div ref={containerRef} style={{ flex: 1, minHeight: 0, overflow: 'auto', background: '#f0ece6', borderRadius: 6, padding: '16px 16px 32px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          {isEmpty ? (
+            <div style={{ padding: 40, color: '#8a7a6a', fontSize: 12, fontFamily: "'Jost', sans-serif", textAlign: 'center', letterSpacing: '0.05em' }}>
+              Generate a timeline to preview it here.
+            </div>
+          ) : pages.map((items, i) => (
+            <PreviewPage key={i} items={items} isFirst={i === 0} pageNum={i + 1} totalPages={pages.length} sc={sc}
+              bride={bride} groom={groom} date={date}
+              photoStartHour={photoStartHour} photoStartMinute={photoStartMinute} photoStartPeriod={photoStartPeriod}
+              photoEndHour={photoEndHour} photoEndMinute={photoEndMinute} photoEndPeriod={photoEndPeriod}
+              videoStartHour={videoStartHour} videoStartMinute={videoStartMinute} videoStartPeriod={videoStartPeriod}
+              videoEndHour={videoEndHour} videoEndMinute={videoEndMinute} videoEndPeriod={videoEndPeriod}
+              photoEnabled={photoEnabled} videoEnabled={videoEnabled}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- Sidebar (desktop only) ---------------- */
-function EventSidebar({ onUndo, onRedo, canUndo, canRedo }) {
+function EventSidebar({ onUndo, onRedo, canUndo, canRedo, rows, bride, groom, date, photoStartHour, photoStartMinute, photoStartPeriod, photoEndHour, photoEndMinute, photoEndPeriod, videoStartHour, videoStartMinute, videoStartPeriod, videoEndHour, videoEndMinute, videoEndPeriod, photoEnabled, videoEnabled }) {
+  const [activeTab, setActiveTab] = useState('blocks');
+  const previewProps = { rows, bride, groom, date, photoStartHour, photoStartMinute, photoStartPeriod, photoEndHour, photoEndMinute, photoEndPeriod, videoStartHour, videoStartMinute, videoStartPeriod, videoEndHour, videoEndMinute, videoEndPeriod, photoEnabled, videoEnabled };
   return (
     <div className="wtb-sidebar-wrap">
-      <aside className="wtb-sidebar">
-        <h3 className="wtb-side-title">Event Blocks</h3>
-        <div className="wtb-side-note">Drag a block onto a row</div>
-        <div className="wtb-palette">
-          {/* Location / Travel block */}
-          <div style={{ fontSize: 10, color: "#ffffff", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 4, fontFamily: "'Jost', sans-serif", fontWeight: 400 }}>Travel</div>
-          <button
-            draggable
-            onDragStart={(e) => {
-              if (e.dataTransfer) e.dataTransfer.effectAllowed = "copy";
-              e.dataTransfer.setData(
-                "application/json",
-                JSON.stringify({ type: "location", event: "", duration: 15 })
-              );
-            }}
-            style={{ background: "#161310", border: "2px solid #ffffff", color: "#ddd0bc", marginBottom: 8 }}
-            title="Drag to add a location / travel block"
-          >
-            <span>Location / Travel</span>
-            <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px" }}>
-              15 min
-            </span>
-          </button>
-          {(() => {
-            // Group EVENT_BLOCKS by category prefix (before the first ": ")
-            const groups = [];
-            const groupMap = {};
-            EVENT_BLOCKS.forEach(block => {
-              const [label, duration] = block.split("::");
-              const sep = label.indexOf(": ");
-              const category  = sep !== -1 ? label.substring(0, sep) : label;
-              const shortLabel = sep !== -1 ? label.substring(sep + 2) : label;
-              if (!groupMap[category]) {
-                groupMap[category] = [];
-                groups.push(category);
-              }
-              groupMap[category].push({ label, shortLabel, dur: parseInt(duration, 10), block });
-            });
-            return groups.map(category => {
-              const categoryColor = getEventColor(groupMap[category][0].label);
-              return (
-                <div key={category} style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: 10, color: categoryColor, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 4, paddingTop: 6, borderTop: "1px solid #1e1c19", fontFamily: "'Jost', sans-serif", fontWeight: 400 }}>{category}</div>
-                  {groupMap[category].map(({ label, shortLabel, dur, block }) => (
-                    <button
-                      key={block}
-                      draggable
-                      onDragStart={(e) => {
-                        if (e.dataTransfer) e.dataTransfer.effectAllowed = "copy";
-                        e.dataTransfer.setData("application/json", JSON.stringify({ event: label, duration: dur }));
-                      }}
-                      style={{ background: "#161310", border: `2px solid ${getEventColor(label)}`, color: "#ddd0bc" }}
-                      title="Drag to timeline"
-                    >
-                      <span>{shortLabel}</span>
-                      <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px" }}>{dur} min</span>
-                    </button>
-                  ))}
-                </div>
-              );
-            });
-          })()}
+      <aside className="wtb-sidebar" style={{ overflow: activeTab === 'preview' ? 'hidden' : 'auto', display: 'flex', flexDirection: 'column' }}>
+        <div className="wtb-tabs">
+          <button className={`wtb-tab-btn${activeTab === 'blocks' ? ' active' : ''}`} onClick={() => setActiveTab('blocks')}>Event Blocks</button>
+          <button className={`wtb-tab-btn${activeTab === 'preview' ? ' active' : ''}`} onClick={() => setActiveTab('preview')}>Preview</button>
         </div>
+
+        {activeTab === 'blocks' ? (
+          <>
+            <div className="wtb-side-note">Drag a block onto a row</div>
+            <div className="wtb-palette">
+              {/* Location / Travel block */}
+              <div style={{ fontSize: 10, color: "#ffffff", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 4, fontFamily: "'Jost', sans-serif", fontWeight: 400 }}>Travel</div>
+              <button
+                draggable
+                onDragStart={(e) => {
+                  if (e.dataTransfer) e.dataTransfer.effectAllowed = "copy";
+                  e.dataTransfer.setData("application/json", JSON.stringify({ type: "location", event: "", duration: 15 }));
+                }}
+                style={{ background: "#161310", border: "2px solid #ffffff", color: "#ddd0bc", marginBottom: 8 }}
+                title="Drag to add a location / travel block"
+              >
+                <span>Location / Travel</span>
+                <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px", whiteSpace: "nowrap" }}>15 min</span>
+              </button>
+              {(() => {
+                const groups = [];
+                const groupMap = {};
+                EVENT_BLOCKS.forEach(block => {
+                  const [label, duration] = block.split("::");
+                  const sep = label.indexOf(": ");
+                  const category  = sep !== -1 ? label.substring(0, sep) : label;
+                  const shortLabel = sep !== -1 ? label.substring(sep + 2) : label;
+                  if (!groupMap[category]) { groupMap[category] = []; groups.push(category); }
+                  groupMap[category].push({ label, shortLabel, dur: parseInt(duration, 10), block });
+                });
+                return groups.map(category => {
+                  const categoryColor = getEventColor(groupMap[category][0].label);
+                  return (
+                    <div key={category} style={{ marginBottom: 8, breakInside: "avoid", WebkitColumnBreakInside: "avoid" }}>
+                      <div style={{ fontSize: 10, color: categoryColor, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 4, paddingTop: 6, borderTop: "1px solid #1e1c19", fontFamily: "'Jost', sans-serif", fontWeight: 400, textAlign: "center" }}>{category}</div>
+                      {groupMap[category].map(({ label, shortLabel, dur, block }) => (
+                        <button
+                          key={block}
+                          draggable
+                          onDragStart={(e) => {
+                            if (e.dataTransfer) e.dataTransfer.effectAllowed = "copy";
+                            e.dataTransfer.setData("application/json", JSON.stringify({ event: label, duration: dur }));
+                          }}
+                          style={{ background: "#161310", border: `2px solid ${getEventColor(label)}`, color: "#ddd0bc" }}
+                          title="Drag to timeline"
+                        >
+                          <span>{shortLabel}</span>
+                          <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px", whiteSpace: "nowrap" }}>{dur} min</span>
+                        </button>
+                      ))}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </>
+        ) : (
+          <TimelinePreview {...previewProps} />
+        )}
       </aside>
       <div style={{ display: "flex", gap: 8 }}>
-        <button
-          onClick={onUndo}
-          disabled={!canUndo}
-          style={{
-            flex: 1,
-            padding: "8px 0",
-            backgroundColor: canUndo ? "#b8906a" : "#1e1c19",
-            color: canUndo ? "#060504" : "#3a3530",
-            border: "none",
-            borderRadius: 4,
-            cursor: canUndo ? "pointer" : "not-allowed",
-            fontSize: 14,
-            fontFamily: "'Jost', sans-serif",
-          }}
-        >
-          Undo
-        </button>
-        <button
-          onClick={onRedo}
-          disabled={!canRedo}
-          style={{
-            flex: 1,
-            padding: "8px 0",
-            backgroundColor: "transparent",
-            color: canRedo ? "#b8906a" : "#3a3530",
-            border: canRedo ? "1px solid #b8906a" : "1px solid #2a2520",
-            borderRadius: 4,
-            cursor: canRedo ? "pointer" : "not-allowed",
-            fontSize: 14,
-            fontFamily: "'Jost', sans-serif",
-          }}
-        >
-          Redo
-        </button>
+        <button onClick={onUndo} disabled={!canUndo} style={{ flex: 1, padding: "8px 0", backgroundColor: canUndo ? "#b8906a" : "#1e1c19", color: canUndo ? "#060504" : "#3a3530", border: "none", borderRadius: 4, cursor: canUndo ? "pointer" : "not-allowed", fontSize: 14, fontFamily: "'Jost', sans-serif" }}>Undo</button>
+        <button onClick={onRedo} disabled={!canRedo} style={{ flex: 1, padding: "8px 0", backgroundColor: "transparent", color: canRedo ? "#b8906a" : "#3a3530", border: canRedo ? "1px solid #b8906a" : "1px solid #2a2520", borderRadius: 4, cursor: canRedo ? "pointer" : "not-allowed", fontSize: 14, fontFamily: "'Jost', sans-serif" }}>Redo</button>
       </div>
     </div>
   );
@@ -2309,12 +2605,14 @@ export default function MobileApp() {
     
     console.log('[AddRow] Calculated newTime:', newTime);
 
+    const aboveRow = insertIndex > 0 ? rows[insertIndex - 1] : null;
+
     const newRow = {
       id: nextId,
       location: "",
       time: newTime,
       event: "",
-      duration: 30,
+      duration: aboveRow ? aboveRow.duration : 30,
       isOutdoor: false,
       photo: photoEnabled,
       video: videoEnabled,
@@ -2380,21 +2678,12 @@ export default function MobileApp() {
     const userRowIndex = userRows.findIndex((u) => u.id === displayRow.id);
     if (userRowIndex === -1) return;
 
-    const newUserRows = [...userRows];
-    const targetRow = newUserRows[userRowIndex];
+    const updatedFields = eventData.type === "location"
+      ? { type: "location", event: eventData.event || "", duration: eventData.duration, address: eventData.address || "", color: "" }
+      : { type: "event", event: eventData.event, duration: eventData.duration };
 
-    // Update row details based on block type
-    if (eventData.type === "location") {
-      targetRow.type = "location";
-      targetRow.event = eventData.event || "";
-      targetRow.duration = eventData.duration;
-      targetRow.address = eventData.address || "";
-      targetRow.color = "";
-    } else {
-      targetRow.type = "event";
-      targetRow.event = eventData.event;
-      targetRow.duration = eventData.duration;
-    }
+    const newUserRows = userRows.map((r, i) => i === userRowIndex ? { ...r, ...updatedFields } : r);
+    const targetRow = newUserRows[userRowIndex];
 
     // If dropped on the last visible row, append a fresh empty row
     const droppedOnLastVisible = displayIndex === rows.length - 1;
@@ -2417,8 +2706,6 @@ export default function MobileApp() {
     }
 
     const cascaded = applyCeremonyAnchorCascade(newUserRows, targetRow.time);
-    console.log("[DnD] MobileApp: cascaded rows (preview)", cascaded.slice(Math.max(0, userRowIndex - 1), userRowIndex + 2));
-    setUserRows(cascaded);
     saveToHistory(cascaded);
   };
 
@@ -4804,6 +5091,24 @@ export default function MobileApp() {
           onRedo={redo}
           canUndo={history.length > 0}
           canRedo={redoStack.length > 0}
+          rows={rows}
+          bride={bride}
+          groom={groom}
+          date={date}
+          photoStartHour={photoStartHour}
+          photoStartMinute={photoStartMinute}
+          photoStartPeriod={photoStartPeriod}
+          photoEndHour={photoEndHour}
+          photoEndMinute={photoEndMinute}
+          photoEndPeriod={photoEndPeriod}
+          videoStartHour={videoStartHour}
+          videoStartMinute={videoStartMinute}
+          videoStartPeriod={videoStartPeriod}
+          videoEndHour={videoEndHour}
+          videoEndMinute={videoEndMinute}
+          videoEndPeriod={videoEndPeriod}
+          photoEnabled={photoEnabled}
+          videoEnabled={videoEnabled}
         />
       </div>
 

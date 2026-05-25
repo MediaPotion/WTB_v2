@@ -720,6 +720,8 @@ export default function App() {
   const [date, setDate] = useState("");
   const [bride, setBride] = useState("");
   const [groom, setGroom] = useState("");
+  const [brideLabel, setBrideLabel] = useState("Bride");
+  const [groomLabel, setGroomLabel] = useState("Groom");
   const [photoStartHour, setPhotoStartHour] = useState("9");
   const [photoStartMinute, setPhotoStartMinute] = useState("00");
   const [photoStartPeriod, setPhotoStartPeriod] = useState("AM");
@@ -1233,19 +1235,36 @@ export default function App() {
                   color: "#555",
                 }}
               >
-                Bride:
+                {brideLabel}:
               </label>
-              <input
-                type="text"
-                value={bride}
-                onChange={(e) => setBride(e.target.value)}
-                placeholder="Bride's name"
+              <select
+                value={brideLabel}
+                onChange={(e) => setBrideLabel(e.target.value)}
                 style={{
                   width: "100%",
                   padding: "8px",
                   border: "1px solid #ccc",
-                  borderRadius: "4px",
+                  borderRadius: "6px",
                   fontSize: "14px",
+                  marginBottom: "6px",
+                }}
+              >
+                <option value="Bride">Bride</option>
+                <option value="Groom">Groom</option>
+                <option value="Partner 1">Partner 1</option>
+                <option value="Partner 2">Partner 2</option>
+              </select>
+              <input
+                type="text"
+                value={bride}
+                onChange={(e) => setBride(e.target.value)}
+                placeholder={`${brideLabel}'s name`}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  border: "1px solid #ccc",
+                  borderRadius: "6px",
+                  fontSize: "16px",
                 }}
               />
             </div>
@@ -1260,19 +1279,36 @@ export default function App() {
                   color: "#555",
                 }}
               >
-                Groom:
+                {groomLabel}:
               </label>
-              <input
-                type="text"
-                value={groom}
-                onChange={(e) => setGroom(e.target.value)}
-                placeholder="Groom's name"
+              <select
+                value={groomLabel}
+                onChange={(e) => setGroomLabel(e.target.value)}
                 style={{
                   width: "100%",
                   padding: "8px",
                   border: "1px solid #ccc",
-                  borderRadius: "4px",
+                  borderRadius: "6px",
                   fontSize: "14px",
+                  marginBottom: "6px",
+                }}
+              >
+                <option value="Bride">Bride</option>
+                <option value="Groom">Groom</option>
+                <option value="Partner 1">Partner 1</option>
+                <option value="Partner 2">Partner 2</option>
+              </select>
+              <input
+                type="text"
+                value={groom}
+                onChange={(e) => setGroom(e.target.value)}
+                placeholder={`${groomLabel}'s name`}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  border: "1px solid #ccc",
+                  borderRadius: "6px",
+                  fontSize: "16px",
                 }}
               />
             </div>
@@ -1300,33 +1336,53 @@ export default function App() {
               <div
                 style={{ display: "flex", gap: "4px", alignItems: "center" }}
               >
-                <input
-                  type="text"
+                <select
                   value={photoStartHour}
                   onChange={(e) => setPhotoStartHour(e.target.value)}
                   style={{
-                    width: "40px",
                     padding: "6px",
-                    textAlign: "center",
                     border: "1px solid #ccc",
                     borderRadius: "4px",
                     fontSize: "12px",
                   }}
-                />
+                >
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="8">8</option>
+                  <option value="9">9</option>
+                  <option value="10">10</option>
+                  <option value="11">11</option>
+                  <option value="12">12</option>
+                </select>
                 <span>:</span>
-                <input
-                  type="text"
+                <select
                   value={photoStartMinute}
                   onChange={(e) => setPhotoStartMinute(e.target.value)}
                   style={{
-                    width: "40px",
                     padding: "6px",
-                    textAlign: "center",
                     border: "1px solid #ccc",
                     borderRadius: "4px",
                     fontSize: "12px",
                   }}
-                />
+                >
+                  <option value="00">00</option>
+                  <option value="05">05</option>
+                  <option value="10">10</option>
+                  <option value="15">15</option>
+                  <option value="20">20</option>
+                  <option value="25">25</option>
+                  <option value="30">30</option>
+                  <option value="35">35</option>
+                  <option value="40">40</option>
+                  <option value="45">45</option>
+                  <option value="50">50</option>
+                  <option value="55">55</option>
+                </select>
                 <select
                   value={photoStartPeriod}
                   onChange={(e) => setPhotoStartPeriod(e.target.value)}
@@ -1358,33 +1414,53 @@ export default function App() {
               <div
                 style={{ display: "flex", gap: "4px", alignItems: "center" }}
               >
-                <input
-                  type="text"
+                <select
                   value={photoEndHour}
                   onChange={(e) => setPhotoEndHour(e.target.value)}
                   style={{
-                    width: "40px",
                     padding: "6px",
-                    textAlign: "center",
                     border: "1px solid #ccc",
                     borderRadius: "4px",
                     fontSize: "12px",
                   }}
-                />
+                >
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="8">8</option>
+                  <option value="9">9</option>
+                  <option value="10">10</option>
+                  <option value="11">11</option>
+                  <option value="12">12</option>
+                </select>
                 <span>:</span>
-                <input
-                  type="text"
+                <select
                   value={photoEndMinute}
                   onChange={(e) => setPhotoEndMinute(e.target.value)}
                   style={{
-                    width: "40px",
                     padding: "6px",
-                    textAlign: "center",
                     border: "1px solid #ccc",
                     borderRadius: "4px",
                     fontSize: "12px",
                   }}
-                />
+                >
+                  <option value="00">00</option>
+                  <option value="05">05</option>
+                  <option value="10">10</option>
+                  <option value="15">15</option>
+                  <option value="20">20</option>
+                  <option value="25">25</option>
+                  <option value="30">30</option>
+                  <option value="35">35</option>
+                  <option value="40">40</option>
+                  <option value="45">45</option>
+                  <option value="50">50</option>
+                  <option value="55">55</option>
+                </select>
                 <select
                   value={photoEndPeriod}
                   onChange={(e) => setPhotoEndPeriod(e.target.value)}
@@ -1424,33 +1500,53 @@ export default function App() {
               <div
                 style={{ display: "flex", gap: "4px", alignItems: "center" }}
               >
-                <input
-                  type="text"
+                <select
                   value={videoStartHour}
                   onChange={(e) => setVideoStartHour(e.target.value)}
                   style={{
-                    width: "40px",
                     padding: "6px",
-                    textAlign: "center",
                     border: "1px solid #ccc",
                     borderRadius: "4px",
                     fontSize: "12px",
                   }}
-                />
+                >
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="8">8</option>
+                  <option value="9">9</option>
+                  <option value="10">10</option>
+                  <option value="11">11</option>
+                  <option value="12">12</option>
+                </select>
                 <span>:</span>
-                <input
-                  type="text"
+                <select
                   value={videoStartMinute}
                   onChange={(e) => setVideoStartMinute(e.target.value)}
                   style={{
-                    width: "40px",
                     padding: "6px",
-                    textAlign: "center",
                     border: "1px solid #ccc",
                     borderRadius: "4px",
                     fontSize: "12px",
                   }}
-                />
+                >
+                  <option value="00">00</option>
+                  <option value="05">05</option>
+                  <option value="10">10</option>
+                  <option value="15">15</option>
+                  <option value="20">20</option>
+                  <option value="25">25</option>
+                  <option value="30">30</option>
+                  <option value="35">35</option>
+                  <option value="40">40</option>
+                  <option value="45">45</option>
+                  <option value="50">50</option>
+                  <option value="55">55</option>
+                </select>
                 <select
                   value={videoStartPeriod}
                   onChange={(e) => setVideoStartPeriod(e.target.value)}
@@ -1482,33 +1578,53 @@ export default function App() {
               <div
                 style={{ display: "flex", gap: "4px", alignItems: "center" }}
               >
-                <input
-                  type="text"
+                <select
                   value={videoEndHour}
                   onChange={(e) => setVideoEndHour(e.target.value)}
                   style={{
-                    width: "40px",
                     padding: "6px",
-                    textAlign: "center",
                     border: "1px solid #ccc",
                     borderRadius: "4px",
                     fontSize: "12px",
                   }}
-                />
+                >
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="8">8</option>
+                  <option value="9">9</option>
+                  <option value="10">10</option>
+                  <option value="11">11</option>
+                  <option value="12">12</option>
+                </select>
                 <span>:</span>
-                <input
-                  type="text"
+                <select
                   value={videoEndMinute}
                   onChange={(e) => setVideoEndMinute(e.target.value)}
                   style={{
-                    width: "40px",
                     padding: "6px",
-                    textAlign: "center",
                     border: "1px solid #ccc",
                     borderRadius: "4px",
                     fontSize: "12px",
                   }}
-                />
+                >
+                  <option value="00">00</option>
+                  <option value="05">05</option>
+                  <option value="10">10</option>
+                  <option value="15">15</option>
+                  <option value="20">20</option>
+                  <option value="25">25</option>
+                  <option value="30">30</option>
+                  <option value="35">35</option>
+                  <option value="40">40</option>
+                  <option value="45">45</option>
+                  <option value="50">50</option>
+                  <option value="55">55</option>
+                </select>
                 <select
                   value={videoEndPeriod}
                   onChange={(e) => setVideoEndPeriod(e.target.value)}
