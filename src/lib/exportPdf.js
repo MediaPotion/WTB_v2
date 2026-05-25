@@ -58,19 +58,19 @@ function PvHeader({ bride, groom, date, photoStartHour, photoStartMinute, photoS
   if (videoEnabled) covParts.push(`Video: ${videoStartHour}:${videoStartMinute} ${videoStartPeriod} – ${videoEndHour}:${videoEndMinute} ${videoEndPeriod}`);
   return (
     <div style={{ height: HDR_H, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-      <div style={{ fontSize: 7.5, letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: "'Jost', sans-serif", color: '#b8906a', fontWeight: 300 }}>Wedding Potion</div>
+      <div style={{ fontSize: 7.5, letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: "'Jost', sans-serif", color: 'var(--wtb-accent)', fontWeight: 300 }}>Wedding Potion</div>
       <div style={{ fontSize: 24, fontFamily: "'Cormorant Garamond', serif", color: '#1a1a1a', fontWeight: 300, lineHeight: 1 }}>{bride || 'Bride'} &amp; {groom || 'Groom'}</div>
       <div style={{ fontSize: 9, fontFamily: "'Jost', sans-serif", color: '#555', fontWeight: 300, letterSpacing: '0.08em' }}>{fmtDateLong(date)}</div>
       {covParts.length > 0 && <div style={{ fontSize: 7.5, fontFamily: "'Jost', sans-serif", color: '#888', fontWeight: 300 }}>{covParts.join('  ·  ')}</div>}
-      <div style={{ width: '100%', height: 0.75, background: '#b8906a', marginTop: 4 }} />
+      <div style={{ width: '100%', height: 0.75, background: 'var(--wtb-accent)', marginTop: 4 }} />
     </div>
   );
 }
 
 function PvColHeaders() {
-  const lbl = { fontSize: 6.5, fontFamily: "'Jost', sans-serif", fontWeight: 400, color: '#b8906a', textTransform: 'uppercase', letterSpacing: '0.1em' };
+  const lbl = { fontSize: 6.5, fontFamily: "'Jost', sans-serif", fontWeight: 400, color: 'var(--wtb-accent)', textTransform: 'uppercase', letterSpacing: '0.1em' };
   return (
-    <div style={{ display: 'flex', height: RH_COL, flexShrink: 0, alignItems: 'center', borderBottom: '0.5px solid #b8906a', marginBottom: 3 }}>
+    <div style={{ display: 'flex', height: RH_COL, flexShrink: 0, alignItems: 'center', borderBottom: '0.5px solid var(--wtb-accent)', marginBottom: 3 }}>
       <div style={{ ...lbl, width: COL_TIME }}>Time</div>
       <div style={{ ...lbl, flex: 1 }}>Event</div>
       <div style={{ ...lbl, width: COL_DUR, textAlign: 'right' }}>Min</div>
@@ -84,7 +84,7 @@ function PvRow({ row }) {
   const timeStr = `${t.hour}:${t.minute} ${t.period}`;
   if (row.type === 'location') {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: RH_LOC, flexShrink: 0, marginBottom: RH_GAP, paddingLeft: 7, paddingRight: 4, background: '#f8f6f3', borderLeft: '3px solid #b8906a' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: RH_LOC, flexShrink: 0, marginBottom: RH_GAP, paddingLeft: 7, paddingRight: 4, background: '#f8f6f3', borderLeft: '3px solid var(--wtb-accent)' }}>
         <div style={{ fontSize: 7.5, color: '#aaa', fontFamily: "'Jost', sans-serif", marginBottom: 2 }}>{timeStr}</div>
         <div style={{ fontSize: 10, color: '#1a1a1a', fontFamily: "'Jost', sans-serif", fontWeight: 500 }}>📍 {row.event || '(Travel)'}</div>
         {row.address && row.address.trim() && <div style={{ fontSize: 8, color: '#666', fontFamily: "'Jost', sans-serif", marginTop: 2 }}>{row.address}</div>}
@@ -267,20 +267,20 @@ function TimelinePreview({ rows, bride, groom, date, photoStartHour, photoStartM
     }
   };
 
-  const toolBtn = (extra = {}) => ({ padding: '4px 10px', background: 'transparent', border: '1px solid #2a2520', borderRadius: 4, color: '#b8906a', fontSize: 11, fontFamily: "'Jost', sans-serif", cursor: 'pointer', ...extra });
+  const toolBtn = (extra = {}) => ({ padding: '4px 10px', background: 'transparent', border: '1px solid var(--wtb-border)', borderRadius: 4, color: 'var(--wtb-accent)', fontSize: 11, fontFamily: "'Jost', sans-serif", cursor: 'pointer', ...extra });
   const isEmpty = pages.length === 0 || (pages.length === 1 && pages[0].length === 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingBottom: 8, flexShrink: 0 }}>
         <button style={toolBtn()} onClick={() => setUserZoom(z => Math.max(0.4, +(z - 0.15).toFixed(2)))}>−</button>
-        <span style={{ fontSize: 11, color: '#6e6358', fontFamily: "'Jost', sans-serif", minWidth: 38, textAlign: 'center' }}>{Math.round(userZoom * 100)}%</span>
+        <span style={{ fontSize: 11, color: 'var(--wtb-text-muted)', fontFamily: "'Jost', sans-serif", minWidth: 38, textAlign: 'center' }}>{Math.round(userZoom * 100)}%</span>
         <button style={toolBtn()} onClick={() => setUserZoom(z => Math.min(2.5, +(z + 0.15).toFixed(2)))}>+</button>
       </div>
-      <div ref={containerRef} style={{ flex: 1, minHeight: 0, overflow: 'auto', background: '#f0ece6', borderRadius: 6, padding: '16px 16px 32px' }}>
+      <div ref={containerRef} style={{ flex: 1, minHeight: 0, overflow: 'auto', background: 'var(--wtb-surface-raised)', borderRadius: 6, padding: '16px 16px 32px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
           {isEmpty ? (
-            <div style={{ padding: 40, color: '#8a7a6a', fontSize: 12, fontFamily: "'Jost', sans-serif", textAlign: 'center', letterSpacing: '0.05em' }}>
+            <div style={{ padding: 40, color: 'var(--wtb-text-muted)', fontSize: 12, fontFamily: "'Jost', sans-serif", textAlign: 'center', letterSpacing: '0.05em' }}>
               Generate a timeline to preview it here.
             </div>
           ) : pages.map((items, i) => (

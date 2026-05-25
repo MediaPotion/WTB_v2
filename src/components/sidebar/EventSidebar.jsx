@@ -24,11 +24,11 @@ function EventSidebar({ rows, bride, groom, date, photoStartHour, photoStartMinu
               <DraggableSidebarBlock
                 id="sidebar-location"
                 data={{ type: "location", event: "", duration: 15 }}
-                style={{ background: "#161310", border: "2px solid #ffffff", color: "#ddd0bc", marginBottom: 8, width: "100%", textAlign: "left" }}
+                style={{ background: "var(--wtb-surface-raised)", border: "2px solid #ffffff", color: "var(--wtb-text)", marginBottom: 8, width: "100%", textAlign: "left" }}
                 title="Drag to add a location / travel block"
               >
                 <span>Location / Travel</span>
-                <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px", whiteSpace: "nowrap" }}>15 min</span>
+                <span style={{ fontSize: 12, color: "var(--wtb-text-muted)", fontWeight: "bold", marginLeft: "16px", whiteSpace: "nowrap" }}>15 min</span>
               </DraggableSidebarBlock>
               {(() => {
                 const groups = [];
@@ -45,17 +45,17 @@ function EventSidebar({ rows, bride, groom, date, photoStartHour, photoStartMinu
                   const categoryColor = getEventColor(groupMap[category][0].label);
                   return (
                     <div key={category} style={{ marginBottom: 8, breakInside: "avoid", WebkitColumnBreakInside: "avoid" }}>
-                      <div style={{ fontSize: 10, color: categoryColor, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 4, paddingTop: 6, borderTop: "1px solid #1e1c19", fontFamily: "'Jost', sans-serif", fontWeight: 400, textAlign: "center" }}>{category}</div>
+                      <div style={{ fontSize: 10, color: categoryColor, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 4, paddingTop: 6, borderTop: "1px solid var(--wtb-border-subtle)", fontFamily: "'Jost', sans-serif", fontWeight: 400, textAlign: "center" }}>{category}</div>
                       {groupMap[category].map(({ label, shortLabel, dur, block }) => (
                         <DraggableSidebarBlock
                           key={block}
                           id={`sidebar-${block}`}
                           data={{ event: label, duration: dur }}
-                          style={{ background: "#161310", border: `2px solid ${getEventColor(label)}`, color: "#ddd0bc", width: "100%", textAlign: "left" }}
+                          style={{ background: "var(--wtb-surface-raised)", border: `2px solid ${getEventColor(label)}`, color: "var(--wtb-text)", width: "100%", textAlign: "left" }}
                           title="Drag to timeline"
                         >
                           <span>{shortLabel}</span>
-                          <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px", whiteSpace: "nowrap" }}>{dur} min</span>
+                          <span style={{ fontSize: 12, color: "var(--wtb-text-muted)", fontWeight: "bold", marginLeft: "16px", whiteSpace: "nowrap" }}>{dur} min</span>
                         </DraggableSidebarBlock>
                       ))}
                     </div>

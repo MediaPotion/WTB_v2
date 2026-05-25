@@ -49,7 +49,6 @@ import { formatTime, parseTimeInput } from "./time";
  * @param {string} wizardAnswers.distanceBrideToCeremony — Bride ready to ceremony travel
  * @param {string} wizardAnswers.distanceReceptionToCeremony — Reception to ceremony travel
  * @param {boolean} wizardAnswers.ceremonyOutdoor — Ceremony outdoors
- * @param {boolean} wizardAnswers.goldenHour — Golden hour portraits requested
  * @param {boolean} wizardAnswers.cakeCutting — Cake cutting at reception
  * @param {boolean} wizardAnswers.firstDance — First dance at reception
  * @param {boolean} wizardAnswers.brideParentDance — Bride parent dance
@@ -109,7 +108,6 @@ export function generateTimeline(wizardAnswers) {
     distanceBrideToCeremony: wiz_distanceBrideToCeremony,
     distanceReceptionToCeremony: wiz_distanceReceptionToCeremony,
     ceremonyOutdoor: wiz_ceremonyOutdoor,
-    goldenHour: wiz_goldenHour,
     cakeCutting: wiz_cakeCutting,
     firstDance: wiz_firstDance,
     brideParentDance: wiz_brideParentDance,
@@ -150,18 +148,6 @@ export function generateTimeline(wizardAnswers) {
     // Pre-ceremony flags: only when post-ceremony time is insufficient and couple can be seen before
     const weddingPartyPre = neitherFitsPost && groupShotsBeforeCeremony;
     const brideGroomPre   = !bothFitPost && groupShotsBeforeCeremony;
-
-    // Golden hour by month (Northern Michigan, sunset − 45 min)
-    const GOLDEN_HOUR_BY_MONTH = [990, 1035, 1125, 1170, 1200, 1230, 1215, 1170, 1125, 1080, 990, 960];
-    let goldenHourTime = null;
-    let weddingMonth = null;
-    if (date) {
-      const parts = date.split("-");
-      if (parts.length >= 2) {
-        const m = parseInt(parts[1], 10) - 1;
-        if (m >= 0 && m <= 11) { weddingMonth = m; goldenHourTime = GOLDEN_HOUR_BY_MONTH[m]; }
-      }
-    }
 
     const familyGroupNotes = wiz_familyGroups !== "none" && wiz_familyGroupNames.some(n => n)
       ? wiz_familyGroupNames.filter(Boolean).map((n, i) => `${i + 1}. ${n}`).join(", ")
@@ -333,29 +319,6 @@ export function generateTimeline(wizardAnswers) {
       });
     }
 
-    // Golden hour — time-anchored to calculated golden hour, with notes if it conflicts
-    let goldenHourBlock = null;
-    if (wiz_goldenHour) {
-      const ceremonyEnd = ceremonyStartTime + ceremonyDurationMin;
-      goldenHourBlock = { event: "Bride & Groom: Golden Hour Portraits", duration: 20, notes: "", isOutdoor: true };
-      if (goldenHourTime !== null && weddingMonth !== null) {
-        const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-        const ghStartFmt = formatTime(goldenHourTime);
-        const ghEndFmt = formatTime(goldenHourTime + 20);
-        const ghTimeNote = `Estimated golden hour: ${ghStartFmt.hour}:${ghStartFmt.minute} ${ghStartFmt.period} – ${ghEndFmt.hour}:${ghEndFmt.minute} ${ghEndFmt.period} based on a ${MONTH_NAMES[weddingMonth]} wedding in Northern Michigan.`;
-        goldenHourBlock.time = goldenHourTime;
-        if (goldenHourTime < ceremonyEnd) {
-          goldenHourBlock.notes = `Golden hour falls before or during ceremony. Consider scheduling portraits immediately after. ${ghTimeNote}`;
-        } else if (goldenHourTime >= receptionStartTime) {
-          goldenHourBlock.notes = `Golden hour falls during reception. Couple may want to step away briefly for portraits. ${ghTimeNote}`;
-        } else {
-          goldenHourBlock.notes = ghTimeNote;
-        }
-      } else {
-        goldenHourBlock.time = postT;
-      }
-    }
-
     // === Phase 5: Reception venue ===
     const receptionBlocks = [];
     let recT = receptionStartTime;
@@ -386,7 +349,6 @@ export function generateTimeline(wizardAnswers) {
     // ---- Assemble rows ----
     const allBlocks = [
       ...preBlocks, ...ceremonyBlocks, ...postBlocks,
-      ...(goldenHourBlock ? [goldenHourBlock] : []),
       ...receptionBlocks,
     ];
 

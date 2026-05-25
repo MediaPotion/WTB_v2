@@ -1,4 +1,5 @@
 import React from "react";
+import { SETTINGS_SELECT_STYLE } from "../../constants/styles";
 
 function WizardStep6(props) {
   const {
@@ -29,7 +30,7 @@ function WizardStep6(props) {
     wiz_speeches, setWiz_speeches, wiz_speechCount, setWiz_speechCount, wiz_dinner, setWiz_dinner,
     wiz_dinnerStartHour, setWiz_dinnerStartHour, wiz_dinnerStartMinute, setWiz_dinnerStartMinute, wiz_dinnerStartPeriod, setWiz_dinnerStartPeriod,
     wiz_dinnerStyle, setWiz_dinnerStyle, wiz_openDanceFloor, setWiz_openDanceFloor, wiz_garterToss, setWiz_garterToss, wiz_bouquetToss, setWiz_bouquetToss,
-    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames, wiz_goldenHour, setWiz_goldenHour,
+    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames,
     wiz_brideReadyAtCeremony, setWiz_brideReadyAtCeremony, wiz_brideReadyAtReception, setWiz_brideReadyAtReception,
     wiz_groomReadyAtCeremony, setWiz_groomReadyAtCeremony, wiz_groomReadyAtReception, setWiz_groomReadyAtReception, wiz_groomReadyAtBride, setWiz_groomReadyAtBride,
     wiz_preCeremonyBrideReady, setWiz_preCeremonyBrideReady, wiz_preCeremonyGroomReady, setWiz_preCeremonyGroomReady,
@@ -40,6 +41,7 @@ function WizardStep6(props) {
     wiz_grandEntranceSub, setWiz_grandEntranceSub, wiz_customReceptionEvents, setWiz_customReceptionEvents, wiz_customReceptionEventNextId, setWiz_customReceptionEventNextId,
     setWizardStep, setScreen, generateTimeline, withThe,
   } = props;
+      const settingsSelectStyle = SETTINGS_SELECT_STYLE;
       const hourOptions = ["1","2","3","4","5","6","7","8","9","10","11","12"];
       const minuteOptions = ["00","05","10","15","20","25","30","35","40","45","50","55"];
       return stepCard(
@@ -47,7 +49,7 @@ function WizardStep6(props) {
         "",
         <div>
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Ceremony Start Time</label>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Ceremony Start Time</label>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <select value={wiz_ceremonyHour} onChange={(e) => setWiz_ceremonyHour(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
                 {hourOptions.map((h) => <option key={h} value={h}>{h}</option>)}
@@ -64,31 +66,31 @@ function WizardStep6(props) {
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Ceremony Duration (minutes)</label>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Ceremony Duration (minutes)</label>
             <input
               type="number"
               value={wiz_ceremonyDuration}
               min={5}
               step={5}
               onChange={(e) => setWiz_ceremonyDuration(parseInt(e.target.value, 10) || 30)}
-              style={{ padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, width: 100, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+              style={{ padding: 10, border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 15, width: 100, background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}
             />
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Anticipated Guest Count</label>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Anticipated Guest Count</label>
             <input
               type="number"
               value={wiz_guestCount}
               min={1}
               onChange={(e) => setWiz_guestCount(e.target.value)}
               placeholder="e.g. 150"
-              style={{ padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, width: 120, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+              style={{ padding: 10, border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 15, width: 120, background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}
             />
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Ceremony Setting</label>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Ceremony Setting</label>
             <div style={{ display: "flex", gap: 10 }}>
               <button style={wizToggleStyle(!wiz_ceremonyOutdoor)} onClick={() => setWiz_ceremonyOutdoor(false)}>Indoors</button>
               <button style={wizToggleStyle(wiz_ceremonyOutdoor)} onClick={() => setWiz_ceremonyOutdoor(true)}>Outdoor</button>
@@ -96,13 +98,13 @@ function WizardStep6(props) {
           </div>
 
           <div>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Any special events during the ceremony that the photographer/videographer should know about?</label>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Any special events during the ceremony that the photographer/videographer should know about?</label>
             <textarea
               value={wiz_ceremonyNotes}
               onChange={(e) => setWiz_ceremonyNotes(e.target.value)}
               placeholder="e.g. Unity candle, ring warming, surprise song performance…"
               rows={3}
-              style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif", resize: "vertical" }}
+              style={{ width: "100%", padding: 10, border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif", resize: "vertical" }}
             />
           </div>
         </div>,

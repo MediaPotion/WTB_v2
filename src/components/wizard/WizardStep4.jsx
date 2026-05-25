@@ -1,4 +1,5 @@
 import React from "react";
+import { SETTINGS_SELECT_STYLE, WIZ_INPUT_STYLE } from "../../constants/styles";
 
 function WizardStep4(props) {
   const {
@@ -29,7 +30,7 @@ function WizardStep4(props) {
     wiz_speeches, setWiz_speeches, wiz_speechCount, setWiz_speechCount, wiz_dinner, setWiz_dinner,
     wiz_dinnerStartHour, setWiz_dinnerStartHour, wiz_dinnerStartMinute, setWiz_dinnerStartMinute, wiz_dinnerStartPeriod, setWiz_dinnerStartPeriod,
     wiz_dinnerStyle, setWiz_dinnerStyle, wiz_openDanceFloor, setWiz_openDanceFloor, wiz_garterToss, setWiz_garterToss, wiz_bouquetToss, setWiz_bouquetToss,
-    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames, wiz_goldenHour, setWiz_goldenHour,
+    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames,
     wiz_brideReadyAtCeremony, setWiz_brideReadyAtCeremony, wiz_brideReadyAtReception, setWiz_brideReadyAtReception,
     wiz_groomReadyAtCeremony, setWiz_groomReadyAtCeremony, wiz_groomReadyAtReception, setWiz_groomReadyAtReception, wiz_groomReadyAtBride, setWiz_groomReadyAtBride,
     wiz_preCeremonyBrideReady, setWiz_preCeremonyBrideReady, wiz_preCeremonyGroomReady, setWiz_preCeremonyGroomReady,
@@ -40,22 +41,23 @@ function WizardStep4(props) {
     wiz_grandEntranceSub, setWiz_grandEntranceSub, wiz_customReceptionEvents, setWiz_customReceptionEvents, wiz_customReceptionEventNextId, setWiz_customReceptionEventNextId,
     setWizardStep, setScreen, generateTimeline, withThe,
   } = props;
-      const wizInputStyle = { width: "100%", padding: "10px 12px", border: "1px solid #2a2520", borderRadius: 8, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" };
-      const wizMinuteNote = <p style={{ fontSize: 12, color: "#aaa", margin: "4px 0 0 0" }}>Enter drive time in minutes, not miles</p>;
+      const settingsSelectStyle = SETTINGS_SELECT_STYLE;
+      const wizInputStyle = WIZ_INPUT_STYLE;
+      const wizMinuteNote = <p style={{ fontSize: 12, color: "var(--wtb-text-faint)", margin: "4px 0 0 0" }}>Enter drive time in minutes, not miles</p>;
       return stepCard(
         "Pre-Ceremony",
         "",
         <div>
           {wizSectionHeading("Hair & Makeup")}
           <div style={{ marginBottom: 4 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#ddd0bc", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text)", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>
               When will hair &amp; make-up be completed for {withThe(brideLabel)} and bridesmaids?
             </label>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <select value={wiz_hairMakeupDoneHour} onChange={(e) => setWiz_hairMakeupDoneHour(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
                 {["1","2","3","4","5","6","7","8","9","10","11","12"].map(h => <option key={h} value={h}>{h}</option>)}
               </select>
-              <span style={{ fontSize: 18, fontWeight: "bold", color: "#ddd0bc" }}>:</span>
+              <span style={{ fontSize: 18, fontWeight: "bold", color: "var(--wtb-text)" }}>:</span>
               <select value={wiz_hairMakeupDoneMinute} onChange={(e) => setWiz_hairMakeupDoneMinute(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
                 {["00","05","10","15","20","25","30","35","40","45","50","55"].map(m => <option key={m} value={m}>{m}</option>)}
               </select>
@@ -64,11 +66,11 @@ function WizardStep4(props) {
                 <option value="PM">PM</option>
               </select>
             </div>
-            <p style={{ fontSize: 12, color: "#6e6358", margin: 0, fontFamily: "'Jost', sans-serif", fontStyle: "italic" }}>Hair &amp; Makeup delays are the #1 reason for being behind schedule. Please have your hair/makeup artists arrive extra early so you have adequate time.</p>
+            <p style={{ fontSize: 12, color: "var(--wtb-text-muted)", margin: 0, fontFamily: "'Jost', sans-serif", fontStyle: "italic" }}>Hair &amp; Makeup delays are the #1 reason for being behind schedule. Please have your hair/makeup artists arrive extra early so you have adequate time.</p>
           </div>
 
           {wizSectionHeading("Shot Types")}
-          <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 12px 0", fontFamily: "'Jost', sans-serif" }}>What types of shots do you want before the ceremony starts?</p>
+          <p style={{ fontSize: 13, color: "var(--wtb-text-muted)", margin: "0 0 12px 0", fontFamily: "'Jost', sans-serif" }}>What types of shots do you want before the ceremony starts?</p>
           {[
             { key: "brideReady", label: `${brideLabel} Getting Ready`, sub: "Candid getting-ready moments", val: wiz_preCeremonyBrideReady, set: setWiz_preCeremonyBrideReady },
             { key: "groomReady", label: `${groomLabel} Getting Ready`, sub: "Candid getting-ready moments", val: wiz_preCeremonyGroomReady, set: setWiz_preCeremonyGroomReady },
@@ -80,8 +82,8 @@ function WizardStep4(props) {
             <label key={key} style={{ ...wizCheckRowStyle }} onClick={() => set(!val)}>
               <input type="checkbox" checked={val} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
               <div>
-                <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{label}</div>
-                <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>{sub}</div>
+                <div style={{ fontSize: 15, fontWeight: 400, color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}>{label}</div>
+                <div style={{ fontSize: 13, color: "var(--wtb-text-muted)", marginTop: 2 }}>{sub}</div>
               </div>
             </label>
           ))}

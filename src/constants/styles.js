@@ -6,14 +6,14 @@ const MOBILE_TWEAKS = `
   input, select, textarea {
     font-size: 16px;
     font-family: 'Jost', sans-serif;
-    background: #0f0d0b;
-    color: #ddd0bc;
-    border: 1px solid #2a2520;
+    background: var(--wtb-input-bg);
+    color: var(--wtb-text);
+    border: 1px solid var(--wtb-border);
   }
-  input::placeholder, textarea::placeholder { color: #6e6358; }
+  input::placeholder, textarea::placeholder { color: var(--wtb-text-muted); }
   input:focus, select:focus, textarea:focus {
     outline: none;
-    border-color: #b8906a;
+    border-color: var(--wtb-accent);
     box-shadow: 0 0 0 2px rgba(184,144,106,0.15);
   }
 
@@ -21,11 +21,11 @@ const MOBILE_TWEAKS = `
   input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   input[type="number"] { -moz-appearance: textfield; }
 
-  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6) sepia(0.3) saturate(0.8) hue-rotate(10deg); }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: var(--wtb-date-filter); }
 
-  input[type="checkbox"] { accent-color: #b8906a; }
+  input[type="checkbox"] { accent-color: var(--wtb-accent); }
 
-  select option { background: #0f0d0b; color: #ddd0bc; }
+  select option { background: var(--wtb-input-bg); color: var(--wtb-text); }
 
   .wtb-mins input { width: 44px; padding: 2px 4px; text-align: center; }
   .wtb-notes { padding-right: 10px; }
@@ -34,7 +34,7 @@ const MOBILE_TWEAKS = `
     display: grid;
     grid-template-columns: 1fr;
     gap: 10px;
-    background: #060504;
+    background: var(--wtb-bg);
   }
 
   @media (min-width: 901px) {
@@ -54,8 +54,8 @@ const MOBILE_TWEAKS = `
     .wtb-sidebar {
       display: flex;
       flex-direction: column;
-      border: 1px solid #1e1c19;
-      background: #0f0d0b;
+      border: 1px solid var(--wtb-border-subtle);
+      background: var(--wtb-surface);
       border-radius: 8px;
       padding: 12px;
       flex: 1;
@@ -96,22 +96,22 @@ const MOBILE_TWEAKS = `
       gap: 2px;
       width: 40px;
       flex-shrink: 0;
-      border-right: 1px solid #2a2520;
-      background: #1e1a16;
+      border-right: 1px solid var(--wtb-border);
+      background: var(--wtb-row-reorder-bg);
     }
     .wtb-row-reorder button {
       flex: 1;
       min-height: 28px;
       border: none;
       background: transparent;
-      color: #b8906a;
+      color: var(--wtb-accent);
       font-size: 16px;
       cursor: pointer;
       font-family: 'Jost', sans-serif;
       padding: 0;
     }
     .wtb-row-reorder button:disabled {
-      color: #3a3530;
+      color: var(--wtb-text-faint);
       cursor: not-allowed;
     }
     .wtb-setting-btn--meta { display: inline-flex !important; }
@@ -156,7 +156,7 @@ const MOBILE_TWEAKS = `
     white-space: nowrap;
     cursor: pointer;
     border-radius: 6;
-    border: 1px solid #2a2520;
+    border: 1px solid var(--wtb-border);
     flex-shrink: 0;
   }
   .wtb-setting-btn--meta {
@@ -197,12 +197,12 @@ const MOBILE_TWEAKS = `
     font-weight: 300;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: #b8906a;
+    color: var(--wtb-accent);
     font-family: 'Jost', sans-serif;
   }
   .wtb-side-note {
     font-size: 11px;
-    color: #6e6358;
+    color: var(--wtb-text-muted);
     text-align: center;
     margin-bottom: 8px;
     font-family: 'Jost', sans-serif;
@@ -220,7 +220,7 @@ const MOBILE_TWEAKS = `
       width: 100%;
       padding: 8px;
       margin: 0 0 8px;
-      border: 1px solid #2a2520;
+      border: 1px solid var(--wtb-border);
       border-radius: 6px;
       text-align: left;
       font-size: 12px;
@@ -230,12 +230,12 @@ const MOBILE_TWEAKS = `
       break-inside: avoid;
       -webkit-column-break-inside: avoid;
       page-break-inside: avoid;
-      background: #0f0d0b;
-      color: #ddd0bc;
+      background: var(--wtb-surface);
+      color: var(--wtb-text);
       transition: border-color 0.2s, box-shadow 0.2s;
     }
     .wtb-palette button:hover {
-      border-color: #b8906a;
+      border-color: var(--wtb-accent);
       box-shadow: 0 0 8px rgba(184,144,106,0.2);
     }
     .wtb-palette button:active { cursor: grabbing; }
@@ -251,7 +251,7 @@ const MOBILE_TWEAKS = `
       width: 100%;
       padding: 10px;
       margin: 0;
-      border: 1px solid #2a2520;
+      border: 1px solid var(--wtb-border);
       border-radius: 6px;
       text-align: left;
       display: flex;
@@ -261,8 +261,8 @@ const MOBILE_TWEAKS = `
       font-family: 'Jost', sans-serif;
       cursor: grab;
       user-select: none;
-      background: #0f0d0b;
-      color: #ddd0bc;
+      background: var(--wtb-surface);
+      color: var(--wtb-text);
     }
   }
 
@@ -299,9 +299,9 @@ const MOBILE_TWEAKS = `
     gap: 12px;
     padding: 10px 16px;
     padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
-    background: #0f0d0b;
-    border-top: 1px solid #161310;
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.35);
+    background: var(--wtb-surface);
+    border-top: 1px solid var(--wtb-surface-raised);
+    box-shadow: 0 -4px 16px var(--wtb-shadow);
   }
   .wtb-mobile-undo-dock .wtb-mobile-undo,
   .wtb-mobile-undo-dock .wtb-mobile-redo {
@@ -318,28 +318,28 @@ const MOBILE_TWEAKS = `
     align-items: center;
     justify-content: center;
     background: transparent;
-    border: 1px solid #2a2520;
+    border: 1px solid var(--wtb-border);
     border-radius: 4px;
-    color: #ddd0bc;
+    color: var(--wtb-text);
     font-size: 20px;
     cursor: pointer;
     line-height: 1;
   }
   .wtb-mobile-gear-btn[aria-expanded="true"] {
-    border-color: #b8906a;
-    color: #b8906a;
+    border-color: var(--wtb-accent);
+    color: var(--wtb-accent);
   }
   .wtb-mobile-gear-menu {
     position: absolute;
     right: 0;
     top: calc(100% + 4px);
     min-width: 196px;
-    background: #1a1714;
-    border: 1px solid #2a2520;
+    background: var(--wtb-surface-alt);
+    border: 1px solid var(--wtb-border);
     border-radius: 4px;
     z-index: 200;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 12px var(--wtb-shadow);
   }
   .wtb-mobile-gear-menu-item {
     display: block;
@@ -347,8 +347,8 @@ const MOBILE_TWEAKS = `
     padding: 10px 14px;
     background: none;
     border: none;
-    border-bottom: 1px solid #2a2520;
-    color: #ddd0bc;
+    border-bottom: 1px solid var(--wtb-border);
+    color: var(--wtb-text);
     text-align: left;
     font-size: 13px;
     font-family: 'Jost', sans-serif;
@@ -364,7 +364,7 @@ const MOBILE_TWEAKS = `
     cursor: not-allowed;
   }
   .wtb-mobile-gear-menu-item--primary {
-    color: #b8906a;
+    color: var(--wtb-accent);
   }
   .wtb-mobile-undo,
   .wtb-mobile-redo {
@@ -385,8 +385,8 @@ const MOBILE_TWEAKS = `
   }
   .wtb-mobile-view-tabs {
     display: flex;
-    border-bottom: 1px solid #161310;
-    background: #0f0d0b;
+    border-bottom: 1px solid var(--wtb-surface-raised);
+    background: var(--wtb-surface);
     margin: 0 -8px;
     flex-shrink: 0;
   }
@@ -396,7 +396,7 @@ const MOBILE_TWEAKS = `
     background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
-    color: #6e6358;
+    color: var(--wtb-text-muted);
     font-size: 11px;
     font-family: 'Jost', sans-serif;
     letter-spacing: 0.12em;
@@ -405,8 +405,8 @@ const MOBILE_TWEAKS = `
     margin-bottom: -1px;
   }
   .wtb-mobile-view-tab.active {
-    color: #b8906a;
-    border-bottom-color: #b8906a;
+    color: var(--wtb-accent);
+    border-bottom-color: var(--wtb-accent);
   }
   .wtb-mobile-preview-panel {
     flex: 1;
@@ -429,13 +429,13 @@ const MOBILE_TWEAKS = `
     font-family: 'Jost', sans-serif;
     cursor: pointer;
     white-space: nowrap;
-    border: 1px solid #2a2520;
+    border: 1px solid var(--wtb-border);
     background: transparent;
-    color: #ddd0bc;
+    color: var(--wtb-text);
   }
   .wtb-toolbar-btn-primary {
-    background: #b8906a;
-    color: #060504;
+    background: var(--wtb-accent);
+    color: var(--wtb-on-accent);
     border: none;
   }
   .wtb-toolbar-btn:disabled {
@@ -451,7 +451,7 @@ const MOBILE_TWEAKS = `
     .wtb-setting-col { padding: 0 8px; }
   }
 
-  .wtb-dropping { outline: 2px dashed #b8906a; outline-offset: -2px; }
+  .wtb-dropping { outline: 2px dashed var(--wtb-accent); outline-offset: -2px; }
 
   /* Event block hover lift */
   .wtb-row-card {
@@ -563,7 +563,7 @@ const MOBILE_TWEAKS = `
   .wiz-step-fade { animation: wiz-fade 0.3s ease; }
 
   .generate-btn {
-    background: linear-gradient(90deg, #b8906a, #cfa882, #b8906a);
+    background: linear-gradient(90deg, var(--wtb-accent), #cfa882, var(--wtb-accent));
     background-size: 200% auto;
     transition: background-position 0.4s ease, box-shadow 0.2s ease;
   }
@@ -583,7 +583,7 @@ const MOBILE_TWEAKS = `
 
   .wtb-tabs {
     display: flex;
-    border-bottom: 1px solid #1e1c19;
+    border-bottom: 1px solid var(--wtb-border-subtle);
     margin: -12px -12px 8px;
   }
   .wtb-tab-btn {
@@ -592,7 +592,7 @@ const MOBILE_TWEAKS = `
     background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
-    color: #6e6358;
+    color: var(--wtb-text-muted);
     font-size: 10px;
     font-family: 'Jost', sans-serif;
     letter-spacing: 0.12em;
@@ -601,8 +601,30 @@ const MOBILE_TWEAKS = `
     margin-bottom: -1px;
     transition: color 0.15s, border-color 0.15s;
   }
-  .wtb-tab-btn.active { color: #b8906a; border-bottom-color: #b8906a; }
-  .wtb-tab-btn:hover:not(.active) { color: #ddd0bc; }
+  .wtb-tab-btn.active { color: var(--wtb-accent); border-bottom-color: var(--wtb-accent); }
+  .wtb-tab-btn:hover:not(.active) { color: var(--wtb-text); }
 `;
 
-export { MOBILE_TWEAKS };
+const SETTINGS_SELECT_STYLE = {
+  padding: "8px 10px",
+  borderRadius: 6,
+  border: "1px solid var(--wtb-border)",
+  background: "var(--wtb-input-bg)",
+  color: "var(--wtb-text)",
+  fontFamily: "'Jost', sans-serif",
+  fontSize: 14,
+};
+
+const WIZ_INPUT_STYLE = {
+  width: "100%",
+  padding: "10px 12px",
+  border: "1px solid var(--wtb-border)",
+  borderRadius: 8,
+  fontSize: 15,
+  boxSizing: "border-box",
+  background: "var(--wtb-input-bg)",
+  color: "var(--wtb-text)",
+  fontFamily: "'Jost', sans-serif",
+};
+
+export { MOBILE_TWEAKS, SETTINGS_SELECT_STYLE, WIZ_INPUT_STYLE };

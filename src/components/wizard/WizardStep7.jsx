@@ -29,7 +29,7 @@ function WizardStep7(props) {
     wiz_speeches, setWiz_speeches, wiz_speechCount, setWiz_speechCount, wiz_dinner, setWiz_dinner,
     wiz_dinnerStartHour, setWiz_dinnerStartHour, wiz_dinnerStartMinute, setWiz_dinnerStartMinute, wiz_dinnerStartPeriod, setWiz_dinnerStartPeriod,
     wiz_dinnerStyle, setWiz_dinnerStyle, wiz_openDanceFloor, setWiz_openDanceFloor, wiz_garterToss, setWiz_garterToss, wiz_bouquetToss, setWiz_bouquetToss,
-    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames, wiz_goldenHour, setWiz_goldenHour,
+    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames,
     wiz_brideReadyAtCeremony, setWiz_brideReadyAtCeremony, wiz_brideReadyAtReception, setWiz_brideReadyAtReception,
     wiz_groomReadyAtCeremony, setWiz_groomReadyAtCeremony, wiz_groomReadyAtReception, setWiz_groomReadyAtReception, wiz_groomReadyAtBride, setWiz_groomReadyAtBride,
     wiz_preCeremonyBrideReady, setWiz_preCeremonyBrideReady, wiz_preCeremonyGroomReady, setWiz_preCeremonyGroomReady,
@@ -43,11 +43,11 @@ function WizardStep7(props) {
       const groupCount = wiz_familyGroups === "none" ? 0 : parseInt(wiz_familyGroups, 10);
       return stepCard(
         "Portraits",
-        "Tell us about group photos, portrait sessions, and golden hour after the ceremony.",
+        "Tell us about group photos and portrait sessions after the ceremony.",
         <div>
           {wizSectionHeading("Family Group Photos")}
-          <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 6px 0", fontFamily: "'Jost', sans-serif" }}>Family and Group Photos typically follow directly after the ceremony while your guests are still present.</p>
-          <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 10px 0", fontFamily: "'Jost', sans-serif" }}>How many family groupings will be photographed after the ceremony?</p>
+          <p style={{ fontSize: 13, color: "var(--wtb-text-muted)", margin: "0 0 6px 0", fontFamily: "'Jost', sans-serif" }}>Family and Group Photos typically follow directly after the ceremony while your guests are still present.</p>
+          <p style={{ fontSize: 13, color: "var(--wtb-text-muted)", margin: "0 0 10px 0", fontFamily: "'Jost', sans-serif" }}>How many family groupings will be photographed after the ceremony?</p>
           <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
             <button style={wizToggleStyle(wiz_familyGroups === "5")} onClick={() => setWiz_familyGroups("5")}>5 Groups (~20 min)</button>
             <button style={wizToggleStyle(wiz_familyGroups === "10")} onClick={() => setWiz_familyGroups("10")}>10 Groups (~45 min)</button>
@@ -55,10 +55,10 @@ function WizardStep7(props) {
           </div>
           {groupCount > 0 && (
             <div style={{ marginBottom: 8 }}>
-              <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 10px 0", fontFamily: "'Jost', sans-serif" }}>List who is in each group <span style={{ color: "#3a3530" }}>(optional)</span></p>
+              <p style={{ fontSize: 13, color: "var(--wtb-text-muted)", margin: "0 0 10px 0", fontFamily: "'Jost', sans-serif" }}>List who is in each group <span style={{ color: "var(--wtb-text-faint)" }}>(optional)</span></p>
               {Array.from({ length: groupCount }).map((_, i) => (
                 <div key={i} style={{ marginBottom: 10 }}>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Group {i + 1}</label>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Group {i + 1}</label>
                   <input
                     type="text"
                     value={wiz_familyGroupNames[i] || ""}
@@ -68,7 +68,7 @@ function WizardStep7(props) {
                       setWiz_familyGroupNames(next);
                     }}
                     placeholder="e.g. Smith family — bride's parents + 2 siblings"
-                    style={{ width: "100%", padding: 9, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+                    style={{ width: "100%", padding: 9, border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}
                   />
                 </div>
               ))}
@@ -76,24 +76,24 @@ function WizardStep7(props) {
           )}
 
           {wizSectionHeading("Portrait Sessions")}
-          <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 12px 0", fontFamily: "'Jost', sans-serif" }}>Add each portrait session that will happen after the ceremony.</p>
+          <p style={{ fontSize: 13, color: "var(--wtb-text-muted)", margin: "0 0 12px 0", fontFamily: "'Jost', sans-serif" }}>Add each portrait session that will happen after the ceremony.</p>
           {wiz_portraitSessions.map((session, i) => (
-            <div key={session.id} style={{ border: "1px solid #1e1c19", borderRadius: 8, padding: "14px 14px 10px", marginBottom: 10, background: "#0f0d0b" }}>
+            <div key={session.id} style={{ border: "1px solid var(--wtb-border-subtle)", borderRadius: 8, padding: "14px 14px 10px", marginBottom: 10, background: "var(--wtb-surface)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Portrait Session {i + 1}</span>
+                <span style={{ fontSize: 14, fontWeight: 400, color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}>Portrait Session {i + 1}</span>
                 <button
                   onClick={() => setWiz_portraitSessions(prev => prev.filter((_, idx) => idx !== i))}
-                  style={{ background: "none", border: "1px solid #2a2520", borderRadius: 4, padding: "3px 10px", fontSize: 12, color: "#6e6358", cursor: "pointer" }}
+                  style={{ background: "none", border: "1px solid var(--wtb-border)", borderRadius: 4, padding: "3px 10px", fontSize: 12, color: "var(--wtb-text-muted)", cursor: "pointer" }}
                 >
                   Remove
                 </button>
               </div>
               <div style={{ marginBottom: 8 }}>
-                <label style={{ display: "block", fontSize: 12, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Session Type</label>
+                <label style={{ display: "block", fontSize: 12, color: "var(--wtb-text-muted)", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Session Type</label>
                 <select
                   value={session.type}
                   onChange={(e) => setWiz_portraitSessions(prev => { const next = [...prev]; next[i] = { ...next[i], type: e.target.value }; return next; })}
-                  style={{ width: "100%", padding: "8px 10px", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, background: "#0f0d0b", color: "#ddd0bc" }}
+                  style={{ width: "100%", padding: "8px 10px", border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 14, background: "var(--wtb-surface)", color: "var(--wtb-text)" }}
                 >
                   <option value="">Select type…</option>
                   <option value="Bride & Groom">Bride &amp; Groom</option>
@@ -105,11 +105,11 @@ function WizardStep7(props) {
                 </select>
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 12, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Location</label>
+                <label style={{ display: "block", fontSize: 12, color: "var(--wtb-text-muted)", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Location</label>
                 <select
                   value={session.location}
                   onChange={(e) => setWiz_portraitSessions(prev => { const next = [...prev]; next[i] = { ...next[i], location: e.target.value }; return next; })}
-                  style={{ width: "100%", padding: "8px 10px", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, background: "#0f0d0b", color: "#ddd0bc" }}
+                  style={{ width: "100%", padding: "8px 10px", border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 14, background: "var(--wtb-surface)", color: "var(--wtb-text)" }}
                 >
                   <option value="">Select a location…</option>
                   {allWizLocations.map((name, j) => <option key={j} value={name}>{name}</option>)}
@@ -119,17 +119,10 @@ function WizardStep7(props) {
           ))}
           <button
             onClick={() => { setWiz_portraitSessions(prev => [...prev, { id: wiz_portraitSessionNextId, type: "", location: "" }]); setWiz_portraitSessionNextId(n => n + 1); }}
-            style={{ padding: "9px 18px", background: "#161310", color: "#b8906a", border: "1px solid #b8906a", borderRadius: 8, fontSize: 13, fontWeight: 300, cursor: "pointer", marginBottom: 20, fontFamily: "'Jost', sans-serif" }}
+            style={{ padding: "9px 18px", background: "var(--wtb-surface-raised)", color: "var(--wtb-accent)", border: "1px solid var(--wtb-accent)", borderRadius: 8, fontSize: 13, fontWeight: 300, cursor: "pointer", marginBottom: 20, fontFamily: "'Jost', sans-serif" }}
           >
             + Add Portrait Session
           </button>
-
-          {wizSectionHeading("Golden Hour")}
-          <p style={{ fontSize: 13, color: "#6e6358", margin: "0 0 10px 0", fontFamily: "'Jost', sans-serif" }}>Golden hour portraits take advantage of the soft light just before sunset.</p>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button style={wizToggleStyle(wiz_goldenHour === true)} onClick={() => setWiz_goldenHour(true)}>Yes</button>
-            <button style={wizToggleStyle(wiz_goldenHour === false)} onClick={() => setWiz_goldenHour(false)}>No</button>
-          </div>
         </div>,
         () => setWizardStep(6),
         () => setWizardStep(9)

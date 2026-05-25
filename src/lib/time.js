@@ -9,21 +9,6 @@ function snapMinuteToFive(minuteStr) {
   return String(Math.round(rawMin / 5) * 5 % 60).padStart(2, "0");
 }
 
-function getEventColor(label, fallback = "#ffffff") {
-  if (!label) return fallback;
-  const key = Object.keys(COLOR_BUCKETS).find((k) => label.startsWith(k));
-  return COLOR_BUCKETS[key] || COLOR_BUCKETS.Other;
-}
-
-function isBridePreDressEvent(eventName) {
-  return String(eventName || "").startsWith("Bride (Pre-Dress):");
-}
-
-function defaultIsOutdoorForEvent(eventName) {
-  if (isBridePreDressEvent(eventName)) return false;
-  return undefined;
-}
-
 const DESKTOP_MIN_WIDTH = "(min-width: 901px)";
 
 function useMediaQuery(query) {
@@ -99,7 +84,7 @@ function TimelineCoverageCounter({ coverage }) {
     <div
       style={{
         fontSize: 13,
-        color: "#b8906a",
+        color: "var(--wtb-accent)",
         marginTop: 6,
         fontFamily: "'Jost', sans-serif",
         fontWeight: 300,
@@ -107,7 +92,7 @@ function TimelineCoverageCounter({ coverage }) {
       }}
     >
       Coverage Time: {formatDurationSpan(coverage.totalMinutes)}
-      <span style={{ color: "#6e6358", fontWeight: 200 }}>
+      <span style={{ color: "var(--wtb-text-muted)", fontWeight: 200 }}>
         {" "}
         ({formatClockLabel(coverage.startMin)} – {formatClockLabel(coverage.endMin)})
       </span>

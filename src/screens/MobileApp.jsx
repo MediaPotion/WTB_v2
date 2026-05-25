@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import mediaPotionLogo from "../assets/mediapotion_logo.png";
-import { MOBILE_TWEAKS } from "../constants/styles";
+import { MOBILE_TWEAKS, SETTINGS_SELECT_STYLE } from "../constants/styles";
+import { THEME_CSS } from "../constants/theme";
+import { useTheme } from "../hooks/useTheme";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { SETTINGS_WIZARD_TABS, PROJECT_VERSION, AUTOSAVE_KEY, DESKTOP_MIN_WIDTH } from "../constants/wizard";
 import { defaultIsOutdoorForEvent } from "../constants/colors";
 import { formatTime, parseTimeInput, computeTimelineCoverage, TimelineCoverageCounter, useMediaQuery } from "../lib/time";
@@ -18,6 +21,7 @@ import { WelcomeScreen } from "./WelcomeScreen";
 import { renderWizard } from "./WizardScreen";
 
 export default function MobileApp() {
+  const { theme, toggleTheme } = useTheme();
   const isDesktop = useMediaQuery(DESKTOP_MIN_WIDTH);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [mobileMainTab, setMobileMainTab] = useState("timeline"); // "timeline" | "preview" (mobile only)
@@ -181,7 +185,6 @@ export default function MobileApp() {
   const [wiz_bouquetToss, setWiz_bouquetToss] = useState(false);
   const [wiz_familyGroups, setWiz_familyGroups] = useState("5"); // "5"|"10"|"none"
   const [wiz_familyGroupNames, setWiz_familyGroupNames] = useState([]);
-  const [wiz_goldenHour, setWiz_goldenHour] = useState(false);
 
   // Step 2 — Getting ready location checkboxes
   const [wiz_brideReadyAtCeremony, setWiz_brideReadyAtCeremony] = useState(false);
@@ -941,15 +944,7 @@ export default function MobileApp() {
   };
 
   // ---- Project Settings helpers ----
-  const settingsSelectStyle = {
-    padding: "8px 10px",
-    borderRadius: 6,
-    border: "1px solid #2a2520",
-    background: "#0f0d0b",
-    color: "#ddd0bc",
-    fontFamily: "'Jost', sans-serif",
-    fontSize: 14,
-  };
+  const settingsSelectStyle = SETTINGS_SELECT_STYLE;
 
   const addFixedEvent = (eventName = "", h = "12", m = "00", p = "PM", dur = 30) => {
     setFixedEvents((prev) => [
@@ -1026,7 +1021,6 @@ export default function MobileApp() {
       distanceBrideToCeremony: wiz_distanceBrideToCeremony,
       distanceReceptionToCeremony: wiz_distanceReceptionToCeremony,
       ceremonyOutdoor: wiz_ceremonyOutdoor,
-      goldenHour: wiz_goldenHour,
       cakeCutting: wiz_cakeCutting,
       firstDance: wiz_firstDance,
       brideParentDance: wiz_brideParentDance,
@@ -1102,7 +1096,7 @@ export default function MobileApp() {
     wiz_speeches, setWiz_speeches, wiz_speechCount, setWiz_speechCount, wiz_dinner, setWiz_dinner,
     wiz_dinnerStartHour, setWiz_dinnerStartHour, wiz_dinnerStartMinute, setWiz_dinnerStartMinute, wiz_dinnerStartPeriod, setWiz_dinnerStartPeriod,
     wiz_dinnerStyle, setWiz_dinnerStyle, wiz_openDanceFloor, setWiz_openDanceFloor, wiz_garterToss, setWiz_garterToss, wiz_bouquetToss, setWiz_bouquetToss,
-    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames, wiz_goldenHour, setWiz_goldenHour,
+    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames,
     wiz_brideReadyAtCeremony, setWiz_brideReadyAtCeremony, wiz_brideReadyAtReception, setWiz_brideReadyAtReception,
     wiz_groomReadyAtCeremony, setWiz_groomReadyAtCeremony, wiz_groomReadyAtReception, setWiz_groomReadyAtReception, wiz_groomReadyAtBride, setWiz_groomReadyAtBride,
     wiz_preCeremonyBrideReady, setWiz_preCeremonyBrideReady, wiz_preCeremonyGroomReady, setWiz_preCeremonyGroomReady,
@@ -1116,23 +1110,23 @@ export default function MobileApp() {
   const renderSettingsForm = (isModal) => (
     <div>
       {/* Section 1: Wedding Details */}
-      <div style={{ background: "#0f0d0b", border: "1px solid #161310", borderRadius: 8, padding: 20, marginBottom: 16 }}>
-        <h3 style={{ margin: "0 0 16px 0", fontSize: 12, color: "#b8906a", fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase" }}>Wedding Details</h3>
+      <div style={{ background: "var(--wtb-surface)", border: "1px solid var(--wtb-surface-raised)", borderRadius: 8, padding: 20, marginBottom: 16 }}>
+        <h3 style={{ margin: "0 0 16px 0", fontSize: 12, color: "var(--wtb-accent)", fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase" }}>Wedding Details</h3>
 
         {/* Date */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-          <label style={{ fontSize: 13, fontWeight: 300, color: "#6e6358", minWidth: 60, fontFamily: "'Jost', sans-serif" }}>Date:</label>
+          <label style={{ fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", minWidth: 60, fontFamily: "'Jost', sans-serif" }}>Date:</label>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            style={{ padding: 7, border: "1px solid #2a2520", borderRadius: 4, fontSize: 14, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+            style={{ padding: 7, border: "1px solid var(--wtb-border)", borderRadius: 4, fontSize: 14, background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}
           />
         </div>
 
         {/* Person 1 */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-          <label style={{ fontSize: 13, fontWeight: 300, color: "#6e6358", minWidth: 60, fontFamily: "'Jost', sans-serif" }}>Person 1:</label>
+          <label style={{ fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", minWidth: 60, fontFamily: "'Jost', sans-serif" }}>Person 1:</label>
           <select
             value={brideLabel}
             onChange={(e) => setBrideLabel(e.target.value)}
@@ -1148,13 +1142,13 @@ export default function MobileApp() {
             value={bride}
             onChange={(e) => setBride(e.target.value)}
             placeholder={`${brideLabel}'s name`}
-            style={{ padding: 7, border: "1px solid #2a2520", borderRadius: 4, fontSize: 13, flex: 1, minWidth: 0, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+            style={{ padding: 7, border: "1px solid var(--wtb-border)", borderRadius: 4, fontSize: 13, flex: 1, minWidth: 0, background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}
           />
         </div>
 
         {/* Person 2 */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <label style={{ fontSize: 13, fontWeight: 300, color: "#6e6358", minWidth: 60, fontFamily: "'Jost', sans-serif" }}>Person 2:</label>
+          <label style={{ fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", minWidth: 60, fontFamily: "'Jost', sans-serif" }}>Person 2:</label>
           <select
             value={groomLabel}
             onChange={(e) => setGroomLabel(e.target.value)}
@@ -1170,18 +1164,18 @@ export default function MobileApp() {
             value={groom}
             onChange={(e) => setGroom(e.target.value)}
             placeholder={`${groomLabel}'s name`}
-            style={{ padding: 7, border: "1px solid #2a2520", borderRadius: 4, fontSize: 13, flex: 1, minWidth: 0, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+            style={{ padding: 7, border: "1px solid var(--wtb-border)", borderRadius: 4, fontSize: 13, flex: 1, minWidth: 0, background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}
           />
         </div>
       </div>
 
       {/* Section 2: Coverage */}
-      <div style={{ background: "#0f0d0b", border: "1px solid #161310", borderRadius: 8, padding: 20, marginBottom: 16 }}>
-        <h3 style={{ margin: "0 0 16px 0", fontSize: 12, color: "#b8906a", fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase" }}>Coverage</h3>
+      <div style={{ background: "var(--wtb-surface)", border: "1px solid var(--wtb-surface-raised)", borderRadius: 8, padding: 20, marginBottom: 16 }}>
+        <h3 style={{ margin: "0 0 16px 0", fontSize: 12, color: "var(--wtb-accent)", fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase" }}>Coverage</h3>
 
         {/* Photography */}
         <div style={{ marginBottom: 14 }}>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 300, color: "#ddd0bc", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 300, color: "var(--wtb-text)", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>
             <input
               type="checkbox"
               checked={photoEnabled}
@@ -1194,21 +1188,21 @@ export default function MobileApp() {
             Photography
           </label>
           <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4, paddingLeft: 24, opacity: photoEnabled ? 1 : 0.5 }}>
-            <select value={photoStartHour} onChange={(e) => setPhotoStartHour(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "#1e1c19" : "#0f0d0b", color: !photoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderHourOptions()}</select>
-            <span style={{ color: "#6e6358" }}>:</span>
-            <select value={photoStartMinute} onChange={(e) => setPhotoStartMinute(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "#1e1c19" : "#0f0d0b", color: !photoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderMinuteOptions()}</select>
-            <select value={photoStartPeriod} onChange={(e) => setPhotoStartPeriod(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "#1e1c19" : "#0f0d0b", color: !photoEnabled ? "#3a3530" : "#ddd0bc" }}><option value="AM">AM</option><option value="PM">PM</option></select>
-            <span style={{ margin: "0 4px", color: "#6e6358" }}>—</span>
-            <select value={photoEndHour} onChange={(e) => setPhotoEndHour(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "#1e1c19" : "#0f0d0b", color: !photoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderHourOptions()}</select>
-            <span style={{ color: "#6e6358" }}>:</span>
-            <select value={photoEndMinute} onChange={(e) => setPhotoEndMinute(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "#1e1c19" : "#0f0d0b", color: !photoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderMinuteOptions()}</select>
-            <select value={photoEndPeriod} onChange={(e) => setPhotoEndPeriod(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "#1e1c19" : "#0f0d0b", color: !photoEnabled ? "#3a3530" : "#ddd0bc" }}><option value="AM">AM</option><option value="PM">PM</option></select>
+            <select value={photoStartHour} onChange={(e) => setPhotoStartHour(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !photoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderHourOptions()}</select>
+            <span style={{ color: "var(--wtb-text-muted)" }}>:</span>
+            <select value={photoStartMinute} onChange={(e) => setPhotoStartMinute(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !photoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderMinuteOptions()}</select>
+            <select value={photoStartPeriod} onChange={(e) => setPhotoStartPeriod(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !photoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}><option value="AM">AM</option><option value="PM">PM</option></select>
+            <span style={{ margin: "0 4px", color: "var(--wtb-text-muted)" }}>—</span>
+            <select value={photoEndHour} onChange={(e) => setPhotoEndHour(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !photoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderHourOptions()}</select>
+            <span style={{ color: "var(--wtb-text-muted)" }}>:</span>
+            <select value={photoEndMinute} onChange={(e) => setPhotoEndMinute(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !photoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderMinuteOptions()}</select>
+            <select value={photoEndPeriod} onChange={(e) => setPhotoEndPeriod(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !photoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}><option value="AM">AM</option><option value="PM">PM</option></select>
           </div>
         </div>
 
         {/* Videography */}
         <div>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 300, color: "#ddd0bc", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 300, color: "var(--wtb-text)", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>
             <input
               type="checkbox"
               checked={videoEnabled}
@@ -1221,29 +1215,29 @@ export default function MobileApp() {
             Videography
           </label>
           <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4, paddingLeft: 24, opacity: videoEnabled ? 1 : 0.5 }}>
-            <select value={videoStartHour} onChange={(e) => setVideoStartHour(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "#1e1c19" : "#0f0d0b", color: !videoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderHourOptions()}</select>
-            <span style={{ color: "#6e6358" }}>:</span>
-            <select value={videoStartMinute} onChange={(e) => setVideoStartMinute(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "#1e1c19" : "#0f0d0b", color: !videoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderMinuteOptions()}</select>
-            <select value={videoStartPeriod} onChange={(e) => setVideoStartPeriod(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "#1e1c19" : "#0f0d0b", color: !videoEnabled ? "#3a3530" : "#ddd0bc" }}><option value="AM">AM</option><option value="PM">PM</option></select>
-            <span style={{ margin: "0 4px", color: "#6e6358" }}>—</span>
-            <select value={videoEndHour} onChange={(e) => setVideoEndHour(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "#1e1c19" : "#0f0d0b", color: !videoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderHourOptions()}</select>
-            <span style={{ color: "#6e6358" }}>:</span>
-            <select value={videoEndMinute} onChange={(e) => setVideoEndMinute(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "#1e1c19" : "#0f0d0b", color: !videoEnabled ? "#3a3530" : "#ddd0bc" }}>{renderMinuteOptions()}</select>
-            <select value={videoEndPeriod} onChange={(e) => setVideoEndPeriod(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "#1e1c19" : "#0f0d0b", color: !videoEnabled ? "#3a3530" : "#ddd0bc" }}><option value="AM">AM</option><option value="PM">PM</option></select>
+            <select value={videoStartHour} onChange={(e) => setVideoStartHour(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !videoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderHourOptions()}</select>
+            <span style={{ color: "var(--wtb-text-muted)" }}>:</span>
+            <select value={videoStartMinute} onChange={(e) => setVideoStartMinute(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !videoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderMinuteOptions()}</select>
+            <select value={videoStartPeriod} onChange={(e) => setVideoStartPeriod(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !videoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}><option value="AM">AM</option><option value="PM">PM</option></select>
+            <span style={{ margin: "0 4px", color: "var(--wtb-text-muted)" }}>—</span>
+            <select value={videoEndHour} onChange={(e) => setVideoEndHour(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !videoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderHourOptions()}</select>
+            <span style={{ color: "var(--wtb-text-muted)" }}>:</span>
+            <select value={videoEndMinute} onChange={(e) => setVideoEndMinute(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !videoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderMinuteOptions()}</select>
+            <select value={videoEndPeriod} onChange={(e) => setVideoEndPeriod(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !videoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}><option value="AM">AM</option><option value="PM">PM</option></select>
           </div>
         </div>
       </div>
 
       {/* Section 3: Fixed-Time Events */}
-      <div style={{ background: "#0f0d0b", border: "1px solid #161310", borderRadius: 8, padding: 20, marginBottom: 16 }}>
-        <h3 style={{ margin: "0 0 4px 0", fontSize: 12, color: "#b8906a", fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase" }}>Fixed-Time Events</h3>
-        <p style={{ margin: "0 0 14px 0", fontSize: 13, color: "#6e6358", fontFamily: "'Jost', sans-serif" }}>Events that must start at a specific time — added to your timeline as time-locked anchors.</p>
+      <div style={{ background: "var(--wtb-surface)", border: "1px solid var(--wtb-surface-raised)", borderRadius: 8, padding: 20, marginBottom: 16 }}>
+        <h3 style={{ margin: "0 0 4px 0", fontSize: 12, color: "var(--wtb-accent)", fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase" }}>Fixed-Time Events</h3>
+        <p style={{ margin: "0 0 14px 0", fontSize: 13, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif" }}>Events that must start at a specific time — added to your timeline as time-locked anchors.</p>
 
         {/* Column headers */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 160px 70px 28px", gap: 6, marginBottom: 6, paddingRight: 2 }}>
-          <span style={{ fontSize: 11, fontWeight: 300, color: "#6e6358", paddingLeft: 6, fontFamily: "'Jost', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>Event</span>
-          <span style={{ fontSize: 11, fontWeight: 300, color: "#6e6358", textAlign: "center", fontFamily: "'Jost', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>Start Time</span>
-          <span style={{ fontSize: 11, fontWeight: 300, color: "#6e6358", textAlign: "center", fontFamily: "'Jost', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>Duration</span>
+          <span style={{ fontSize: 11, fontWeight: 300, color: "var(--wtb-text-muted)", paddingLeft: 6, fontFamily: "'Jost', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>Event</span>
+          <span style={{ fontSize: 11, fontWeight: 300, color: "var(--wtb-text-muted)", textAlign: "center", fontFamily: "'Jost', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>Start Time</span>
+          <span style={{ fontSize: 11, fontWeight: 300, color: "var(--wtb-text-muted)", textAlign: "center", fontFamily: "'Jost', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>Duration</span>
           <span />
         </div>
 
@@ -1255,7 +1249,7 @@ export default function MobileApp() {
               value={fe.event}
               onChange={(e) => updateFixedEvent(fe.id, "event", e.target.value)}
               placeholder="Event name"
-              style={{ padding: 6, border: "1px solid #2a2520", borderRadius: 4, fontSize: 13, width: "100%", boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+              style={{ padding: 6, border: "1px solid var(--wtb-border)", borderRadius: 4, fontSize: 13, width: "100%", boxSizing: "border-box", background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}
             />
             <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
               <select value={fe.timeHour} onChange={(e) => updateFixedEvent(fe.id, "timeHour", e.target.value)} style={{ ...settingsSelectStyle, flex: 1, minWidth: 0 }}>{renderHourOptions()}</select>
@@ -1275,7 +1269,7 @@ export default function MobileApp() {
             </div>
             <button
               onClick={() => removeFixedEvent(fe.id)}
-              style={{ padding: 0, width: 24, height: 24, background: "#161310", color: "#6e6358", border: "1px solid #2a2520", borderRadius: 4, fontSize: 13, cursor: "pointer", lineHeight: 1 }}
+              style={{ padding: 0, width: 24, height: 24, background: "var(--wtb-surface-raised)", color: "var(--wtb-text-muted)", border: "1px solid var(--wtb-border)", borderRadius: 4, fontSize: 13, cursor: "pointer", lineHeight: 1 }}
             >
               ✕
             </button>
@@ -1285,7 +1279,7 @@ export default function MobileApp() {
         {/* Add Custom */}
         <button
           onClick={() => addFixedEvent("", "12", "00", "PM")}
-          style={{ padding: "6px 14px", background: "#161310", color: "#b8906a", border: "1px solid #b8906a", borderRadius: 4, fontSize: 13, cursor: "pointer", marginTop: 4, fontFamily: "'Jost', sans-serif", fontWeight: 300 }}
+          style={{ padding: "6px 14px", background: "var(--wtb-surface-raised)", color: "var(--wtb-accent)", border: "1px solid var(--wtb-accent)", borderRadius: 4, fontSize: 13, cursor: "pointer", marginTop: 4, fontFamily: "'Jost', sans-serif", fontWeight: 300 }}
         >
           + Add Custom
         </button>
@@ -1294,8 +1288,9 @@ export default function MobileApp() {
   );
 
   return (
-    <div style={{ padding: "4px 10px 10px", maxWidth: "100%", margin: "0 auto", fontFamily: "'Jost', sans-serif", backgroundColor: "#060504", minHeight: "100vh", color: "#ddd0bc" }}>
-      <style>{MOBILE_TWEAKS}</style>
+    <div className={screen !== "timeline" ? "wtb-app-root" : undefined}>
+      <style>{THEME_CSS}{MOBILE_TWEAKS}</style>
+      <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
       {screen === "welcome" ? (
         <WelcomeScreen
@@ -1312,13 +1307,13 @@ export default function MobileApp() {
       ) : screen === "settings" ? (
         /* ============ PROJECT SETTINGS SCREEN ============ */
         <div style={{ maxWidth: 700, margin: "0 auto", padding: "10px 0 40px" }}>
-          <h1 style={{ textAlign: "center", margin: "20px 0 4px 0", fontSize: "clamp(18px, 5vw, 24px)", color: "#ddd0bc", fontWeight: 300, fontFamily: "'Cormorant Garamond', serif" }}>
+          <h1 style={{ textAlign: "center", margin: "20px 0 4px 0", fontSize: "clamp(18px, 5vw, 24px)", color: "var(--wtb-text)", fontWeight: 300, fontFamily: "'Cormorant Garamond', serif" }}>
             Wedding Timeline Builder
           </h1>
 
-          <div style={{ background: "#0f0d0b", border: "1px solid #161310", borderRadius: 10, padding: "24px 24px 8px", marginBottom: 16 }}>
-            <h2 style={{ margin: "0 0 6px 0", fontSize: 20, color: "#ddd0bc", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Project Settings</h2>
-            <p style={{ margin: "0 0 20px 0", fontSize: 14, color: "#6e6358", fontFamily: "'Jost', sans-serif" }}>Set up your wedding details before building the timeline.</p>
+          <div style={{ background: "var(--wtb-surface)", border: "1px solid var(--wtb-surface-raised)", borderRadius: 10, padding: "24px 24px 8px", marginBottom: 16 }}>
+            <h2 style={{ margin: "0 0 6px 0", fontSize: 20, color: "var(--wtb-text)", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Project Settings</h2>
+            <p style={{ margin: "0 0 20px 0", fontSize: 14, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif" }}>Set up your wedding details before building the timeline.</p>
             {renderSettingsForm(false)}
           </div>
 
@@ -1346,13 +1341,13 @@ export default function MobileApp() {
                 setScreen("timeline");
                 if (mainScrollRef.current) mainScrollRef.current.scrollTop = 0;
               }}
-              style={{ padding: "12px 32px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 6, fontSize: 16, fontWeight: 300, cursor: "pointer", width: "100%", maxWidth: 360, fontFamily: "'Jost', sans-serif" }}
+              style={{ padding: "12px 32px", backgroundColor: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 6, fontSize: 16, fontWeight: 300, cursor: "pointer", width: "100%", maxWidth: 360, fontFamily: "'Jost', sans-serif" }}
             >
               Start Building Timeline
             </button>
 
             <label
-              style={{ padding: "10px 24px", background: "transparent", color: "#b8906a", border: "1px solid #b8906a", borderRadius: 6, fontSize: 14, fontWeight: 300, cursor: "pointer", textAlign: "center", width: "100%", maxWidth: 360, boxSizing: "border-box", fontFamily: "'Jost', sans-serif" }}
+              style={{ padding: "10px 24px", background: "transparent", color: "var(--wtb-accent)", border: "1px solid var(--wtb-accent)", borderRadius: 6, fontSize: 14, fontWeight: 300, cursor: "pointer", textAlign: "center", width: "100%", maxWidth: 360, boxSizing: "border-box", fontFamily: "'Jost', sans-serif" }}
             >
               Load Existing Project
               <input type="file" accept=".json" onChange={loadProject} style={{ display: "none" }} />
@@ -1361,23 +1356,23 @@ export default function MobileApp() {
         </div>
       ) : (
         /* ============ TIMELINE SCREEN ============ */
-        <div className="wtb-timeline-screen" style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", background: "#060504", zIndex: 1, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>
+        <div className="wtb-timeline-screen wtb-timeline-screen-theme" style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", zIndex: 1, fontFamily: "'Jost', sans-serif" }}>
           {versionNotice && (
-            <div style={{ flexShrink: 0, padding: "8px 12px", background: "#161310", borderBottom: "1px solid #2a2520", fontSize: 13, color: "#6e6358", textAlign: "center", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>
+            <div style={{ flexShrink: 0, padding: "8px 12px", background: "var(--wtb-surface-raised)", borderBottom: "1px solid var(--wtb-border)", fontSize: 13, color: "var(--wtb-text-muted)", textAlign: "center", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>
               {versionNotice}
             </div>
           )}
           {/* Header: names/date + controls */}
-          <div style={{ flexShrink: 0, background: "#060504", padding: isDesktop ? "4px 10px 0" : "4px 8px 0" }}>
+          <div className="wtb-header-bar" style={{ flexShrink: 0, padding: isDesktop ? "4px 10px 0" : "4px 8px 0" }}>
             {/* Names & date (+ mobile gear top-right) */}
             {!isDesktop ? (
               <div className="wtb-mobile-header-top">
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: "clamp(18px, 5vw, 26px)", fontWeight: 300, color: "#ddd0bc", lineHeight: 1.2, fontFamily: "'Cormorant Garamond', serif" }}>
+                  <div style={{ fontSize: "clamp(18px, 5vw, 26px)", fontWeight: 300, color: "var(--wtb-text)", lineHeight: 1.2, fontFamily: "'Cormorant Garamond', serif" }}>
                     {bride || groom ? [bride, groom].filter(Boolean).join(" & ") : "Wedding Timeline Builder"}
                   </div>
                   {date && (
-                    <div style={{ fontSize: 14, color: "#6e6358", marginTop: 2, fontFamily: "'Jost', sans-serif", fontWeight: 200 }}>
+                    <div style={{ fontSize: 14, color: "var(--wtb-text-muted)", marginTop: 2, fontFamily: "'Jost', sans-serif", fontWeight: 200 }}>
                       {new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
                     </div>
                   )}
@@ -1461,11 +1456,11 @@ export default function MobileApp() {
               </div>
             ) : (
               <div style={{ textAlign: "center", marginBottom: 6 }}>
-                <div style={{ fontSize: "clamp(18px, 5vw, 26px)", fontWeight: 300, color: "#ddd0bc", lineHeight: 1.2, fontFamily: "'Cormorant Garamond', serif" }}>
+                <div style={{ fontSize: "clamp(18px, 5vw, 26px)", fontWeight: 300, color: "var(--wtb-text)", lineHeight: 1.2, fontFamily: "'Cormorant Garamond', serif" }}>
                   {bride || groom ? [bride, groom].filter(Boolean).join(" & ") : "Wedding Timeline Builder"}
                 </div>
                 {date && (
-                  <div style={{ fontSize: 14, color: "#6e6358", marginTop: 2, fontFamily: "'Jost', sans-serif", fontWeight: 200 }}>
+                  <div style={{ fontSize: 14, color: "var(--wtb-text-muted)", marginTop: 2, fontFamily: "'Jost', sans-serif", fontWeight: 200 }}>
                     {new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
                   </div>
                 )}
@@ -1474,29 +1469,29 @@ export default function MobileApp() {
             )}
 
             {/* Controls — desktop */}
-            <div className="wtb-controls-desktop" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", background: "#0f0d0b", borderBottom: "1px solid #161310", borderTop: "1px solid #161310", padding: "8px 10px", margin: "0 -10px 0" }}>
+            <div className="wtb-controls-desktop" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", background: "var(--wtb-surface)", borderBottom: "1px solid var(--wtb-surface-raised)", borderTop: "1px solid var(--wtb-surface-raised)", padding: "8px 10px", margin: "0 -10px 0" }}>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
                   onClick={requestNewTimeline}
-                  style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
+                  style={{ padding: "6px 14px", background: "transparent", color: "var(--wtb-text)", border: "1px solid var(--wtb-border)", borderRadius: 4, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
                 >
                   New Timeline
                 </button>
                 <label
-                  style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, display: "inline-block", fontFamily: "'Jost', sans-serif" }}
+                  style={{ padding: "6px 14px", background: "transparent", color: "var(--wtb-text)", border: "1px solid var(--wtb-border)", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, display: "inline-block", fontFamily: "'Jost', sans-serif" }}
                 >
                   Load Project
                   <input type="file" accept=".json" onChange={loadProject} style={{ display: "none" }} />
                 </label>
                 <button
                   onClick={saveProject}
-                  style={{ padding: "6px 14px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
+                  style={{ padding: "6px 14px", backgroundColor: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
                 >
                   Save Project
                 </button>
                 <button
                   onClick={() => setShowSettingsModal(true)}
-                  style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
+                  style={{ padding: "6px 14px", background: "transparent", color: "var(--wtb-text)", border: "1px solid var(--wtb-border)", borderRadius: 4, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
                 >
                   Project Settings
                 </button>
@@ -1505,14 +1500,14 @@ export default function MobileApp() {
                 <button
                   onClick={undo}
                   disabled={history.length === 0}
-                  style={{ padding: "6px 14px", background: history.length > 0 ? "#4a6070" : "#1a2228", color: history.length > 0 ? "#ddd0bc" : "#3a4a52", border: "none", borderRadius: 4, cursor: history.length > 0 ? "pointer" : "not-allowed", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", display: "flex", alignItems: "center", gap: 5 }}
+                  style={{ padding: "6px 14px", background: history.length > 0 ? "var(--wtb-undo-bg-active)" : "var(--wtb-undo-bg)", color: history.length > 0 ? "var(--wtb-text)" : "var(--wtb-undo-text-disabled)", border: "none", borderRadius: 4, cursor: history.length > 0 ? "pointer" : "not-allowed", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", display: "flex", alignItems: "center", gap: 5 }}
                 >
                   <span style={{ fontSize: 15, lineHeight: 1 }}>↺</span> Undo
                 </button>
                 <button
                   onClick={redo}
                   disabled={redoStack.length === 0}
-                  style={{ padding: "6px 14px", background: redoStack.length > 0 ? "#4a6070" : "#1a2228", color: redoStack.length > 0 ? "#ddd0bc" : "#3a4a52", border: "none", borderRadius: 4, cursor: redoStack.length > 0 ? "pointer" : "not-allowed", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", display: "flex", alignItems: "center", gap: 5 }}
+                  style={{ padding: "6px 14px", background: redoStack.length > 0 ? "var(--wtb-undo-bg-active)" : "var(--wtb-undo-bg)", color: redoStack.length > 0 ? "var(--wtb-text)" : "var(--wtb-undo-text-disabled)", border: "none", borderRadius: 4, cursor: redoStack.length > 0 ? "pointer" : "not-allowed", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", display: "flex", alignItems: "center", gap: 5 }}
                 >
                   <span style={{ fontSize: 15, lineHeight: 1 }}>↻</span> Redo
                 </button>
@@ -1520,29 +1515,29 @@ export default function MobileApp() {
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
                   onClick={copyTimeline}
-                  style={{ padding: "6px 14px", backgroundColor: copyConfirm ? "#b8906a" : "transparent", color: copyConfirm ? "#060504" : "#ddd0bc", border: copyConfirm ? "1px solid #b8906a" : "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
+                  style={{ padding: "6px 14px", backgroundColor: copyConfirm ? "var(--wtb-accent)" : "transparent", color: copyConfirm ? "var(--wtb-on-accent)" : "var(--wtb-text)", border: copyConfirm ? "1px solid var(--wtb-accent)" : "1px solid var(--wtb-border)", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
                 >
                   {copyConfirm ? "Copied!" : "Copy Timeline"}
                 </button>
                 <div ref={isDesktop ? exportMenuRef : null} style={{ position: "relative" }}>
                   <button
                     onClick={() => setShowExportMenu(v => !v)}
-                    style={{ padding: "6px 14px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
+                    style={{ padding: "6px 14px", backgroundColor: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
                   >
                     Export Timeline ▾
                   </button>
                   {showExportMenu && (
-                    <div style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", background: "#1a1714", border: "1px solid #2a2520", borderRadius: 4, zIndex: 200, minWidth: 150, overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.4)" }}>
+                    <div style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", background: "var(--wtb-surface-alt)", border: "1px solid var(--wtb-border)", borderRadius: 4, zIndex: 200, minWidth: 150, overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.4)" }}>
                       <button
                         onClick={exportPDF}
                         disabled={exporting}
-                        style={{ display: "block", width: "100%", padding: "9px 14px", background: "none", border: "none", color: exporting ? "#6e6358" : "#ddd0bc", textAlign: "left", fontSize: 13, fontFamily: "'Jost', sans-serif", cursor: exporting ? "not-allowed" : "pointer", borderBottom: "1px solid #2a2520" }}
+                        style={{ display: "block", width: "100%", padding: "9px 14px", background: "none", border: "none", color: exporting ? "var(--wtb-text-muted)" : "var(--wtb-text)", textAlign: "left", fontSize: 13, fontFamily: "'Jost', sans-serif", cursor: exporting ? "not-allowed" : "pointer", borderBottom: "1px solid var(--wtb-border)" }}
                       >
                         {exporting ? "Exporting…" : "Save as PDF"}
                       </button>
                       <button
                         onClick={() => { exportTimeline(); setShowExportMenu(false); }}
-                        style={{ display: "block", width: "100%", padding: "9px 14px", background: "none", border: "none", color: "#ddd0bc", textAlign: "left", fontSize: 13, fontFamily: "'Jost', sans-serif", cursor: "pointer" }}
+                        style={{ display: "block", width: "100%", padding: "9px 14px", background: "none", border: "none", color: "var(--wtb-text)", textAlign: "left", fontSize: 13, fontFamily: "'Jost', sans-serif", cursor: "pointer" }}
                       >
                         Save as TXT
                       </button>
@@ -1579,7 +1574,7 @@ export default function MobileApp() {
             <div
               style={{
                 height: !isDesktop && mobileMainTab === "preview" ? 4 : 8,
-                background: "#060504",
+                background: "var(--wtb-bg)",
                 flexShrink: 0,
               }}
             />
@@ -1607,10 +1602,10 @@ export default function MobileApp() {
           {(isDesktop || mobileMainTab === "timeline") && (
           <div
             style={{
-              background: "#060504",
+              background: "var(--wtb-bg)",
               padding: 15,
               borderRadius: 8,
-              border: "1px solid #161310",
+              border: "1px solid var(--wtb-surface-raised)",
             }}
           >
             <h2
@@ -1618,7 +1613,7 @@ export default function MobileApp() {
                 textAlign: "center",
                 margin: "0 0 15px 0",
                 fontSize: 14,
-                color: "#b8906a",
+                color: "var(--wtb-accent)",
                 fontFamily: "'Jost', sans-serif",
                 fontWeight: 300,
                 letterSpacing: "0.15em",
@@ -1681,9 +1676,9 @@ export default function MobileApp() {
                   gap: '6px',
                   padding: '6px 12px',
                   borderRadius: '20px',
-                  border: '1px dashed #b8906a',
+                  border: '1px dashed var(--wtb-accent)',
                   background: 'transparent',
-                  color: '#b8906a',
+                  color: 'var(--wtb-accent)',
                   fontSize: '13px',
                   fontWeight: 300,
                   cursor: 'pointer',
@@ -1771,35 +1766,35 @@ export default function MobileApp() {
           {showSettingsModal && (
             <div
               style={{
-                position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.75)",
+                position: "fixed", inset: 0, backgroundColor: "var(--wtb-overlay)",
                 display: "flex", alignItems: "flex-start", justifyContent: "center",
                 zIndex: 1000, overflowY: "auto", padding: "20px 10px 40px",
               }}
               onClick={(e) => { if (e.target === e.currentTarget) setShowSettingsModal(false); }}
             >
-              <div style={{ background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 10, maxWidth: 960, width: "100%", padding: 24, position: "relative" }}>
+              <div style={{ background: "var(--wtb-surface)", border: "1px solid var(--wtb-border)", borderRadius: 10, maxWidth: 960, width: "100%", padding: 24, position: "relative" }}>
                 {/* Header */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                  <h2 style={{ margin: 0, fontSize: 20, color: "#ddd0bc", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Project Settings</h2>
+                  <h2 style={{ margin: 0, fontSize: 20, color: "var(--wtb-text)", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Project Settings</h2>
                   <button
                     onClick={() => setShowSettingsModal(false)}
-                    style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#6e6358", lineHeight: 1 }}
+                    style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--wtb-text-muted)", lineHeight: 1 }}
                   >
                     ✕
                   </button>
                 </div>
 
                 {/* Tab bar */}
-                <div style={{ display: "flex", flexWrap: "nowrap", gap: 4, marginBottom: 20, borderBottom: "1px solid #2a2520", paddingBottom: 12, overflowX: "auto" }}>
+                <div style={{ display: "flex", flexWrap: "nowrap", gap: 4, marginBottom: 20, borderBottom: "1px solid var(--wtb-border)", paddingBottom: 12, overflowX: "auto" }}>
                   {SETTINGS_WIZARD_TABS.map((tab, i) => (
                     <button
                       key={i}
                       onClick={() => setSettingsTab(i)}
                       style={{
                         padding: "5px 12px",
-                        background: settingsTab === i ? "#b8906a" : "transparent",
-                        color: settingsTab === i ? "#060504" : "#6e6358",
-                        border: settingsTab === i ? "1px solid #b8906a" : "1px solid #2a2520",
+                        background: settingsTab === i ? "var(--wtb-accent)" : "transparent",
+                        color: settingsTab === i ? "var(--wtb-on-accent)" : "var(--wtb-text-muted)",
+                        border: settingsTab === i ? "1px solid var(--wtb-accent)" : "1px solid var(--wtb-border)",
                         borderRadius: 4, fontSize: 12, cursor: "pointer",
                         fontFamily: "'Jost', sans-serif", fontWeight: 300, letterSpacing: "0.05em",
                         whiteSpace: "nowrap",
@@ -1818,7 +1813,7 @@ export default function MobileApp() {
                 <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 16 }}>
                   <button
                     onClick={() => { generateTimeline(); }}
-                    style={{ padding: "8px 20px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 400, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
+                    style={{ padding: "8px 20px", backgroundColor: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 400, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
                   >
                     Done
                   </button>
@@ -1837,8 +1832,8 @@ export default function MobileApp() {
                 disabled={history.length === 0}
                 title="Undo"
                 style={{
-                  background: history.length > 0 ? "#4a6070" : "#1a2228",
-                  color: history.length > 0 ? "#ddd0bc" : "#3a4a52",
+                  background: history.length > 0 ? "var(--wtb-undo-bg-active)" : "var(--wtb-undo-bg)",
+                  color: history.length > 0 ? "var(--wtb-text)" : "var(--wtb-undo-text-disabled)",
                 }}
               >
                 <span style={{ fontSize: 15, lineHeight: 1 }}>↺</span> Undo
@@ -1850,8 +1845,8 @@ export default function MobileApp() {
                 disabled={redoStack.length === 0}
                 title="Redo"
                 style={{
-                  background: redoStack.length > 0 ? "#4a6070" : "#1a2228",
-                  color: redoStack.length > 0 ? "#ddd0bc" : "#3a4a52",
+                  background: redoStack.length > 0 ? "var(--wtb-undo-bg-active)" : "var(--wtb-undo-bg)",
+                  color: redoStack.length > 0 ? "var(--wtb-text)" : "var(--wtb-undo-text-disabled)",
                 }}
               >
                 <span style={{ fontSize: 15, lineHeight: 1 }}>↻</span> Redo
@@ -1866,7 +1861,7 @@ export default function MobileApp() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.65)",
+            background: "var(--wtb-overlay)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -1877,8 +1872,8 @@ export default function MobileApp() {
         >
           <div
             style={{
-              background: "#161310",
-              border: "1px solid #2a2520",
+              background: "var(--wtb-surface-raised)",
+              border: "1px solid var(--wtb-border)",
               borderRadius: 10,
               padding: "24px 28px",
               maxWidth: 420,
@@ -1886,19 +1881,19 @@ export default function MobileApp() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p style={{ margin: "0 0 20px 0", fontSize: 15, color: "#ddd0bc", lineHeight: 1.5, fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>
+            <p style={{ margin: "0 0 20px 0", fontSize: 15, color: "var(--wtb-text)", lineHeight: 1.5, fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>
               You have unsaved changes. Are you sure you want to start a new timeline? Your current timeline will be lost.
             </p>
             <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
               <button
                 onClick={() => setShowUnsavedConfirm(false)}
-                style={{ padding: "10px 20px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}
+                style={{ padding: "10px 20px", background: "transparent", color: "var(--wtb-text)", border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 14, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}
               >
                 Cancel
               </button>
               <button
                 onClick={startNewTimeline}
-                style={{ padding: "10px 20px", background: "#b8906a", color: "#060504", border: "none", borderRadius: 6, fontSize: 14, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}
+                style={{ padding: "10px 20px", background: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 6, fontSize: 14, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}
               >
                 Continue
               </button>

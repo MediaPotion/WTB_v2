@@ -32,7 +32,7 @@ function TimePopover({ open, value, onSet, onClose }) {
         style={{
           position: "fixed",
           inset: 0,
-          background: "rgba(0,0,0,0.75)",
+          background: "var(--wtb-overlay)",
           zIndex: 1000,
         }}
       />
@@ -46,8 +46,8 @@ function TimePopover({ open, value, onSet, onClose }) {
           transform: "translate(-50%, -50%)",
           width: 260,
           maxWidth: "90vw",
-          background: "#0f0d0b",
-          border: "1px solid #2a2520",
+          background: "var(--wtb-surface)",
+          border: "1px solid var(--wtb-border)",
           borderRadius: 10,
           padding: 12,
           zIndex: 1001,
@@ -70,10 +70,10 @@ function TimePopover({ open, value, onSet, onClose }) {
               width: 64,
               height: 32,
               fontSize: 14,
-              border: '1px solid #2a2520',
+              border: '1px solid var(--wtb-border)',
               borderRadius: 6,
-              background: '#0f0d0b',
-              color: '#ddd0bc',
+              background: 'var(--wtb-surface)',
+              color: 'var(--wtb-text)',
               cursor: 'pointer',
             }}
           >
@@ -83,7 +83,7 @@ function TimePopover({ open, value, onSet, onClose }) {
               </option>
             ))}
           </select>
-          <span style={{ fontSize: 16, lineHeight: "32px", color: "#ddd0bc" }}>:</span>
+          <span style={{ fontSize: 16, lineHeight: "32px", color: "var(--wtb-text)" }}>:</span>
           <select
             value={mm}
             onChange={(e) => setMm(e.target.value)}
@@ -91,10 +91,10 @@ function TimePopover({ open, value, onSet, onClose }) {
               width: 64,
               height: 32,
               fontSize: 14,
-              border: '1px solid #2a2520',
+              border: '1px solid var(--wtb-border)',
               borderRadius: 6,
-              background: '#0f0d0b',
-              color: '#ddd0bc',
+              background: 'var(--wtb-surface)',
+              color: 'var(--wtb-text)',
               cursor: 'pointer',
             }}
           >
@@ -111,10 +111,10 @@ function TimePopover({ open, value, onSet, onClose }) {
               width: 70,
               height: 32,
               fontSize: 14,
-              border: '1px solid #2a2520',
+              border: '1px solid var(--wtb-border)',
               borderRadius: 6,
-              background: '#0f0d0b',
-              color: '#ddd0bc',
+              background: 'var(--wtb-surface)',
+              color: 'var(--wtb-text)',
               cursor: 'pointer',
             }}
           >
@@ -128,9 +128,9 @@ function TimePopover({ open, value, onSet, onClose }) {
             onClick={onClose}
             style={{
               padding: "6px 10px",
-              border: "1px solid #2a2520",
-              background: "#161310",
-              color: "#ddd0bc",
+              border: "1px solid var(--wtb-border)",
+              background: "var(--wtb-surface-raised)",
+              color: "var(--wtb-text)",
               borderRadius: 6,
               cursor: "pointer",
               fontSize: 13,
@@ -142,9 +142,9 @@ function TimePopover({ open, value, onSet, onClose }) {
             onClick={() => onSet?.(hh, mm, ap)}
             style={{
               padding: "6px 12px",
-              border: "1px solid #b8906a",
-              background: "#b8906a",
-              color: "#060504",
+              border: "1px solid var(--wtb-accent)",
+              background: "var(--wtb-accent)",
+              color: "var(--wtb-on-accent)",
               borderRadius: 6,
               cursor: "pointer",
               fontSize: 13,

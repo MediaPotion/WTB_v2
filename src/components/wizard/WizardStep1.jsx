@@ -29,7 +29,7 @@ function WizardStep1(props) {
     wiz_speeches, setWiz_speeches, wiz_speechCount, setWiz_speechCount, wiz_dinner, setWiz_dinner,
     wiz_dinnerStartHour, setWiz_dinnerStartHour, wiz_dinnerStartMinute, setWiz_dinnerStartMinute, wiz_dinnerStartPeriod, setWiz_dinnerStartPeriod,
     wiz_dinnerStyle, setWiz_dinnerStyle, wiz_openDanceFloor, setWiz_openDanceFloor, wiz_garterToss, setWiz_garterToss, wiz_bouquetToss, setWiz_bouquetToss,
-    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames, wiz_goldenHour, setWiz_goldenHour,
+    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames,
     wiz_brideReadyAtCeremony, setWiz_brideReadyAtCeremony, wiz_brideReadyAtReception, setWiz_brideReadyAtReception,
     wiz_groomReadyAtCeremony, setWiz_groomReadyAtCeremony, wiz_groomReadyAtReception, setWiz_groomReadyAtReception, wiz_groomReadyAtBride, setWiz_groomReadyAtBride,
     wiz_preCeremonyBrideReady, setWiz_preCeremonyBrideReady, wiz_preCeremonyGroomReady, setWiz_preCeremonyGroomReady,
@@ -45,23 +45,23 @@ function WizardStep1(props) {
         "These details will appear in your timeline header and exported documents.",
         <div>
           <div style={{ marginBottom: 20, textAlign: "center" }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Wedding Date</label>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Wedding Date</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              style={{ padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+              style={{ padding: 10, border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 15, background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}
             />
           </div>
           <div style={{ marginBottom: 14 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Couple&apos;s Titles</label>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Couple&apos;s Titles</label>
             <select
               value={brideLabel === "Bride" && groomLabel === "Groom" ? "bride-groom" : brideLabel === "Partner 1" && groomLabel === "Partner 2" ? "partner" : "bride-groom"}
               onChange={(e) => {
                 if (e.target.value === "bride-groom") { setBrideLabel("Bride"); setGroomLabel("Groom"); }
                 else { setBrideLabel("Partner 1"); setGroomLabel("Partner 2"); }
               }}
-              style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+              style={{ width: "100%", padding: 10, border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}
             >
               <option value="bride-groom">Bride &amp; Groom</option>
               <option value="partner">Partner 1 &amp; Partner 2</option>
@@ -69,23 +69,23 @@ function WizardStep1(props) {
           </div>
           <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>{brideLabel}&apos;s Name</label>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>{brideLabel}&apos;s Name</label>
               <input
                 type="text"
                 value={bride}
                 onChange={(e) => setBride(e.target.value)}
                 placeholder={`${brideLabel}'s full name`}
-                style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+                style={{ width: "100%", padding: 10, border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>{groomLabel}&apos;s Name</label>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>{groomLabel}&apos;s Name</label>
               <input
                 type="text"
                 value={groom}
                 onChange={(e) => setGroom(e.target.value)}
                 placeholder={`${groomLabel}'s full name`}
-                style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+                style={{ width: "100%", padding: 10, border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}
               />
             </div>
           </div>

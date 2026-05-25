@@ -22,7 +22,7 @@ function RowDropZone({ index, onAddRow, isLast }) {
         height: over ? 60 : 40,
         margin: "2px 0",
         backgroundColor: over ? "rgba(184,144,106,0.08)" : "transparent",
-        border: over ? "2px dashed #b8906a" : "2px dashed transparent",
+        border: over ? "2px dashed var(--wtb-accent)" : "2px dashed transparent",
         borderRadius: 8,
         transition: "all 0.15s ease-in-out",
         display: "flex",

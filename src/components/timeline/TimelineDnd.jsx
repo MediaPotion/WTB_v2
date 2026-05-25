@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -14,6 +14,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { snapGrabPointToCursor, snapRowHandleToCursor } from "../../lib/dndModifiers";
 import { getEventColor } from "../../constants/colors";
 
 function timelineCollisionDetection(args) {
@@ -67,6 +68,13 @@ function TimelineDndProvider({
     setActiveDrag(null);
   }, []);
 
+  const overlayModifiers = useMemo(() => {
+    if (activeDrag?.data?.type === "timeline-row") {
+      return [snapRowHandleToCursor];
+    }
+    return [snapGrabPointToCursor];
+  }, [activeDrag]);
+
   const renderOverlay = () => {
     if (!activeDrag) return null;
     const { data } = activeDrag;
@@ -82,9 +90,9 @@ function TimelineDndProvider({
         <div
           style={{
             padding: "8px 12px",
-            background: "#161310",
+            background: "var(--wtb-surface-raised)",
             border: `2px solid ${borderColor}`,
-            color: "#ddd0bc",
+            color: "var(--wtb-text)",
             borderRadius: 6,
             fontSize: 13,
             fontFamily: "'Jost', sans-serif",
@@ -94,7 +102,7 @@ function TimelineDndProvider({
         >
           {label}
           {typeof payload?.duration === "number" && (
-            <span style={{ marginLeft: 12, color: "#6e6358", fontWeight: "bold" }}>
+            <span style={{ marginLeft: 12, color: "var(--wtb-text-muted)", fontWeight: "bold" }}>
               {payload.duration} min
             </span>
           )}
@@ -106,19 +114,44 @@ function TimelineDndProvider({
       return (
         <div
           style={{
-            padding: "12px 16px",
-            background: "#0f0d0b",
-            border: "2px dashed #b8906a",
+            display: "flex",
+            alignItems: "stretch",
+            minWidth: 280,
+            background: "var(--wtb-surface)",
+            border: "2px dashed var(--wtb-accent)",
             borderRadius: 8,
-            color: "#ddd0bc",
-            fontSize: 13,
-            fontFamily: "'Jost', sans-serif",
             boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
             pointerEvents: "none",
-            minWidth: 200,
+            overflow: "hidden",
           }}
         >
-          ⠿ Reorder row
+          <div
+            style={{
+              width: 36,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "var(--wtb-row-reorder-bg)",
+              color: "var(--wtb-text-muted)",
+              fontSize: 22,
+              borderRight: "1px solid var(--wtb-border)",
+            }}
+          >
+            ⠿
+          </div>
+          <div
+            style={{
+              padding: "12px 16px",
+              color: "var(--wtb-text)",
+              fontSize: 13,
+              fontFamily: "'Jost', sans-serif",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            Reorder row
+          </div>
         </div>
       );
     }
@@ -137,7 +170,9 @@ function TimelineDndProvider({
       <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
         {children}
       </SortableContext>
-      <DragOverlay dropAnimation={null}>{renderOverlay()}</DragOverlay>
+      <DragOverlay dropAnimation={null} modifiers={overlayModifiers}>
+        {renderOverlay()}
+      </DragOverlay>
     </DndContext>
   );
 }

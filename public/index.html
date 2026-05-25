@@ -10,13 +10,48 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
   <title>Wedding Potion — Timeline Builder</title>
+  <script>
+    (function () {
+      var key = 'wtb-theme';
+      var theme = 'dark';
+      try {
+        var stored = localStorage.getItem(key);
+        if (stored === 'light' || stored === 'dark') theme = stored;
+      } catch (e) {}
+      document.documentElement.setAttribute('data-theme', theme);
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', theme === 'light' ? '#f5f0e8' : '#060504');
+    })();
+  </script>
   <style>
+    :root, [data-theme="dark"] {
+      --wtb-bg: #060504;
+      --wtb-surface: #0f0d0b;
+      --wtb-surface-raised: #161310;
+      --wtb-surface-alt: #1a1714;
+      --wtb-border: #2a2520;
+      --wtb-text: #ddd0bc;
+      --wtb-text-muted: #6e6358;
+      --wtb-accent: #b8906a;
+      --wtb-cream: #ddd0bc;
+    }
+    [data-theme="light"] {
+      --wtb-bg: #f5f0e8;
+      --wtb-surface: #fffdf9;
+      --wtb-surface-raised: #efe8dc;
+      --wtb-surface-alt: #e8e0d4;
+      --wtb-border: #d4c8b8;
+      --wtb-text: #1e140a;
+      --wtb-text-muted: #6e5c48;
+      --wtb-accent: #a67c52;
+      --wtb-cream: #1e140a;
+    }
     *, *::before, *::after { box-sizing: border-box; }
     html, body, #root { margin: 0; padding: 0; background: var(--wtb-bg, #060504); color: var(--wtb-cream, #ddd0bc); font-family: 'Jost', sans-serif; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0f0d0b; }
-    ::-webkit-scrollbar-thumb { background: #2a2520; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #b8906a; }
+    ::-webkit-scrollbar-track { background: var(--wtb-surface, #0f0d0b); }
+    ::-webkit-scrollbar-thumb { background: var(--wtb-border, #2a2520); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--wtb-accent, #b8906a); }
     #grain {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none; z-index: 9999;

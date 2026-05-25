@@ -49,7 +49,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
       style={{
         position: "fixed",
         inset: 0,
-        backgroundColor: "rgba(0,0,0,0.85)",
+        backgroundColor: "var(--wtb-overlay-heavy)",
         zIndex: 1100,
         display: "flex",
         alignItems: "center",
@@ -59,8 +59,8 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
     >
       <div
         style={{
-          backgroundColor: "#0f0d0b",
-          border: "1px solid #2a2520",
+          backgroundColor: "var(--wtb-surface)",
+          border: "1px solid var(--wtb-border)",
           borderRadius: 8,
           padding: 20,
           maxHeight: "80vh",
@@ -75,13 +75,13 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
             justifyContent: "space-between",
             alignItems: "center",
             marginBottom: 20,
-            background: "#060504",
-            borderBottom: "1px solid #2a2520",
+            background: "var(--wtb-bg)",
+            borderBottom: "1px solid var(--wtb-border)",
             margin: "-20px -20px 20px -20px",
             padding: "16px 20px",
           }}
         >
-          <h3 style={{ margin: 0, color: "#ddd0bc", fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400 }}>Select or Create Event</h3>
+          <h3 style={{ margin: 0, color: "var(--wtb-text)", fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400 }}>Select or Create Event</h3>
           <button
             onClick={onClose}
             style={{
@@ -89,7 +89,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
               border: "none",
               fontSize: 24,
               cursor: "pointer",
-              color: "#6e6358",
+              color: "var(--wtb-text-muted)",
             }}
           >
             ×
@@ -101,12 +101,12 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
           style={{
             marginBottom: 20,
             padding: 15,
-            backgroundColor: "#161310",
+            backgroundColor: "var(--wtb-surface-raised)",
             borderRadius: 8,
-            border: "1px solid #2a2520",
+            border: "1px solid var(--wtb-border)",
           }}
         >
-          <h4 style={{ margin: "0 0 10px 0", color: "#ddd0bc", fontFamily: "'Jost', sans-serif", fontWeight: 400, letterSpacing: "0.1em", textTransform: "uppercase", fontSize: 11 }}>
+          <h4 style={{ margin: "0 0 10px 0", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif", fontWeight: 400, letterSpacing: "0.1em", textTransform: "uppercase", fontSize: 11 }}>
             Create Custom Event
           </h4>
           <div style={{ marginBottom: 10 }}>
@@ -115,7 +115,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                 display: "block",
                 marginBottom: 5,
                 fontSize: 12,
-                color: "#6e6358",
+                color: "var(--wtb-text-muted)",
                 fontFamily: "'Jost', sans-serif",
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
@@ -131,11 +131,11 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
               style={{
                 width: "100%",
                 padding: 8,
-                border: "1px solid #2a2520",
+                border: "1px solid var(--wtb-border)",
                 borderRadius: 4,
                 fontSize: 14,
-                background: "#0f0d0b",
-                color: "#ddd0bc",
+                background: "var(--wtb-surface)",
+                color: "var(--wtb-text)",
               }}
             />
           </div>
@@ -146,7 +146,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                   display: "block",
                   marginBottom: 5,
                   fontSize: 12,
-                  color: "#6e6358",
+                  color: "var(--wtb-text-muted)",
                   fontFamily: "'Jost', sans-serif",
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
@@ -162,10 +162,10 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                     width: 64,
                     height: 32,
                     fontSize: 14,
-                    border: '1px solid #2a2520',
+                    border: '1px solid var(--wtb-border)',
                     borderRadius: 4,
-                    background: '#0f0d0b',
-                    color: '#ddd0bc',
+                    background: 'var(--wtb-surface)',
+                    color: 'var(--wtb-text)',
                     cursor: 'pointer',
                   }}
                 >
@@ -175,7 +175,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                     </option>
                   ))}
                 </select>
-                <span style={{ fontSize: 16, color: "#ddd0bc" }}>:</span>
+                <span style={{ fontSize: 16, color: "var(--wtb-text)" }}>:</span>
                 <select
                   value={timeMinute}
                   onChange={(e) => setTimeMinute(e.target.value)}
@@ -183,10 +183,10 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                     width: 64,
                     height: 32,
                     fontSize: 14,
-                    border: '1px solid #2a2520',
+                    border: '1px solid var(--wtb-border)',
                     borderRadius: 4,
-                    background: '#0f0d0b',
-                    color: '#ddd0bc',
+                    background: 'var(--wtb-surface)',
+                    color: 'var(--wtb-text)',
                     cursor: 'pointer',
                   }}
                 >
@@ -203,10 +203,10 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                     width: 70,
                     height: 32,
                     fontSize: 14,
-                    border: '1px solid #2a2520',
+                    border: '1px solid var(--wtb-border)',
                     borderRadius: 4,
-                    background: '#0f0d0b',
-                    color: '#ddd0bc',
+                    background: 'var(--wtb-surface)',
+                    color: 'var(--wtb-text)',
                     cursor: 'pointer',
                   }}
                 >
@@ -221,7 +221,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                   display: "block",
                   marginBottom: 5,
                   fontSize: 12,
-                  color: "#6e6358",
+                  color: "var(--wtb-text-muted)",
                   fontFamily: "'Jost', sans-serif",
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
@@ -243,11 +243,11 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                   width: 100,
                   height: 32,
                   padding: 8,
-                  border: "1px solid #2a2520",
+                  border: "1px solid var(--wtb-border)",
                   borderRadius: 4,
                   fontSize: 14,
-                  background: "#0f0d0b",
-                  color: "#ddd0bc",
+                  background: "var(--wtb-surface)",
+                  color: "var(--wtb-text)",
                 }}
               />
             </div>
@@ -259,8 +259,8 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
               style={{
                 padding: "10px 20px",
                 backgroundColor:
-                  customEvent.trim() && isValidDuration ? "#b8906a" : "#2a2520",
-                color: customEvent.trim() && isValidDuration ? "#060504" : "#6e6358",
+                  customEvent.trim() && isValidDuration ? "var(--wtb-accent)" : "var(--wtb-border)",
+                color: customEvent.trim() && isValidDuration ? "var(--wtb-on-accent)" : "var(--wtb-text-muted)",
                 border: "none",
                 borderRadius: 4,
                 cursor:
@@ -277,7 +277,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
           </div>
         </div>
 
-        <div style={{ marginBottom: 10, color: "#b8906a", fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase", fontSize: 11 }}>
+        <div style={{ marginBottom: 10, color: "var(--wtb-accent)", fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase", fontSize: 11 }}>
           Or Select Preset Event:
         </div>
 
@@ -294,7 +294,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
           });
           return groups.map(category => (
             <div key={category} style={{ breakInside: "avoid", WebkitColumnBreakInside: "avoid" }}>
-              <div style={{ fontSize: 10, color: getEventColor(groupMap[category][0].label), textTransform: "uppercase", letterSpacing: "0.12em", margin: "10px 0 4px", fontFamily: "'Jost', sans-serif", fontWeight: 400, borderTop: "1px solid #1e1c19", paddingTop: 8, textAlign: "center" }}>{category}</div>
+              <div style={{ fontSize: 10, color: getEventColor(groupMap[category][0].label), textTransform: "uppercase", letterSpacing: "0.12em", margin: "10px 0 4px", fontFamily: "'Jost', sans-serif", fontWeight: 400, borderTop: "1px solid var(--wtb-border-subtle)", paddingTop: 8, textAlign: "center" }}>{category}</div>
               {groupMap[category].map(({ label, shortLabel, duration, block }) => (
                 <button
                   key={block}
@@ -302,10 +302,10 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                     const newTime = parseTimeInput(timeHour, timeMinute, timePeriod);
                     onSelect({ event: label, duration, time: newTime });
                   }}
-                  style={{ width: "100%", padding: 12, margin: "4px 0", backgroundColor: "#0f0d0b", border: `2px solid ${getEventColor(label)}`, borderRadius: 8, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14, fontWeight: 500, color: "#ddd0bc" }}
+                  style={{ width: "100%", padding: 12, margin: "4px 0", backgroundColor: "var(--wtb-surface)", border: `2px solid ${getEventColor(label)}`, borderRadius: 8, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14, fontWeight: 500, color: "var(--wtb-text)" }}
                 >
                   <span>{shortLabel}</span>
-                  <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px", whiteSpace: "nowrap" }}>{duration} min</span>
+                  <span style={{ fontSize: 12, color: "var(--wtb-text-muted)", fontWeight: "bold", marginLeft: "16px", whiteSpace: "nowrap" }}>{duration} min</span>
                 </button>
               ))}
             </div>

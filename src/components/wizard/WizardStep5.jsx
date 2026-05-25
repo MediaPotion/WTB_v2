@@ -29,7 +29,7 @@ function WizardStep5(props) {
     wiz_speeches, setWiz_speeches, wiz_speechCount, setWiz_speechCount, wiz_dinner, setWiz_dinner,
     wiz_dinnerStartHour, setWiz_dinnerStartHour, wiz_dinnerStartMinute, setWiz_dinnerStartMinute, wiz_dinnerStartPeriod, setWiz_dinnerStartPeriod,
     wiz_dinnerStyle, setWiz_dinnerStyle, wiz_openDanceFloor, setWiz_openDanceFloor, wiz_garterToss, setWiz_garterToss, wiz_bouquetToss, setWiz_bouquetToss,
-    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames, wiz_goldenHour, setWiz_goldenHour,
+    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames,
     wiz_brideReadyAtCeremony, setWiz_brideReadyAtCeremony, wiz_brideReadyAtReception, setWiz_brideReadyAtReception,
     wiz_groomReadyAtCeremony, setWiz_groomReadyAtCeremony, wiz_groomReadyAtReception, setWiz_groomReadyAtReception, wiz_groomReadyAtBride, setWiz_groomReadyAtBride,
     wiz_preCeremonyBrideReady, setWiz_preCeremonyBrideReady, wiz_preCeremonyGroomReady, setWiz_preCeremonyGroomReady,
@@ -46,7 +46,7 @@ function WizardStep5(props) {
         <div>
           {wizSectionHeading("Pre-Ceremony Visibility")}
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Can {withThe(brideLabel)} be seen by {withThe(groomLabel)} before the Ceremony?</label>
+            <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "var(--wtb-text)", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Can {withThe(brideLabel)} be seen by {withThe(groomLabel)} before the Ceremony?</label>
             <div style={{ display: "flex", gap: 10 }}>
               <button style={wizToggleStyle(wiz_brideOkayBefore === true)} onClick={() => setWiz_brideOkayBefore(true)}>Yes</button>
               <button style={wizToggleStyle(wiz_brideOkayBefore === false)} onClick={() => setWiz_brideOkayBefore(false)}>No</button>
@@ -55,7 +55,7 @@ function WizardStep5(props) {
 
           {wizSectionHeading("First Looks")}
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Will there be any first looks before the ceremony?</label>
+            <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "var(--wtb-text)", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Will there be any first looks before the ceremony?</label>
             <div style={{ display: "flex", gap: 10 }}>
               <button style={wizToggleStyle(wiz_hasFirstLooks === true)} onClick={() => setWiz_hasFirstLooks(true)}>Yes</button>
               <button style={wizToggleStyle(wiz_hasFirstLooks === false)} onClick={() => { setWiz_hasFirstLooks(false); setWiz_firstLookGroom(false); setWiz_firstLookParent(false); setWiz_firstLookBridesmaids(false); setWiz_firstLookOther(false); }}>No</button>
@@ -63,7 +63,7 @@ function WizardStep5(props) {
           </div>
           {wiz_hasFirstLooks === true && (
             <div>
-              <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Who are the first looks with?</label>
+              <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "var(--wtb-text)", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Who are the first looks with?</label>
               {[
                 { key: "groom", label: "Groom", sub: "Couple's first look before the ceremony", val: wiz_firstLookGroom, set: setWiz_firstLookGroom, locVal: wiz_firstLookGroomLocation, setLoc: setWiz_firstLookGroomLocation },
                 { key: "parent", label: "Parent(s)", sub: `${brideLabel} sees parent(s) for the first time`, val: wiz_firstLookParent, set: setWiz_firstLookParent, locVal: wiz_firstLookParentLocation, setLoc: setWiz_firstLookParentLocation },
@@ -72,15 +72,15 @@ function WizardStep5(props) {
                 <label key={key} style={{ ...wizCheckRowStyle }} onClick={() => set(!val)}>
                   <input type="checkbox" checked={val} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 16, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{label}</div>
-                    <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>{sub}</div>
+                    <div style={{ fontSize: 16, fontWeight: 400, color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}>{label}</div>
+                    <div style={{ fontSize: 13, color: "var(--wtb-text-muted)", marginTop: 2 }}>{sub}</div>
                     {val && (
-                      <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #1e1c19" }} onClick={e => e.stopPropagation()}>
-                        <label style={{ display: "block", fontSize: 12, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Where will this first look take place?</label>
+                      <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--wtb-border-subtle)" }} onClick={e => e.stopPropagation()}>
+                        <label style={{ display: "block", fontSize: 12, color: "var(--wtb-text-muted)", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Where will this first look take place?</label>
                         <select
                           value={locVal}
                           onChange={e => setLoc(e.target.value)}
-                          style={{ width: "100%", padding: "6px 8px", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, background: "#0f0d0b", color: "#ddd0bc" }}
+                          style={{ width: "100%", padding: "6px 8px", border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 14, background: "var(--wtb-surface)", color: "var(--wtb-text)" }}
                         >
                           <option value="">Select a location…</option>
                           {allWizLocations.map((name, i) => (
@@ -95,32 +95,32 @@ function WizardStep5(props) {
 
               {wizSectionHeading("Additional First Looks")}
               {wiz_customFirstLooks.map((fl, i) => (
-                <div key={fl.id} style={{ border: "1px solid #1e1c19", borderRadius: 8, padding: "14px 14px 10px", marginBottom: 10, background: "#0f0d0b" }}>
+                <div key={fl.id} style={{ border: "1px solid var(--wtb-border-subtle)", borderRadius: 8, padding: "14px 14px 10px", marginBottom: 10, background: "var(--wtb-surface)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <span style={{ fontSize: 13, color: "#6e6358", fontFamily: "'Jost', sans-serif" }}>Custom First Look {i + 1}</span>
+                    <span style={{ fontSize: 13, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif" }}>Custom First Look {i + 1}</span>
                     <button
                       onClick={() => setWiz_customFirstLooks(prev => prev.filter((_, idx) => idx !== i))}
-                      style={{ background: "none", border: "1px solid #2a2520", borderRadius: 4, padding: "3px 10px", fontSize: 12, color: "#6e6358", cursor: "pointer" }}
+                      style={{ background: "none", border: "1px solid var(--wtb-border)", borderRadius: 4, padding: "3px 10px", fontSize: 12, color: "var(--wtb-text-muted)", cursor: "pointer" }}
                     >
                       Remove
                     </button>
                   </div>
                   <div style={{ marginBottom: 8 }}>
-                    <label style={{ display: "block", fontSize: 12, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Label</label>
+                    <label style={{ display: "block", fontSize: 12, color: "var(--wtb-text-muted)", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Label</label>
                     <input
                       type="text"
                       value={fl.label}
                       onChange={(e) => setWiz_customFirstLooks(prev => { const next = [...prev]; next[i] = { ...next[i], label: e.target.value }; return next; })}
                       placeholder="e.g. Bride & Flower Girl"
-                      style={{ width: "100%", padding: "8px 10px", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+                      style={{ width: "100%", padding: "8px 10px", border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: 12, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Location</label>
+                    <label style={{ display: "block", fontSize: 12, color: "var(--wtb-text-muted)", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Location</label>
                     <select
                       value={fl.location}
                       onChange={(e) => setWiz_customFirstLooks(prev => { const next = [...prev]; next[i] = { ...next[i], location: e.target.value }; return next; })}
-                      style={{ width: "100%", padding: "8px 10px", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, background: "#0f0d0b", color: "#ddd0bc" }}
+                      style={{ width: "100%", padding: "8px 10px", border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 14, background: "var(--wtb-surface)", color: "var(--wtb-text)" }}
                     >
                       <option value="">Select a location…</option>
                       {allWizLocations.map((name, j) => <option key={j} value={name}>{name}</option>)}
@@ -130,7 +130,7 @@ function WizardStep5(props) {
               ))}
               <button
                 onClick={() => { setWiz_customFirstLooks(prev => [...prev, { id: wiz_customFirstLookNextId, label: "", location: "" }]); setWiz_customFirstLookNextId(n => n + 1); }}
-                style={{ padding: "9px 18px", background: "#161310", color: "#b8906a", border: "1px solid #b8906a", borderRadius: 8, fontSize: 13, fontWeight: 300, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
+                style={{ padding: "9px 18px", background: "var(--wtb-surface-raised)", color: "var(--wtb-accent)", border: "1px solid var(--wtb-accent)", borderRadius: 8, fontSize: 13, fontWeight: 300, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
               >
                 + Add First Look
               </button>

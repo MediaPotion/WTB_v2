@@ -1,4 +1,5 @@
 import React from "react";
+import { SETTINGS_SELECT_STYLE } from "../../constants/styles";
 
 function WizardStep8(props) {
   const {
@@ -29,7 +30,7 @@ function WizardStep8(props) {
     wiz_speeches, setWiz_speeches, wiz_speechCount, setWiz_speechCount, wiz_dinner, setWiz_dinner,
     wiz_dinnerStartHour, setWiz_dinnerStartHour, wiz_dinnerStartMinute, setWiz_dinnerStartMinute, wiz_dinnerStartPeriod, setWiz_dinnerStartPeriod,
     wiz_dinnerStyle, setWiz_dinnerStyle, wiz_openDanceFloor, setWiz_openDanceFloor, wiz_garterToss, setWiz_garterToss, wiz_bouquetToss, setWiz_bouquetToss,
-    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames, wiz_goldenHour, setWiz_goldenHour,
+    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames,
     wiz_brideReadyAtCeremony, setWiz_brideReadyAtCeremony, wiz_brideReadyAtReception, setWiz_brideReadyAtReception,
     wiz_groomReadyAtCeremony, setWiz_groomReadyAtCeremony, wiz_groomReadyAtReception, setWiz_groomReadyAtReception, wiz_groomReadyAtBride, setWiz_groomReadyAtBride,
     wiz_preCeremonyBrideReady, setWiz_preCeremonyBrideReady, wiz_preCeremonyGroomReady, setWiz_preCeremonyGroomReady,
@@ -40,6 +41,7 @@ function WizardStep8(props) {
     wiz_grandEntranceSub, setWiz_grandEntranceSub, wiz_customReceptionEvents, setWiz_customReceptionEvents, wiz_customReceptionEventNextId, setWiz_customReceptionEventNextId,
     setWizardStep, setScreen, generateTimeline, withThe,
   } = props;
+      const settingsSelectStyle = SETTINGS_SELECT_STYLE;
       const hourOptions = ["1","2","3","4","5","6","7","8","9","10","11","12"];
       const minuteOptions = ["00","05","10","15","20","25","30","35","40","45","50","55"];
       return stepCard(
@@ -47,7 +49,7 @@ function WizardStep8(props) {
         "Select what's happening at the reception so we can build out that part of your timeline.",
         <div>
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Reception Start Time</label>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Reception Start Time</label>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <select value={wiz_receptionHour} onChange={(e) => setWiz_receptionHour(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
                 {hourOptions.map((h) => <option key={h} value={h}>{h}</option>)}
@@ -69,8 +71,8 @@ function WizardStep8(props) {
           <label style={{ ...wizCheckRowStyle }} onClick={() => setWiz_grandEntrance(!wiz_grandEntrance)}>
             <input type="checkbox" checked={wiz_grandEntrance} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Grand Entrance</div>
-              <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>Couple introduced to the reception</div>
+              <div style={{ fontSize: 15, fontWeight: 400, color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}>Grand Entrance</div>
+              <div style={{ fontSize: 13, color: "var(--wtb-text-muted)", marginTop: 2 }}>Couple introduced to the reception</div>
               {wiz_grandEntrance && (
                 <div style={{ marginTop: 10 }} onClick={(e) => e.stopPropagation()}>
                   <div style={{ display: "flex", gap: 8 }}>
@@ -96,12 +98,12 @@ function WizardStep8(props) {
           <label style={{ ...wizCheckRowStyle }} onClick={() => setWiz_dinner(!wiz_dinner)}>
             <input type="checkbox" checked={wiz_dinner} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Dinner</div>
-              <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>Sit-down meal service</div>
+              <div style={{ fontSize: 15, fontWeight: 400, color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}>Dinner</div>
+              <div style={{ fontSize: 13, color: "var(--wtb-text-muted)", marginTop: 2 }}>Sit-down meal service</div>
               {wiz_dinner && (
                 <div style={{ marginTop: 12 }} onClick={(e) => e.stopPropagation()}>
                   <div style={{ marginBottom: 10 }}>
-                    <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Dinner Start Time</label>
+                    <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Dinner Start Time</label>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <select value={wiz_dinnerStartHour} onChange={(e) => setWiz_dinnerStartHour(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
                         {hourOptions.map((h) => <option key={h} value={h}>{h}</option>)}
@@ -117,7 +119,7 @@ function WizardStep8(props) {
                     </div>
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Dinner Style</label>
+                    <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Dinner Style</label>
                     <div style={{ display: "flex", gap: 10 }}>
                       {["Plated", "Buffet"].map((s) => (
                         <button
@@ -148,8 +150,8 @@ function WizardStep8(props) {
             <label key={label} style={{ ...wizCheckRowStyle }} onClick={() => set(!val)}>
               <input type="checkbox" checked={val} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
               <div>
-                <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{label}</div>
-                {sub && <div style={{ fontSize: 13, color: "#6e6358", marginTop: 2 }}>{sub}</div>}
+                <div style={{ fontSize: 15, fontWeight: 400, color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}>{label}</div>
+                {sub && <div style={{ fontSize: 13, color: "var(--wtb-text-muted)", marginTop: 2 }}>{sub}</div>}
               </div>
             </label>
           ))}
@@ -158,22 +160,22 @@ function WizardStep8(props) {
           <label style={{ ...wizCheckRowStyle }} onClick={() => setWiz_speeches(!wiz_speeches)}>
             <input type="checkbox" checked={wiz_speeches} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 400, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>Speeches</div>
+              <div style={{ fontSize: 15, fontWeight: 400, color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}>Speeches</div>
               {wiz_speeches && (
                 <div onClick={(e) => e.stopPropagation()}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
-                    <label style={{ fontSize: 13, color: "#6e6358", fontWeight: 300, fontFamily: "'Jost', sans-serif" }}>How many speakers?</label>
+                    <label style={{ fontSize: 13, color: "var(--wtb-text-muted)", fontWeight: 300, fontFamily: "'Jost', sans-serif" }}>How many speakers?</label>
                     <input
                       type="number"
                       value={wiz_speechCount}
                       min={1}
                       step={1}
                       onChange={(e) => setWiz_speechCount(parseInt(e.target.value, 10) || 1)}
-                      style={{ padding: 6, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, width: 60, textAlign: "center", background: "#0f0d0b", color: "#ddd0bc" }}
+                      style={{ padding: 6, border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 14, width: 60, textAlign: "center", background: "var(--wtb-surface)", color: "var(--wtb-text)" }}
                     />
                   </div>
-                  <p style={{ fontSize: 12, color: "#6e6358", margin: "6px 0 0 0", fontFamily: "'Jost', sans-serif" }}>Include anyone doing a blessing or prayer in this count.</p>
-                  <p style={{ fontSize: 12, color: "#6e6358", margin: "4px 0 0 0", fontFamily: "'Jost', sans-serif" }}>Typically 10 minutes per speaker is enough. You can change this to be longer or shorter in your first draft.</p>
+                  <p style={{ fontSize: 12, color: "var(--wtb-text-muted)", margin: "6px 0 0 0", fontFamily: "'Jost', sans-serif" }}>Include anyone doing a blessing or prayer in this count.</p>
+                  <p style={{ fontSize: 12, color: "var(--wtb-text-muted)", margin: "4px 0 0 0", fontFamily: "'Jost', sans-serif" }}>Typically 10 minutes per speaker is enough. You can change this to be longer or shorter in your first draft.</p>
                 </div>
               )}
             </div>
@@ -182,36 +184,36 @@ function WizardStep8(props) {
           {/* Custom Events */}
           {wizSectionHeading("Custom Events")}
           {wiz_customReceptionEvents.map((ev, i) => (
-            <div key={ev.id} style={{ border: "1px solid #1e1c19", borderRadius: 8, padding: "14px 14px 10px", marginBottom: 10, background: "#0f0d0b" }}>
+            <div key={ev.id} style={{ border: "1px solid var(--wtb-border-subtle)", borderRadius: 8, padding: "14px 14px 10px", marginBottom: 10, background: "var(--wtb-surface)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <span style={{ fontSize: 13, color: "#6e6358", fontFamily: "'Jost', sans-serif" }}>Custom Event {i + 1}</span>
+                <span style={{ fontSize: 13, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif" }}>Custom Event {i + 1}</span>
                 <button
                   onClick={() => setWiz_customReceptionEvents(prev => prev.filter((_, idx) => idx !== i))}
-                  style={{ background: "none", border: "1px solid #2a2520", borderRadius: 4, padding: "3px 10px", fontSize: 12, color: "#6e6358", cursor: "pointer" }}
+                  style={{ background: "none", border: "1px solid var(--wtb-border)", borderRadius: 4, padding: "3px 10px", fontSize: 12, color: "var(--wtb-text-muted)", cursor: "pointer" }}
                 >
                   Remove
                 </button>
               </div>
               <div style={{ display: "flex", gap: 10 }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", fontSize: 12, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Label</label>
+                  <label style={{ display: "block", fontSize: 12, color: "var(--wtb-text-muted)", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Label</label>
                   <input
                     type="text"
                     value={ev.label}
                     onChange={(e) => setWiz_customReceptionEvents(prev => { const next = [...prev]; next[i] = { ...next[i], label: e.target.value }; return next; })}
                     placeholder="Event name"
-                    style={{ width: "100%", padding: "8px 10px", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
+                    style={{ width: "100%", padding: "8px 10px", border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}
                   />
                 </div>
                 <div style={{ width: 80 }}>
-                  <label style={{ display: "block", fontSize: 12, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Minutes</label>
+                  <label style={{ display: "block", fontSize: 12, color: "var(--wtb-text-muted)", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Minutes</label>
                   <input
                     type="number"
                     value={ev.duration}
                     min={5}
                     step={5}
                     onChange={(e) => setWiz_customReceptionEvents(prev => { const next = [...prev]; next[i] = { ...next[i], duration: parseInt(e.target.value, 10) || 15 }; return next; })}
-                    style={{ width: "100%", padding: "8px 10px", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", textAlign: "center" }}
+                    style={{ width: "100%", padding: "8px 10px", border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "var(--wtb-surface)", color: "var(--wtb-text)", textAlign: "center" }}
                   />
                 </div>
               </div>
@@ -219,7 +221,7 @@ function WizardStep8(props) {
           ))}
           <button
             onClick={() => { setWiz_customReceptionEvents(prev => [...prev, { id: wiz_customReceptionEventNextId, label: "", duration: 15 }]); setWiz_customReceptionEventNextId(n => n + 1); }}
-            style={{ padding: "9px 18px", background: "#161310", color: "#b8906a", border: "1px solid #b8906a", borderRadius: 8, fontSize: 13, fontWeight: 300, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
+            style={{ padding: "9px 18px", background: "var(--wtb-surface-raised)", color: "var(--wtb-accent)", border: "1px solid var(--wtb-accent)", borderRadius: 8, fontSize: 13, fontWeight: 300, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
           >
             + Add Custom Event
           </button>

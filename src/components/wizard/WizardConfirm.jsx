@@ -29,7 +29,7 @@ function WizardConfirm(props) {
     wiz_speeches, setWiz_speeches, wiz_speechCount, setWiz_speechCount, wiz_dinner, setWiz_dinner,
     wiz_dinnerStartHour, setWiz_dinnerStartHour, wiz_dinnerStartMinute, setWiz_dinnerStartMinute, wiz_dinnerStartPeriod, setWiz_dinnerStartPeriod,
     wiz_dinnerStyle, setWiz_dinnerStyle, wiz_openDanceFloor, setWiz_openDanceFloor, wiz_garterToss, setWiz_garterToss, wiz_bouquetToss, setWiz_bouquetToss,
-    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames, wiz_goldenHour, setWiz_goldenHour,
+    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames,
     wiz_brideReadyAtCeremony, setWiz_brideReadyAtCeremony, wiz_brideReadyAtReception, setWiz_brideReadyAtReception,
     wiz_groomReadyAtCeremony, setWiz_groomReadyAtCeremony, wiz_groomReadyAtReception, setWiz_groomReadyAtReception, wiz_groomReadyAtBride, setWiz_groomReadyAtBride,
     wiz_preCeremonyBrideReady, setWiz_preCeremonyBrideReady, wiz_preCeremonyGroomReady, setWiz_preCeremonyGroomReady,
@@ -40,17 +40,17 @@ function WizardConfirm(props) {
     wiz_grandEntranceSub, setWiz_grandEntranceSub, wiz_customReceptionEvents, setWiz_customReceptionEvents, wiz_customReceptionEventNextId, setWiz_customReceptionEventNextId,
     setWizardStep, setScreen, generateTimeline, withThe,
   } = props;
-      const cardStyle = { background: "#0f0d0b", border: "1px solid #1e1c19", borderRadius: 8, padding: "20px", marginBottom: 12 };
+      const cardStyle = { background: "var(--wtb-surface)", border: "1px solid var(--wtb-border-subtle)", borderRadius: 8, padding: "20px", marginBottom: 12 };
       const sectionHeading = (label) => (
-        <h3 style={{ margin: "0 0 14px 0", fontSize: 12, color: "#b8906a", fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase" }}>{label}</h3>
+        <h3 style={{ margin: "0 0 14px 0", fontSize: 12, color: "var(--wtb-accent)", fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase" }}>{label}</h3>
       );
       const reviewRow = (label, value, incomplete = false) => (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "8px 0", borderBottom: "1px solid #161310", ...(incomplete ? { borderLeft: "2px solid #b8906a", paddingLeft: 8 } : {}) }}>
-          <span style={{ color: "#6e6358", fontFamily: "'Jost', sans-serif", fontSize: 13, fontWeight: 300, flexShrink: 0, marginRight: 12 }}>{label}</span>
-          <span style={{ color: incomplete ? "#b8906a" : "#ddd0bc", textAlign: "right", fontFamily: "'Jost', sans-serif", fontSize: 13 }}>{value}</span>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "8px 0", borderBottom: "1px solid var(--wtb-surface-raised)", ...(incomplete ? { borderLeft: "2px solid var(--wtb-accent)", paddingLeft: 8 } : {}) }}>
+          <span style={{ color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif", fontSize: 13, fontWeight: 300, flexShrink: 0, marginRight: 12 }}>{label}</span>
+          <span style={{ color: incomplete ? "var(--wtb-accent)" : "var(--wtb-text)", textAlign: "right", fontFamily: "'Jost', sans-serif", fontSize: 13 }}>{value}</span>
         </div>
       );
-      const noneSelected = <p style={{ fontSize: 13, color: "#6e6358", fontFamily: "'Jost', sans-serif", margin: 0 }}>None selected</p>;
+      const noneSelected = <p style={{ fontSize: 13, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif", margin: 0 }}>None selected</p>;
 
       // Pre-Ceremony shot types
       const preCeremonyShots = [
@@ -102,8 +102,8 @@ function WizardConfirm(props) {
         <div className="wiz-layout" style={{ padding: "16px 0" }}>
           <div className="wiz-step-col">
             <div style={{ maxWidth: 600, margin: "0 auto", padding: "24px 16px 40px" }}>
-              <h2 style={{ margin: "0 0 6px 0", fontSize: "clamp(22px,4vw,32px)", color: "#ddd0bc", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Ready to Generate Draft</h2>
-              <p style={{ margin: "0 0 20px 0", fontSize: 14, color: "#6e6358", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>Review your selections below, then click Generate Timeline.</p>
+              <h2 style={{ margin: "0 0 6px 0", fontSize: "clamp(22px,4vw,32px)", color: "var(--wtb-text)", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Ready to Generate Draft</h2>
+              <p style={{ margin: "0 0 20px 0", fontSize: 14, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>Review your selections below, then click Generate Timeline.</p>
 
               {/* 1. The Couple */}
               <div style={cardStyle}>
@@ -197,7 +197,6 @@ function WizardConfirm(props) {
                   : reviewRow("Portrait Sessions", "None added")}
                 {reviewRow("Family Groups", wiz_familyGroups === "none" ? "None" : wiz_familyGroups === "5" ? "5 Groups (~20 min)" : "10 Groups (~45 min)")}
                 {wiz_familyGroups !== "none" && wiz_familyGroupNames.some(n => n) && reviewRow("Group Names", wiz_familyGroupNames.filter(Boolean).join(", "))}
-                {reviewRow("Golden Hour", wiz_goldenHour ? "Yes" : "No")}
               </div>
 
               {/* 8. Reception */}
@@ -214,10 +213,10 @@ function WizardConfirm(props) {
               </div>
 
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 8 }}>
-                <button onClick={() => setWizardStep(9)} style={{ padding: "12px 28px", border: "1px solid #b8906a", borderRadius: 8, background: "transparent", color: "#ddd0bc", fontSize: 15, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>
+                <button onClick={() => setWizardStep(9)} style={{ padding: "12px 28px", border: "1px solid var(--wtb-accent)", borderRadius: 8, background: "transparent", color: "var(--wtb-text)", fontSize: 15, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>
                   Go Back
                 </button>
-                <button onClick={generateTimeline} className="generate-btn" style={{ padding: "18px 48px", color: "#060504", border: "none", borderRadius: 10, fontSize: 22, fontWeight: 400, cursor: "pointer", fontFamily: "'Cormorant Garamond', serif" }}>
+                <button onClick={generateTimeline} className="generate-btn" style={{ padding: "18px 48px", color: "var(--wtb-on-accent)", border: "none", borderRadius: 10, fontSize: 22, fontWeight: 400, cursor: "pointer", fontFamily: "'Cormorant Garamond', serif" }}>
                   Generate Timeline
                 </button>
               </div>

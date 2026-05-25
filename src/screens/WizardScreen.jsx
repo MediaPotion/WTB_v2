@@ -26,9 +26,9 @@ function renderWizard(props) {
   const wizToggleStyle = (selected) => ({
     padding: "12px 24px",
     borderRadius: 8,
-    border: selected ? "1px solid #b8906a" : "1px solid #2a2520",
-    background: selected ? "rgba(184,144,106,0.15)" : "#0f0d0b",
-    color: selected ? "#b8906a" : "#6e6358",
+    border: selected ? "1px solid var(--wtb-accent)" : "1px solid var(--wtb-border)",
+    background: selected ? "rgba(184,144,106,0.15)" : "var(--wtb-surface)",
+    color: selected ? "var(--wtb-accent)" : "var(--wtb-text-muted)",
     fontFamily: "'Jost', sans-serif",
     fontWeight: selected ? 400 : 300,
     fontSize: 15,
@@ -44,8 +44,8 @@ function renderWizard(props) {
     gap: 12,
     padding: "14px 16px",
     borderRadius: 8,
-    border: "1px solid #1e1c19",
-    background: "#0f0d0b",
+    border: "1px solid var(--wtb-border-subtle)",
+    background: "var(--wtb-surface)",
     cursor: "pointer",
     marginBottom: 10,
     transition: "border-color 0.2s",
@@ -53,38 +53,38 @@ function renderWizard(props) {
   };
 
   const wizSectionHeading = (text) => (
-    <div style={{ fontFamily: "'Jost', sans-serif", fontSize: 11, fontWeight: 300, letterSpacing: "0.18em", textTransform: "uppercase", color: "#b8906a", margin: "20px 0 10px" }}>{text}</div>
+    <div style={{ fontFamily: "'Jost', sans-serif", fontSize: 11, fontWeight: 300, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--wtb-accent)", margin: "20px 0 10px" }}>{text}</div>
   );
 
   const stepCard = (title, subtitle, content, backFn, nextFn, nextLabel = "Next") => {
     if (inModal) {
       return (
         <div style={{ paddingBottom: 8 }}>
-          {subtitle && <p style={{ margin: "0 0 16px", fontSize: 13, color: "#6e6358", fontFamily: "'Jost', sans-serif", lineHeight: 1.5 }}>{subtitle}</p>}
+          {subtitle && <p style={{ margin: "0 0 16px", fontSize: 13, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif", lineHeight: 1.5 }}>{subtitle}</p>}
           {content}
         </div>
       );
     }
     return (
-      <div className="wiz-layout" style={{ padding: "16px 0", background: "#060504", minHeight: "100vh", fontFamily: "'Jost', sans-serif" }}>
+      <div className="wiz-layout" style={{ padding: "16px 0", background: "var(--wtb-bg)", minHeight: "100vh", fontFamily: "'Jost', sans-serif", color: "var(--wtb-text)" }}>
         <div className="wiz-step-col">
           <div style={{ maxWidth: 600, margin: "0 auto", padding: "24px 16px 40px" }}>
             <div style={{ marginBottom: 24 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#6e6358", marginBottom: 6, fontFamily: "'Jost', sans-serif", letterSpacing: "0.1em" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--wtb-text-muted)", marginBottom: 6, fontFamily: "'Jost', sans-serif", letterSpacing: "0.1em" }}>
                 <span>Step {displayStep} of {totalWizardSteps}</span>
               </div>
-              <div style={{ height: 3, background: "#161310", borderRadius: 2, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${(displayStep / totalWizardSteps) * 100}%`, background: "linear-gradient(90deg, #b8906a, #cfa882)", borderRadius: 2, transition: "width 0.3s ease" }} />
+              <div style={{ height: 3, background: "var(--wtb-surface-raised)", borderRadius: 2, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${(displayStep / totalWizardSteps) * 100}%`, background: "linear-gradient(90deg, var(--wtb-accent), #cfa882)", borderRadius: 2, transition: "width 0.3s ease" }} />
               </div>
             </div>
-            <div style={{ background: "#0f0d0b", border: "1px solid #1e1c19", borderRadius: 12, padding: "24px 20px", marginBottom: 20 }}>
-              <h2 style={{ margin: "0 0 8px 0", fontSize: "clamp(22px,4vw,32px)", color: "#ddd0bc", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>{title}</h2>
-              <p style={{ margin: "0 0 24px 0", fontSize: 14, color: "#6e6358", lineHeight: 1.5, fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>{subtitle}</p>
+            <div style={{ background: "var(--wtb-surface)", border: "1px solid var(--wtb-border-subtle)", borderRadius: 12, padding: "24px 20px", marginBottom: 20 }}>
+              <h2 style={{ margin: "0 0 8px 0", fontSize: "clamp(22px,4vw,32px)", color: "var(--wtb-text)", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>{title}</h2>
+              <p style={{ margin: "0 0 24px 0", fontSize: 14, color: "var(--wtb-text-muted)", lineHeight: 1.5, fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>{subtitle}</p>
               {content}
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-              <button onClick={backFn} style={{ padding: "12px 28px", border: "1px solid #b8906a", borderRadius: 8, background: "transparent", color: "#ddd0bc", fontSize: 15, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300, transition: "all 0.2s" }}>Back</button>
-              <button onClick={nextFn} style={{ padding: "12px 32px", background: "#b8906a", color: "#060504", border: "none", borderRadius: 8, fontSize: 15, fontWeight: 400, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}>{nextLabel}</button>
+              <button onClick={backFn} style={{ padding: "12px 28px", border: "1px solid var(--wtb-accent)", borderRadius: 8, background: "transparent", color: "var(--wtb-text)", fontSize: 15, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300, transition: "all 0.2s" }}>Back</button>
+              <button onClick={nextFn} style={{ padding: "12px 32px", background: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 8, fontSize: 15, fontWeight: 400, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}>{nextLabel}</button>
             </div>
           </div>
         </div>
