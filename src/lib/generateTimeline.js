@@ -1,31 +1,128 @@
 import { formatTime, parseTimeInput } from "./time";
 
-export function generateTimeline(ctx) {
+/**
+ * Build timeline rows from wizard answers. Pure function — no React state or side effects.
+ *
+ * @param {object} wizardAnswers
+ * @param {string} wizardAnswers.date — Wedding date (YYYY-MM-DD) for golden-hour estimate
+ * @param {boolean} wizardAnswers.photoEnabled — Default photo flag on generated rows
+ * @param {boolean} wizardAnswers.videoEnabled — Default video flag on generated rows
+ * @param {number} wizardAnswers.ceremonyDuration — Ceremony length in minutes
+ * @param {string} wizardAnswers.ceremonyHour — Ceremony start hour (1–12)
+ * @param {string} wizardAnswers.ceremonyMinute — Ceremony start minute
+ * @param {string} wizardAnswers.ceremonyPeriod — Ceremony start AM/PM
+ * @param {string} wizardAnswers.receptionHour — Reception start hour
+ * @param {string} wizardAnswers.receptionMinute — Reception start minute
+ * @param {string} wizardAnswers.receptionPeriod — Reception start AM/PM
+ * @param {boolean} wizardAnswers.firstLookGroom — Couple first look before ceremony
+ * @param {boolean|null} wizardAnswers.brideOkayBefore — Bride visible to groom pre-ceremony
+ * @param {boolean} wizardAnswers.grandEntrance — Reception grand entrance
+ * @param {boolean} wizardAnswers.dinner — Reception dinner
+ * @param {string} wizardAnswers.dinnerStartHour — Dinner start hour
+ * @param {string} wizardAnswers.dinnerStartMinute — Dinner start minute
+ * @param {string} wizardAnswers.dinnerStartPeriod — Dinner start AM/PM
+ * @param {string|null} wizardAnswers.dinnerStyle — Dinner style label for notes
+ * @param {string} wizardAnswers.familyGroups — "5", "10", or "none"
+ * @param {string[]} wizardAnswers.familyGroupNames — Optional family group labels
+ * @param {boolean} wizardAnswers.groomReadyAtCeremony — Groom ready at ceremony venue
+ * @param {boolean} wizardAnswers.groomReadyAtReception — Groom ready at reception venue
+ * @param {boolean} wizardAnswers.groomReadyAtBride — Groom ready at bride location
+ * @param {string} wizardAnswers.groomReadyAddress — Groom getting-ready address/name
+ * @param {string} wizardAnswers.ceremonyVenue — Ceremony venue name
+ * @param {boolean} wizardAnswers.receptionSameAsCeremony — Reception at ceremony venue
+ * @param {string} wizardAnswers.receptionVenue — Reception venue name
+ * @param {string} wizardAnswers.receptionAddress — Reception address
+ * @param {string} wizardAnswers.ceremonyAddress — Ceremony address
+ * @param {string} wizardAnswers.brideReadyAddress — Bride getting-ready address/name
+ * @param {boolean} wizardAnswers.firstLookParent — Parent first look
+ * @param {boolean} wizardAnswers.firstLookBridesmaids — Bridesmaids first look
+ * @param {boolean} wizardAnswers.firstLookOther — Other first look
+ * @param {string} wizardAnswers.firstLookGroomLocation — Groom first-look location name
+ * @param {string} wizardAnswers.firstLookParentLocation — Parent first-look location
+ * @param {string} wizardAnswers.firstLookBridesmaidsLocation — Bridesmaids first-look location
+ * @param {string} wizardAnswers.firstLookOtherLocation — Other first-look location
+ * @param {boolean} wizardAnswers.drone — Drone coverage in package
+ * @param {boolean} wizardAnswers.narration — Narration blocks included
+ * @param {object[]} wizardAnswers.portraitLocations — Extra portrait location stops
+ * @param {string} wizardAnswers.distanceBetweenReady — Travel min between ready locations
+ * @param {string} wizardAnswers.distanceGroomToCeremony — Groom ready to ceremony travel
+ * @param {string} wizardAnswers.distanceBrideToCeremony — Bride ready to ceremony travel
+ * @param {string} wizardAnswers.distanceReceptionToCeremony — Reception to ceremony travel
+ * @param {boolean} wizardAnswers.ceremonyOutdoor — Ceremony outdoors
+ * @param {boolean} wizardAnswers.goldenHour — Golden hour portraits requested
+ * @param {boolean} wizardAnswers.cakeCutting — Cake cutting at reception
+ * @param {boolean} wizardAnswers.firstDance — First dance at reception
+ * @param {boolean} wizardAnswers.brideParentDance — Bride parent dance
+ * @param {boolean} wizardAnswers.groomParentDance — Groom parent dance
+ * @param {boolean} wizardAnswers.specialDance — Special dance
+ * @param {boolean} wizardAnswers.speeches — Speeches at reception
+ * @param {number} wizardAnswers.speechCount — Number of speakers
+ * @param {boolean} wizardAnswers.openDanceFloor — Open dancing
+ * @param {boolean} wizardAnswers.garterToss — Garter toss
+ * @param {boolean} wizardAnswers.bouquetToss — Bouquet toss
+ * @returns {object[]} Timeline row objects
+ */
+export function generateTimeline(wizardAnswers) {
   const {
-    date, photoEnabled, videoEnabled,
-    wiz_ceremonyDuration, wiz_ceremonyHour, wiz_ceremonyMinute, wiz_ceremonyPeriod,
-    wiz_receptionHour, wiz_receptionMinute, wiz_receptionPeriod,
-    wiz_firstLookGroom, wiz_brideOkayBefore,
-    wiz_grandEntrance, wiz_dinner, wiz_dinnerStartHour, wiz_dinnerStartMinute, wiz_dinnerStartPeriod,
-    wiz_familyGroups, wiz_familyGroupNames,
-    wiz_groomReadyAtCeremony, wiz_groomReadyAtReception, wiz_groomReadyAtBride, wiz_groomReadyAddress,
-    wiz_ceremonyVenue, wiz_receptionSameAsCeremony, wiz_receptionVenue, wiz_receptionAddress, wiz_ceremonyAddress,
-    wiz_brideReadyAddress,
-    wiz_firstLookParent, wiz_firstLookBridesmaids, wiz_firstLookOther,
-    wiz_firstLookGroomLocation, wiz_firstLookParentLocation, wiz_firstLookBridesmaidsLocation, wiz_firstLookOtherLocation,
-    wiz_drone, wiz_narration, wiz_portraitLocations,
-    wiz_distanceBetweenReady, wiz_distanceGroomToCeremony, wiz_distanceBrideToCeremony, wiz_distanceReceptionToCeremony,
-    wiz_ceremonyOutdoor, wiz_goldenHour,
-    wiz_cakeCutting, wiz_firstDance, wiz_brideParentDance, wiz_groomParentDance, wiz_specialDance,
-    wiz_speeches, wiz_speechCount, wiz_openDanceFloor, wiz_garterToss, wiz_bouquetToss,
-    wiz_photoCoverageHours, wiz_videoCoverageHours,
-    setUserRows, setNextId, setHistory, setRedoStack,
-    setPhotoStartHour, setPhotoStartMinute, setPhotoStartPeriod, setPhotoEndHour, setPhotoEndMinute, setPhotoEndPeriod,
-    setVideoStartHour, setVideoStartMinute, setVideoStartPeriod, setVideoEndHour, setVideoEndMinute, setVideoEndPeriod,
-    setScreen, setShowSettingsModal, mainScrollRef,
-  } = ctx;
+    date,
+    photoEnabled,
+    videoEnabled,
+    ceremonyDuration: wiz_ceremonyDuration,
+    ceremonyHour: wiz_ceremonyHour,
+    ceremonyMinute: wiz_ceremonyMinute,
+    ceremonyPeriod: wiz_ceremonyPeriod,
+    receptionHour: wiz_receptionHour,
+    receptionMinute: wiz_receptionMinute,
+    receptionPeriod: wiz_receptionPeriod,
+    firstLookGroom: wiz_firstLookGroom,
+    brideOkayBefore: wiz_brideOkayBefore,
+    grandEntrance: wiz_grandEntrance,
+    dinner: wiz_dinner,
+    dinnerStartHour: wiz_dinnerStartHour,
+    dinnerStartMinute: wiz_dinnerStartMinute,
+    dinnerStartPeriod: wiz_dinnerStartPeriod,
+    dinnerStyle: wiz_dinnerStyle,
+    familyGroups: wiz_familyGroups,
+    familyGroupNames: wiz_familyGroupNames,
+    groomReadyAtCeremony: wiz_groomReadyAtCeremony,
+    groomReadyAtReception: wiz_groomReadyAtReception,
+    groomReadyAtBride: wiz_groomReadyAtBride,
+    groomReadyAddress: wiz_groomReadyAddress,
+    ceremonyVenue: wiz_ceremonyVenue,
+    receptionSameAsCeremony: wiz_receptionSameAsCeremony,
+    receptionVenue: wiz_receptionVenue,
+    receptionAddress: wiz_receptionAddress,
+    ceremonyAddress: wiz_ceremonyAddress,
+    brideReadyAddress: wiz_brideReadyAddress,
+    firstLookParent: wiz_firstLookParent,
+    firstLookBridesmaids: wiz_firstLookBridesmaids,
+    firstLookOther: wiz_firstLookOther,
+    firstLookGroomLocation: wiz_firstLookGroomLocation,
+    firstLookParentLocation: wiz_firstLookParentLocation,
+    firstLookBridesmaidsLocation: wiz_firstLookBridesmaidsLocation,
+    firstLookOtherLocation: wiz_firstLookOtherLocation,
+    drone: wiz_drone,
+    narration: wiz_narration,
+    portraitLocations: wiz_portraitLocations,
+    distanceBetweenReady: wiz_distanceBetweenReady,
+    distanceGroomToCeremony: wiz_distanceGroomToCeremony,
+    distanceBrideToCeremony: wiz_distanceBrideToCeremony,
+    distanceReceptionToCeremony: wiz_distanceReceptionToCeremony,
+    ceremonyOutdoor: wiz_ceremonyOutdoor,
+    goldenHour: wiz_goldenHour,
+    cakeCutting: wiz_cakeCutting,
+    firstDance: wiz_firstDance,
+    brideParentDance: wiz_brideParentDance,
+    groomParentDance: wiz_groomParentDance,
+    specialDance: wiz_specialDance,
+    speeches: wiz_speeches,
+    speechCount: wiz_speechCount,
+    openDanceFloor: wiz_openDanceFloor,
+    garterToss: wiz_garterToss,
+    bouquetToss: wiz_bouquetToss,
+  } = wizardAnswers;
 
-    // ---- Setup ----
+  // ---- Setup ----
     const ceremonyDurationMin = wiz_ceremonyDuration || 30;
     const ceremonyStartTime = parseTimeInput(wiz_ceremonyHour, wiz_ceremonyMinute, wiz_ceremonyPeriod);
     const receptionStartTime = parseTimeInput(wiz_receptionHour, wiz_receptionMinute, wiz_receptionPeriod);
@@ -293,44 +390,19 @@ export function generateTimeline(ctx) {
       ...receptionBlocks,
     ];
 
-    const newRows = allBlocks.map((block, idx) => ({
-      id: idx + 1,
-      event: block.event,
-      time: block.time,
-      duration: block.duration,
-      location: block.location || "",
-      isOutdoor: block.isOutdoor || false,
-      photo: photoEnabled,
-      video: videoEnabled,
-      notes: block.notes || "",
-      isTimeLocked: false,
-      color: block.color || "",
-      type: block.type || "event",
-      address: block.address || "",
-    }));
-    setUserRows(newRows);
-    setNextId(newRows.length + 1);
-    setHistory([]);
-    setRedoStack([]);
-
-    // Set photo/video coverage windows from Step 1 hours
-    if (allBlocks.length > 0) {
-      const coverageStart = allBlocks[0].time;
-      if (wiz_photoCoverageHours) {
-        const photoEnd = coverageStart + parseFloat(wiz_photoCoverageHours) * 60;
-        const ps = formatTime(coverageStart); const pe = formatTime(photoEnd);
-        setPhotoStartHour(ps.hour); setPhotoStartMinute(ps.minute); setPhotoStartPeriod(ps.period);
-        setPhotoEndHour(pe.hour); setPhotoEndMinute(pe.minute); setPhotoEndPeriod(pe.period);
-      }
-      if (wiz_videoCoverageHours) {
-        const videoEnd = coverageStart + parseFloat(wiz_videoCoverageHours) * 60;
-        const vs = formatTime(coverageStart); const ve = formatTime(videoEnd);
-        setVideoStartHour(vs.hour); setVideoStartMinute(vs.minute); setVideoStartPeriod(vs.period);
-        setVideoEndHour(ve.hour); setVideoEndMinute(ve.minute); setVideoEndPeriod(ve.period);
-      }
-    }
-
-    setScreen("timeline");
-    setShowSettingsModal(false);
-    if (mainScrollRef.current) mainScrollRef.current.scrollTop = 0;
+  return allBlocks.map((block, idx) => ({
+    id: idx + 1,
+    event: block.event,
+    time: block.time,
+    duration: block.duration,
+    location: block.location || "",
+    isOutdoor: block.isOutdoor || false,
+    photo: photoEnabled,
+    video: videoEnabled,
+    notes: block.notes || "",
+    isTimeLocked: false,
+    color: block.color || "",
+    type: block.type || "event",
+    address: block.address || "",
+  }));
 }

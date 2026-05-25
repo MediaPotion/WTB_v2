@@ -252,29 +252,6 @@ export default function MobileApp() {
     videoEnabled,
   };
 
-  const generateTimelineCtx = {
-    date, photoEnabled, videoEnabled,
-    wiz_ceremonyDuration, wiz_ceremonyHour, wiz_ceremonyMinute, wiz_ceremonyPeriod,
-    wiz_receptionHour, wiz_receptionMinute, wiz_receptionPeriod,
-    wiz_firstLookGroom, wiz_brideOkayBefore,
-    wiz_grandEntrance, wiz_dinner, wiz_dinnerStartHour, wiz_dinnerStartMinute, wiz_dinnerStartPeriod,
-    wiz_familyGroups, wiz_familyGroupNames,
-    wiz_groomReadyAtCeremony, wiz_groomReadyAtReception, wiz_groomReadyAtBride, wiz_groomReadyAddress,
-    wiz_ceremonyVenue, wiz_receptionSameAsCeremony, wiz_receptionVenue, wiz_receptionAddress, wiz_ceremonyAddress,
-    wiz_brideReadyAddress,
-    wiz_firstLookParent, wiz_firstLookBridesmaids, wiz_firstLookOther,
-    wiz_firstLookGroomLocation, wiz_firstLookParentLocation, wiz_firstLookBridesmaidsLocation, wiz_firstLookOtherLocation,
-    wiz_drone, wiz_narration, wiz_portraitLocations,
-    wiz_distanceBetweenReady, wiz_distanceGroomToCeremony, wiz_distanceBrideToCeremony, wiz_distanceReceptionToCeremony,
-    wiz_ceremonyOutdoor, wiz_goldenHour,
-    wiz_cakeCutting, wiz_firstDance, wiz_brideParentDance, wiz_groomParentDance, wiz_specialDance,
-    wiz_speeches, wiz_speechCount, wiz_openDanceFloor, wiz_garterToss, wiz_bouquetToss,
-    wiz_photoCoverageHours, wiz_videoCoverageHours,
-    setUserRows, setNextId, setHistory, setRedoStack,
-    setPhotoStartHour, setPhotoStartMinute, setPhotoStartPeriod, setPhotoEndHour, setPhotoEndMinute, setPhotoEndPeriod,
-    setVideoStartHour, setVideoStartMinute, setVideoStartPeriod, setVideoEndHour, setVideoEndMinute, setVideoEndPeriod,
-    setScreen, setShowSettingsModal, mainScrollRef,
-  };
 
   const rows = useMemo(() => {
     return [...userRows].sort((a, b) => a.time - b.time);
@@ -1086,7 +1063,100 @@ export default function MobileApp() {
     wiz_grandEntranceSub, setWiz_grandEntranceSub, wiz_customReceptionEvents, setWiz_customReceptionEvents, wiz_customReceptionEventNextId, setWiz_customReceptionEventNextId,
   };
 
-  const generateTimeline = () => generateTimelineLib(generateTimelineCtx);
+  const generateTimeline = () => {
+    const rows = generateTimelineLib({
+      date,
+      photoEnabled,
+      videoEnabled,
+      ceremonyDuration: wiz_ceremonyDuration,
+      ceremonyHour: wiz_ceremonyHour,
+      ceremonyMinute: wiz_ceremonyMinute,
+      ceremonyPeriod: wiz_ceremonyPeriod,
+      receptionHour: wiz_receptionHour,
+      receptionMinute: wiz_receptionMinute,
+      receptionPeriod: wiz_receptionPeriod,
+      firstLookGroom: wiz_firstLookGroom,
+      brideOkayBefore: wiz_brideOkayBefore,
+      grandEntrance: wiz_grandEntrance,
+      dinner: wiz_dinner,
+      dinnerStartHour: wiz_dinnerStartHour,
+      dinnerStartMinute: wiz_dinnerStartMinute,
+      dinnerStartPeriod: wiz_dinnerStartPeriod,
+      dinnerStyle: wiz_dinnerStyle,
+      familyGroups: wiz_familyGroups,
+      familyGroupNames: wiz_familyGroupNames,
+      groomReadyAtCeremony: wiz_groomReadyAtCeremony,
+      groomReadyAtReception: wiz_groomReadyAtReception,
+      groomReadyAtBride: wiz_groomReadyAtBride,
+      groomReadyAddress: wiz_groomReadyAddress,
+      ceremonyVenue: wiz_ceremonyVenue,
+      receptionSameAsCeremony: wiz_receptionSameAsCeremony,
+      receptionVenue: wiz_receptionVenue,
+      receptionAddress: wiz_receptionAddress,
+      ceremonyAddress: wiz_ceremonyAddress,
+      brideReadyAddress: wiz_brideReadyAddress,
+      firstLookParent: wiz_firstLookParent,
+      firstLookBridesmaids: wiz_firstLookBridesmaids,
+      firstLookOther: wiz_firstLookOther,
+      firstLookGroomLocation: wiz_firstLookGroomLocation,
+      firstLookParentLocation: wiz_firstLookParentLocation,
+      firstLookBridesmaidsLocation: wiz_firstLookBridesmaidsLocation,
+      firstLookOtherLocation: wiz_firstLookOtherLocation,
+      drone: wiz_drone,
+      narration: wiz_narration,
+      portraitLocations: wiz_portraitLocations,
+      distanceBetweenReady: wiz_distanceBetweenReady,
+      distanceGroomToCeremony: wiz_distanceGroomToCeremony,
+      distanceBrideToCeremony: wiz_distanceBrideToCeremony,
+      distanceReceptionToCeremony: wiz_distanceReceptionToCeremony,
+      ceremonyOutdoor: wiz_ceremonyOutdoor,
+      goldenHour: wiz_goldenHour,
+      cakeCutting: wiz_cakeCutting,
+      firstDance: wiz_firstDance,
+      brideParentDance: wiz_brideParentDance,
+      groomParentDance: wiz_groomParentDance,
+      specialDance: wiz_specialDance,
+      speeches: wiz_speeches,
+      speechCount: wiz_speechCount,
+      openDanceFloor: wiz_openDanceFloor,
+      garterToss: wiz_garterToss,
+      bouquetToss: wiz_bouquetToss,
+    });
+    setUserRows(rows);
+    setNextId(rows.length + 1);
+    setHistory([]);
+    setRedoStack([]);
+
+    if (rows.length > 0) {
+      const coverageStart = rows[0].time;
+      if (wiz_photoCoverageHours) {
+        const photoEnd = coverageStart + parseFloat(wiz_photoCoverageHours) * 60;
+        const ps = formatTime(coverageStart);
+        const pe = formatTime(photoEnd);
+        setPhotoStartHour(ps.hour);
+        setPhotoStartMinute(ps.minute);
+        setPhotoStartPeriod(ps.period);
+        setPhotoEndHour(pe.hour);
+        setPhotoEndMinute(pe.minute);
+        setPhotoEndPeriod(pe.period);
+      }
+      if (wiz_videoCoverageHours) {
+        const videoEnd = coverageStart + parseFloat(wiz_videoCoverageHours) * 60;
+        const vs = formatTime(coverageStart);
+        const ve = formatTime(videoEnd);
+        setVideoStartHour(vs.hour);
+        setVideoStartMinute(vs.minute);
+        setVideoStartPeriod(vs.period);
+        setVideoEndHour(ve.hour);
+        setVideoEndMinute(ve.minute);
+        setVideoEndPeriod(ve.period);
+      }
+    }
+
+    setScreen("timeline");
+    setShowSettingsModal(false);
+    if (mainScrollRef.current) mainScrollRef.current.scrollTop = 0;
+  };
   const renderSettingsForm = (isModal) => (
     <div>
       {/* Section 1: Wedding Details */}
