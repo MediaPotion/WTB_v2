@@ -27,10 +27,14 @@ function defaultIsOutdoorForEvent(eventName) {
 const DESKTOP_MIN_WIDTH = "(min-width: 901px)";
 
 function useMediaQuery(query) {
-  const [matches, setMatches] = useState(() =>
-    typeof window !== "undefined" ? window.matchMedia(query).matches : false
-  );
+  const [matches, setMatches] = useState(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return false;
+    }
+    return window.matchMedia(query).matches;
+  });
   useEffect(() => {
+    if (typeof window.matchMedia !== "function") return undefined;
     const mq = window.matchMedia(query);
     const onChange = () => setMatches(mq.matches);
     onChange();
