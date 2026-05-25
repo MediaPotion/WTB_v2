@@ -1567,7 +1567,7 @@ function TimelineRow({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "auto auto 1fr 0.6fr",
+            gridTemplateColumns: "auto auto 0.6fr 1fr",
             padding: "8px 8px 8px 6px",
             gap: 9,
             alignItems: "start",
