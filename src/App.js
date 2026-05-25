@@ -2453,6 +2453,53 @@ export default function MobileApp() {
     }
   };
 
+  // Cascade times based on the visual (array index) order of rows, using the
+  // ceremony row as a fixed anchor. Pre-ceremony rows cascade backwards from
+  // ceremony start; post-ceremony rows cascade forwards from ceremony end.
+  const cascadeTimesByOrder = (orderedRows) => {
+    const isCeremony = (r) => r.event === "Ceremony: Average" || r.event === "Ceremony: Catholic";
+    const ceremonyIdx = orderedRows.findIndex(isCeremony);
+    const result = orderedRows.map(r => ({ ...r }));
+
+    if (ceremonyIdx === -1) {
+      // No ceremony anchor — cascade forward from the first row's existing time
+      let t = result[0]?.time ?? 0;
+      for (let i = 0; i < result.length; i++) {
+        if (result[i].isTimeLocked) {
+          t = result[i].time + result[i].duration;
+        } else {
+          result[i].time = t;
+          t += result[i].duration;
+        }
+      }
+      return result;
+    }
+
+    // Cascade pre-ceremony rows backwards from ceremony start
+    let t = result[ceremonyIdx].time;
+    for (let i = ceremonyIdx - 1; i >= 0; i--) {
+      if (result[i].isTimeLocked) {
+        t = result[i].time;
+      } else {
+        t -= result[i].duration;
+        result[i].time = t;
+      }
+    }
+
+    // Cascade post-ceremony rows forwards from ceremony end
+    t = result[ceremonyIdx].time + result[ceremonyIdx].duration;
+    for (let i = ceremonyIdx + 1; i < result.length; i++) {
+      if (result[i].isTimeLocked) {
+        t = result[i].time + result[i].duration;
+      } else {
+        result[i].time = t;
+        t += result[i].duration;
+      }
+    }
+
+    return result;
+  };
+
   // Chain current row's time to previous row's end time
   const handleChainToPrevious = (index) => {
     console.log('[Chain] handleChainToPrevious called for index', index);
@@ -2811,27 +2858,7 @@ export default function MobileApp() {
     working.splice(targetIndex, 0, moved);
     console.log('[DnD] State after splice:', JSON.parse(JSON.stringify(working.map(r => ({id: r.id, time: r.time, event: r.event})))));
 
-    // Assign a new time to the moved row based on its new neighbors to preserve order
-    const prev = working[targetIndex - 1] || null;
-    const next = working[targetIndex + 1] || null; // The row *after* the moved one
-
-    if (!moved.isTimeLocked) {
-      if (prev) {
-        // If there's a row before it, start after that one ends.
-        moved.time = prev.time + prev.duration;
-      } else if (next) {
-        // If it's the new first row, end it 5 mins before the next one starts.
-        moved.time = Math.max(0, next.time - moved.duration - 5);
-      } else {
-        // Only row in the list, keep its time or default to noon.
-        moved.time = moved.time || 12 * 60;
-      }
-      console.log(`[DnD] New time for moved row ${moved.id}: ${moved.time}`);
-    }
-
-    const recalculated = recalculateTimes(working, Math.min(sourceIndex, targetIndex));
-    console.log('[DnD] Final recalculated state:', JSON.parse(JSON.stringify(recalculated.map(r => ({id: r.id, time: r.time, event: r.event})))));
-
+    const recalculated = cascadeTimesByOrder(working);
     saveToHistory(recalculated);
     setDraggedRowId(null);
     setIsDraggingOver(false);
