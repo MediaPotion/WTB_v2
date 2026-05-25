@@ -1262,9 +1262,34 @@ function TimelineRow({
         position: "relative",
         transition: "all 0.2s ease",
         minHeight: "60px",
+        display: "flex",
       }}
       title={dropping ? "Drop here to add event" : ""}
     >
+      {/* Drag handle strip — full height, left edge */}
+      <div
+        style={{
+          width: 36,
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "grab",
+          borderRight: isLocation ? "1px solid #c8bfb0" : "1px solid #2a2520",
+          background: isLocation ? "#c4b8a0" : "#1e1a16",
+          color: isLocation ? "#6e5c3e" : "#7a6a58",
+          fontSize: 22,
+          userSelect: "none",
+          lineHeight: 1,
+        }}
+        title="Drag to reorder"
+      >
+        ⠿
+      </div>
+
+      {/* Card content wrapper */}
+      <div style={{ flex: 1, minWidth: 0, overflow: "hidden", position: "relative" }}>
+
       {/* Overlap warning badge — centered at top of card */}
       {overlapWith && (
         <div
@@ -1295,11 +1320,11 @@ function TimelineRow({
           )}
         </div>
       )}
-      {/* TOP row: Drag handle (left) | Time | Event (+photo/video) | Delete (right) */}
+      {/* TOP row: Time | Event (+photo/video) | Delete (right) */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "auto auto 1fr",
+          gridTemplateColumns: "auto 1fr",
           padding: 6,
           backgroundColor: isConstraint ? "rgba(180,0,0,0.12)" : isLocation ? "#ede7da" : "#0f0d0b",
           borderBottom: isLocation ? "1px solid #c8bfb0" : "1px solid #1e1c19",
@@ -1307,25 +1332,7 @@ function TimelineRow({
           alignItems: "center",
         }}
       >
-        {/* Drag handle (left) */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 18,
-            cursor: "grab",
-            color: isLocation ? "#a89070" : "#3a3530",
-            fontSize: 15,
-            userSelect: "none",
-            lineHeight: 1,
-          }}
-          title="Drag to reorder"
-        >
-          ⠿
-        </div>
-
-        {/* Time (middle) */}
+        {/* Time (left) */}
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
             <label
@@ -1563,19 +1570,17 @@ function TimelineRow({
           />
         </div>
       ) : isLocation ? (
-        /* BOTTOM: Location block — [spacer] | Travel time | Address | Notes */
+        /* BOTTOM: Location block — Travel time | Address | Notes */
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "auto auto 0.6fr 1fr",
+            gridTemplateColumns: "auto 0.6fr 1fr",
             padding: "8px 8px 8px 6px",
             gap: 9,
             alignItems: "stretch",
             background: "#f5f0e8",
           }}
         >
-          {/* Spacer — aligns with drag handle above */}
-          <div style={{ width: 18, alignSelf: "start" }} />
           {/* Travel time — centred under the 88px time button */}
           <div style={{ width: 88, display: "flex", flexDirection: "column", alignItems: "center", alignSelf: "start" }}>
             <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Travel time</label>
@@ -1623,14 +1628,12 @@ function TimelineRow({
           className="wtb-bottom"
           style={{
             display: "grid",
-            gridTemplateColumns: "auto auto 1fr",
+            gridTemplateColumns: "auto 1fr",
             padding: "8px 8px 8px 6px",
             gap: 9,
             alignItems: "start",
           }}
         >
-          {/* Spacer — aligns with drag handle above */}
-          <div style={{ width: 18 }} />
           {/* Duration — centred under the 88px time button */}
           <div style={{ width: 88, display: "flex", flexDirection: "column", alignItems: "center" }}>
             <label
@@ -1739,6 +1742,7 @@ function TimelineRow({
           onClose={() => setTimeOpen(false)}
         />
       )}
+      </div>{/* end content wrapper */}
     </div>
   );
 }
