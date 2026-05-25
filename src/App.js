@@ -806,6 +806,8 @@ const SETTINGS_WIZARD_TABS = [
   { label: "Draft",           step: 99 },
 ];
 
+const AUTOSAVE_KEY = "wtb_autosave";
+
 /* ---------------- Time Popover ---------------- */
 function TimePopover({ open, value, onSet, onClose }) {
   const [hh, setHh] = useState("12");
@@ -2541,10 +2543,12 @@ export default function MobileApp() {
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
+  const [showAutosaveBanner, setShowAutosaveBanner] = useState(false);
   const isDirtyRef = useRef(false);
   const isApplyingProjectRef = useRef(false);
   const dirtyTrackingEnabledRef = useRef(false);
   const suppressDirtyRef = useRef(false);
+  const autosaveTimerRef = useRef(null);
 
   // ---- Wizard State ----
   const [wizardStep, setWizardStep] = useState(1);
@@ -2705,11 +2709,30 @@ export default function MobileApp() {
     isDirtyRef.current = false;
   };
 
+  const clearAutosave = () => {
+    try {
+      localStorage.removeItem(AUTOSAVE_KEY);
+    } catch (_) {
+      /* ignore storage errors */
+    }
+    setShowAutosaveBanner(false);
+  };
+
   useEffect(() => {
     if (screen !== "welcome") {
       dirtyTrackingEnabledRef.current = true;
     }
   }, [screen]);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(AUTOSAVE_KEY)) {
+        setShowAutosaveBanner(true);
+      }
+    } catch (_) {
+      /* ignore storage errors */
+    }
+  }, []);
 
   useEffect(() => {
     if (!dirtyTrackingEnabledRef.current || isApplyingProjectRef.current) return;
@@ -3428,6 +3451,7 @@ export default function MobileApp() {
     link.download = buildDefaultFilename("json");
     link.click();
     URL.revokeObjectURL(url);
+    clearAutosave();
     clearDirty();
   };
 
@@ -3442,6 +3466,7 @@ export default function MobileApp() {
         isApplyingProjectRef.current = true;
         applyProjectData(projectData);
         clearDirty();
+        clearAutosave();
         setScreen("timeline");
         isApplyingProjectRef.current = false;
       } catch (err) {
@@ -3453,7 +3478,25 @@ export default function MobileApp() {
     event.target.value = "";
   };
 
+  const restoreAutosave = () => {
+    try {
+      const raw = localStorage.getItem(AUTOSAVE_KEY);
+      if (!raw) return;
+      const projectData = JSON.parse(raw);
+      isApplyingProjectRef.current = true;
+      applyProjectData(projectData);
+      setScreen("timeline");
+      clearDirty();
+      setShowAutosaveBanner(false);
+      isApplyingProjectRef.current = false;
+      if (mainScrollRef.current) mainScrollRef.current.scrollTop = 0;
+    } catch (_) {
+      clearAutosave();
+    }
+  };
+
   const startNewTimeline = () => {
+    clearAutosave();
     clearDirty();
     setShowUnsavedConfirm(false);
     setWizardStep(1);
@@ -3468,6 +3511,50 @@ export default function MobileApp() {
     }
     startNewTimeline();
   };
+
+  useEffect(() => {
+    if (!dirtyTrackingEnabledRef.current || isApplyingProjectRef.current || isTimelineEmpty()) {
+      return;
+    }
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      try {
+        localStorage.setItem(
+          AUTOSAVE_KEY,
+          JSON.stringify({ ...buildProjectData(), screen, nextId })
+        );
+      } catch (_) {
+        /* ignore storage errors */
+      }
+    }, 500);
+    return () => {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    };
+  }, [
+    userRows,
+    fixedEvents,
+    date,
+    bride,
+    groom,
+    brideLabel,
+    groomLabel,
+    photoStartHour,
+    photoStartMinute,
+    photoStartPeriod,
+    photoEndHour,
+    photoEndMinute,
+    photoEndPeriod,
+    videoStartHour,
+    videoStartMinute,
+    videoStartPeriod,
+    videoEndHour,
+    videoEndMinute,
+    videoEndPeriod,
+    photoEnabled,
+    videoEnabled,
+    screen,
+    nextId,
+  ]);
 
   // Wizard location helpers
   const addWizLocation = () => {
@@ -5457,6 +5544,27 @@ export default function MobileApp() {
         /* ============ WELCOME SCREEN ============ */
         <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", background: "#060504" }}>
           <div style={{ textAlign: "center", maxWidth: 500, width: "100%" }}>
+            {showAutosaveBanner && (
+              <div style={{ marginBottom: 24, padding: "14px 16px", background: "#161310", border: "1px solid #b8906a", borderRadius: 8, textAlign: "left" }}>
+                <p style={{ margin: "0 0 12px 0", fontSize: 14, color: "#ddd0bc", fontFamily: "'Jost', sans-serif", fontWeight: 300, lineHeight: 1.5 }}>
+                  You have an unsaved timeline from your last session. Would you like to restore it?
+                </p>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button
+                    onClick={restoreAutosave}
+                    style={{ padding: "8px 16px", background: "#b8906a", color: "#060504", border: "none", borderRadius: 6, fontSize: 13, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}
+                  >
+                    Restore Timeline
+                  </button>
+                  <button
+                    onClick={clearAutosave}
+                    style={{ padding: "8px 16px", background: "transparent", color: "#6e6358", border: "1px solid #2a2520", borderRadius: 6, fontSize: 13, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
             <h1 className="welcome-fade-up" style={{ fontSize: "clamp(36px,6vw,72px)", fontWeight: 300, color: "#ddd0bc", margin: "0 0 8px 0", fontFamily: "'Cormorant Garamond', serif", letterSpacing: "0.05em" }}>
               Wedding Timeline Builder
             </h1>
