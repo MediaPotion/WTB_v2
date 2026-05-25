@@ -143,9 +143,17 @@ export function generateTimeline(wizardAnswers) {
     locations: wiz_locations,
     dinnerFlexibility: wiz_dinnerFlexibility = 0,
     receptionStartFlexibility: wiz_receptionStartFlexibility = 0,
+    appliedLogisticsSuggestions: wiz_appliedLogisticsSuggestions = [],
   } = wizardAnswers;
 
-  const includePreCeremonyDetails = wiz_preCeremonyDetails !== false;
+  const skipPreCeremonyDrone = wiz_appliedLogisticsSuggestions.some(
+    (s) => s.type === "move_drone"
+  );
+  const skipPreCeremonyDetails = wiz_appliedLogisticsSuggestions.some(
+    (s) => s.type === "move_details"
+  );
+  const includePreCeremonyDetails =
+    wiz_preCeremonyDetails !== false && !skipPreCeremonyDetails;
   const includePreCeremonyBrideReady = wiz_preCeremonyBrideReady === true;
   const includePreCeremonyPreDress = wiz_preCeremonyPreDress === true;
   const includePreCeremonyBrideParty = wiz_preCeremonyBrideParty !== false;
@@ -178,8 +186,14 @@ export function generateTimeline(wizardAnswers) {
     const neitherFitsPost = remainingAfterFamily < 15;
     const bothFitPost     = remainingAfterFamily >= 35;
     // Pre-ceremony flags: only when post-ceremony time is insufficient and couple can be seen before
-    const weddingPartyPre = neitherFitsPost && groupShotsBeforeCeremony;
-    const brideGroomPre   = !bothFitPost && groupShotsBeforeCeremony;
+    let weddingPartyPre = neitherFitsPost && groupShotsBeforeCeremony;
+    let brideGroomPre = !bothFitPost && groupShotsBeforeCeremony;
+    for (const s of wiz_appliedLogisticsSuggestions) {
+      if (s.type === "move_pre_ceremony" && groupShotsBeforeCeremony) {
+        if (s.targetEvents?.includes("Wedding Party: Group Shots")) weddingPartyPre = true;
+        if (s.targetEvents?.includes("Bride & Groom: Portraits")) brideGroomPre = true;
+      }
+    }
 
     const familyGroupNotes = wiz_familyGroups !== "none" && wiz_familyGroupNames.some(n => n)
       ? wiz_familyGroupNames.filter(Boolean).map((n, i) => `${i + 1}. ${n}`).join(", ")
@@ -235,7 +249,9 @@ export function generateTimeline(wizardAnswers) {
     preBlocks.push({ type: "location", event: brideLoc, address: brideLocAddress, duration: 0, notes: "Start of day" });
     // Detail shots (earliest in the day)
     if (includePreCeremonyDetails) {
-      if (wiz_drone) preBlocks.push({ event: "Details: Drone & Venue Shots", duration: 30, isOutdoor: true });
+      if (wiz_drone && !skipPreCeremonyDrone) {
+        preBlocks.push({ event: "Details: Drone & Venue Shots", duration: 30, isOutdoor: true });
+      }
       preBlocks.push({ event: "Details: Rings, Invitations, & Accessories", duration: 20 });
       preBlocks.push({ event: "Details: Dress Shots", duration: 10 });
     }
@@ -322,8 +338,12 @@ export function generateTimeline(wizardAnswers) {
     const pushPost = (block) => { block.time = postT; postT += block.duration; postBlocks.push(block); };
 
     // Family photos — always immediately after ceremony, before anything else
-    if (wiz_familyGroups === "5")  pushPost({ event: "Group Photos: Family (5 Groups)",  duration: 20, notes: familyGroupNotes, isOutdoor: true });
-    if (wiz_familyGroups === "10") pushPost({ event: "Group Photos: Family (10 Groups)", duration: 45, notes: familyGroupNotes, isOutdoor: true });
+    if (wiz_familyGroups === "5") {
+      pushPost({ event: "Group Photos: Family (5 Groups)", duration: 20, notes: familyGroupNotes, isOutdoor: true });
+    }
+    if (wiz_familyGroups === "10") {
+      pushPost({ event: "Group Photos: Family (10 Groups)", duration: 45, notes: familyGroupNotes, isOutdoor: true });
+    }
     // Wedding Party: post if time allows; TIME CONSTRAINT if neither fits and can't go pre-ceremony
     if (!neitherFitsPost) {
       pushPost({ event: "Wedding Party: Group Shots", duration: 15, isOutdoor: true });
@@ -415,6 +435,19 @@ export function generateTimeline(wizardAnswers) {
       ...preBlocks, ...ceremonyBlocks, ...postBlocks,
       ...receptionBlocks,
     ];
+
+    const earlierStart = wiz_appliedLogisticsSuggestions.find(
+      (s) => s.type === "earlier_start" && s.newTime != null
+    );
+    if (earlierStart && allBlocks.length > 0) {
+      const minTime = Math.min(...allBlocks.map((b) => b.time));
+      if (minTime > earlierStart.newTime) {
+        const shift = minTime - earlierStart.newTime;
+        allBlocks.forEach((b) => {
+          b.time -= shift;
+        });
+      }
+    }
 
   const flexibility = {
     dinnerFlexibility: wiz_dinnerFlexibility,

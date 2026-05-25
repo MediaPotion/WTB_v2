@@ -9,12 +9,18 @@ import { WizardStep6 } from "../components/wizard/WizardStep6";
 import { WizardStep7 } from "../components/wizard/WizardStep7";
 import { WizardStep8 } from "../components/wizard/WizardStep8";
 import { WizardConfirm } from "../components/wizard/WizardConfirm";
+import { WizardLogisticsCheck } from "../components/wizard/WizardLogisticsCheck";
+
+const WIZARD_PROGRESS_STEPS = [1, 2, 3, 4, 5, 6, 8, 9, 10];
 
 function renderWizard(props) {
   const { inModal = false, overrideStep = null, wizardStep } = props;
   const effectiveStep = overrideStep !== null ? overrideStep : wizardStep;
-  const totalWizardSteps = 8;
-  const displayStep = effectiveStep > 7 ? effectiveStep - 1 : effectiveStep;
+  const totalWizardSteps = WIZARD_PROGRESS_STEPS.length;
+  const displayStep =
+    effectiveStep === 99
+      ? totalWizardSteps
+      : Math.max(1, WIZARD_PROGRESS_STEPS.indexOf(effectiveStep) + 1);
 
   const { ceremony, reception, brideReady, groomReady, differentReadyLocations } =
     resolveWeddingLocations(props);
@@ -116,6 +122,7 @@ function renderWizard(props) {
   if (effectiveStep === 6) return <WizardStep6 {...stepProps} />;
   if (effectiveStep === 8) return <WizardStep7 {...stepProps} />;
   if (effectiveStep === 9) return <WizardStep8 {...stepProps} />;
+  if (effectiveStep === 10) return <WizardLogisticsCheck {...stepProps} />;
   if (effectiveStep === 99) return <WizardConfirm {...stepProps} />;
   return null;
 }

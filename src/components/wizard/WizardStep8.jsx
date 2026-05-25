@@ -227,8 +227,8 @@ function WizardStep8(props) {
           </button>
         </div>,
         () => setWizardStep(8),
-        () => setWizardStep(99),
-        "Review & Generate"
+        () => setWizardStep(10),
+        "Next"
       );
 }
 
