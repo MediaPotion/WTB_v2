@@ -2146,6 +2146,7 @@ export default function MobileApp() {
   const [groom, setGroom] = useState("");
   const [brideLabel, setBrideLabel] = useState("Bride");
   const [groomLabel, setGroomLabel] = useState("Groom");
+  const withThe = (label) => (label === "Bride" || label === "Groom") ? `the ${label}` : label;
 
   // Defaults: 12:00 PM starts
   const [photoStartHour, setPhotoStartHour] = useState("12");
@@ -2247,6 +2248,8 @@ export default function MobileApp() {
   const [wiz_ceremonyOutdoor, setWiz_ceremonyOutdoor] = useState(false);
 
   // Step 3 — Package Inclusions
+  const [wiz_photographerCount, setWiz_photographerCount] = useState(1);
+  const [wiz_videographerCount, setWiz_videographerCount] = useState(1);
   const [wiz_drone, setWiz_drone] = useState(false);
   const [wiz_narration, setWiz_narration] = useState(false);
 
@@ -3020,7 +3023,7 @@ export default function MobileApp() {
 
   // Wizard location helpers
   const addWizLocation = () => {
-    setWiz_locations(prev => [...prev, { id: wiz_locationNextId, name: "", address: "", distFromCeremony: "" }]);
+    setWiz_locations(prev => [...prev, { id: wiz_locationNextId, name: "", address: "", distFromCeremony: "", distFromReception: "" }]);
     setWiz_locationNextId(n => n + 1);
   };
   const updateWizLocation = (id, field, value) => {
@@ -3644,11 +3647,11 @@ export default function MobileApp() {
       const mandatoryLocStyle = { border: "1px solid #1e1c19", borderRadius: 8, padding: "14px 14px 12px", marginBottom: 16, background: "#161310" };
       const mandatoryLabelStyle = { display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" };
       const mandatoryInputStyle = { width: "100%", padding: 9, border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" };
-      const travelStepper = (value, onChange) => {
+      const travelStepper = (value, onChange, label = "How far is this location to the ceremony location?") => {
         const mins = parseInt(value) || 0;
         return (
           <div style={{ marginTop: 12 }}>
-            <label style={{ ...mandatoryLabelStyle, marginBottom: 6 }}>How far is this location to the ceremony location?</label>
+            <label style={{ ...mandatoryLabelStyle, marginBottom: 6 }}>{label}</label>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <button onClick={() => onChange(String(Math.max(0, mins - 5)))} style={{ width: 32, height: 32, background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 6, color: "#ddd0bc", fontSize: 18, lineHeight: 1, cursor: "pointer", flexShrink: 0 }}>−</button>
               <span style={{ minWidth: 28, textAlign: "center", fontSize: 16, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{mins}</span>
@@ -3800,7 +3803,7 @@ export default function MobileApp() {
                 </div>
                 {travelStepper(wiz_distanceGroomToCeremony, setWiz_distanceGroomToCeremony)}
                 <div style={{ marginTop: 12 }}>
-                  <label style={{ ...mandatoryLabelStyle, marginBottom: 6 }}>How far is this location from the {brideLabel} Getting Ready location?</label>
+                  <label style={{ ...mandatoryLabelStyle, marginBottom: 6 }}>How far is this location from {withThe(brideLabel)}'s Getting Ready location?</label>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <button onClick={() => setWiz_distanceBetweenReady(String(Math.max(0, (parseInt(wiz_distanceBetweenReady) || 0) - 5)))} style={{ width: 32, height: 32, background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 6, color: "#ddd0bc", fontSize: 18, lineHeight: 1, cursor: "pointer", flexShrink: 0 }}>−</button>
                     <span style={{ minWidth: 28, textAlign: "center", fontSize: 16, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{parseInt(wiz_distanceBetweenReady) || 0}</span>
@@ -3846,6 +3849,7 @@ export default function MobileApp() {
                 />
               </div>
               {travelStepper(loc.distFromCeremony, (val) => updateWizLocation(loc.id, "distFromCeremony", val))}
+              {travelStepper(loc.distFromReception, (val) => updateWizLocation(loc.id, "distFromReception", val), "How far is this location to the reception location?")}
             </div>
           ))}
           <button
@@ -3925,7 +3929,7 @@ export default function MobileApp() {
         <div>
           <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Photo Coverage <span style={{ color: "#3a3530" }}>(hours)</span></label>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Photo Coverage <span style={{ color: "#6e6358" }}>(hours)</span></label>
               <input
                 type="number"
                 value={wiz_photoCoverageHours}
@@ -3937,7 +3941,7 @@ export default function MobileApp() {
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Video Coverage <span style={{ color: "#3a3530" }}>(hours)</span></label>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 5, fontFamily: "'Jost', sans-serif" }}>Video Coverage <span style={{ color: "#6e6358" }}>(hours)</span></label>
               <input
                 type="number"
                 value={wiz_videoCoverageHours}
@@ -3947,6 +3951,24 @@ export default function MobileApp() {
                 max={24}
                 style={{ width: "100%", padding: 10, border: "1px solid #2a2520", borderRadius: 6, fontSize: 15, boxSizing: "border-box", background: "#0f0d0b", color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}
               />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Photographers</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <button onClick={() => setWiz_photographerCount(Math.max(0, wiz_photographerCount - 1))} style={{ width: 32, height: 32, background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 6, color: "#ddd0bc", fontSize: 18, lineHeight: 1, cursor: "pointer", flexShrink: 0 }}>−</button>
+                <span style={{ minWidth: 28, textAlign: "center", fontSize: 16, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{wiz_photographerCount}</span>
+                <button onClick={() => setWiz_photographerCount(wiz_photographerCount + 1)} style={{ width: 32, height: 32, background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 6, color: "#ddd0bc", fontSize: 18, lineHeight: 1, cursor: "pointer", flexShrink: 0 }}>+</button>
+              </div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#6e6358", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Videographers</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <button onClick={() => setWiz_videographerCount(Math.max(0, wiz_videographerCount - 1))} style={{ width: 32, height: 32, background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 6, color: "#ddd0bc", fontSize: 18, lineHeight: 1, cursor: "pointer", flexShrink: 0 }}>−</button>
+                <span style={{ minWidth: 28, textAlign: "center", fontSize: 16, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>{wiz_videographerCount}</span>
+                <button onClick={() => setWiz_videographerCount(wiz_videographerCount + 1)} style={{ width: 32, height: 32, background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 6, color: "#ddd0bc", fontSize: 18, lineHeight: 1, cursor: "pointer", flexShrink: 0 }}>+</button>
+              </div>
             </div>
           </div>
           <label style={{ ...wizCheckRowStyle }} onClick={() => setWiz_drone(!wiz_drone)}>
@@ -3980,7 +4002,7 @@ export default function MobileApp() {
           {wizSectionHeading("Hair & Makeup")}
           <div style={{ marginBottom: 4 }}>
             <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "#ddd0bc", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>
-              When will hair &amp; make-up be completed for the {brideLabel} and bridesmaids?
+              When will hair &amp; make-up be completed for {withThe(brideLabel)} and bridesmaids?
             </label>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <select value={wiz_hairMakeupDoneHour} onChange={(e) => setWiz_hairMakeupDoneHour(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
@@ -4030,7 +4052,7 @@ export default function MobileApp() {
         <div>
           {wizSectionHeading("Pre-Ceremony Visibility")}
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Can the {brideLabel} be seen by the {groomLabel} before the Ceremony?</label>
+            <label style={{ display: "block", fontSize: 14, fontWeight: 300, color: "#ddd0bc", marginBottom: 10, fontFamily: "'Jost', sans-serif" }}>Can {withThe(brideLabel)} be seen by {withThe(groomLabel)} before the Ceremony?</label>
             <div style={{ display: "flex", gap: 10 }}>
               <button style={wizToggleStyle(wiz_brideOkayBefore === true)} onClick={() => setWiz_brideOkayBefore(true)}>Yes</button>
               <button style={wizToggleStyle(wiz_brideOkayBefore === false)} onClick={() => setWiz_brideOkayBefore(false)}>No</button>
@@ -4568,7 +4590,9 @@ export default function MobileApp() {
               <div style={cardStyle}>
                 {sectionHeading("Package")}
                 {reviewRow("Photo Coverage", wiz_photoCoverageHours ? wiz_photoCoverageHours + " hrs" : "(not entered)", !wiz_photoCoverageHours)}
+                {reviewRow("Photographers", String(wiz_photographerCount))}
                 {reviewRow("Video Coverage", wiz_videoCoverageHours ? wiz_videoCoverageHours + " hrs" : "(not entered)", !wiz_videoCoverageHours)}
+                {reviewRow("Videographers", String(wiz_videographerCount))}
                 {reviewRow("Drone Coverage", wiz_drone ? "Yes" : "No")}
                 {reviewRow("Narration Recording", wiz_narration ? "Yes" : "No")}
               </div>
