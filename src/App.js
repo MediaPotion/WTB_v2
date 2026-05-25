@@ -1397,17 +1397,17 @@ function TimelineRow({
             </>
           ) : (
             <>
-              {/* Header row: Event label (left) and Photo/Video (right) */}
+              {/* Header row: Event label + Photo/Video (left) */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "space-between",
+                  gap: 12,
                   marginBottom: 4,
                 }}
               >
                 <label style={{ fontSize: 10, color: "#6e6358", fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Event</label>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4 }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     <label
                       style={{
