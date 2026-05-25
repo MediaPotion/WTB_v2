@@ -8,16 +8,16 @@ const EVENT_BLOCKS = [
   "Details: Drone & Venue Shots::30",
   "Details: Rings,Invitations, & Accessories::20",
   "Details: Dress Shots::10",
-  "Bride (Pre-Dress): Bridemaids Group Shots::10",
-  "Bride (Pre-Dress): Bridemaids Individual Shots::10",
+  "Bride (Pre-Dress): Bridesmaids Group Shots::10",
+  "Bride (Pre-Dress): Bridesmaids Individual Shots::10",
   "Bride (Pre-Dress): Hair & Makeup Details::10",
   "Bride (Pre-Dress): Putting Dress On::10",
   "Bride (Dress On): Accessory Shots::10",
   "Bride (Dress On): Bride Portraits::15",
-  "Bride (Dress On): Bridemaids Group Shots::10",
-  "Bride (Dress On): Bridemaids Individual Shots::10",
+  "Bride (Dress On): Bridesmaids Group Shots::10",
+  "Bride (Dress On): Bridesmaids Individual Shots::10",
   "First Look: with Parent::10",
-  "First Look: with Bridemaids::10",
+  "First Look: with Bridesmaids::10",
   "First Look: with Groom::10",
   "Narration: Bride Record Narration::15",
   "Narration: Groom Record Narration::15",
@@ -2598,7 +2598,7 @@ export default function MobileApp() {
   const [wiz_firstLookOther, setWiz_firstLookOther] = useState(false);
   const [wiz_firstLookGroomLocation, setWiz_firstLookGroomLocation] = useState("");
   const [wiz_firstLookParentLocation, setWiz_firstLookParentLocation] = useState("");
-  const [wiz_firstLookBridsmaidsLocation, setWiz_firstLookBridsmaidsLocation] = useState("");
+  const [wiz_firstLookBridesmaidsLocation, setWiz_firstLookBridesmaidsLocation] = useState("");
   const [wiz_firstLookOtherLocation, setWiz_firstLookOtherLocation] = useState("");
 
   // Step 7 — Pre-Ceremony Visibility (skipped if wiz_firstLookGroom is true)
@@ -3787,13 +3787,13 @@ export default function MobileApp() {
     };
     const flGroomPhase    = wiz_firstLookGroom       ? classifyFL(wiz_firstLookGroomLocation)       : null;
     const flParentPhase   = wiz_firstLookParent      ? classifyFL(wiz_firstLookParentLocation)      : null;
-    const flBmaidsPhase   = wiz_firstLookBridesmaids ? classifyFL(wiz_firstLookBridsmaidsLocation)  : null;
+    const flBmaidsPhase   = wiz_firstLookBridesmaids ? classifyFL(wiz_firstLookBridesmaidsLocation)  : null;
     const flOtherPhase    = wiz_firstLookOther       ? classifyFL(wiz_firstLookOtherLocation)       : null;
 
     const pushFLForPhase = (phase, arr) => {
       if (flGroomPhase  === phase) arr.push({ event: "First Look: with Groom",      duration: 10, isOutdoor: true });
       if (flParentPhase === phase) arr.push({ event: "First Look: with Parent",     duration: 10, isOutdoor: true });
-      if (flBmaidsPhase === phase) arr.push({ event: "First Look: with Bridemaids", duration: 10, isOutdoor: true });
+      if (flBmaidsPhase === phase) arr.push({ event: "First Look: with Bridesmaids", duration: 10, isOutdoor: true });
       if (flOtherPhase  === phase) arr.push({ event: "First Look: Other",           duration: 10, isOutdoor: true });
     };
 
@@ -3810,15 +3810,15 @@ export default function MobileApp() {
     // Bride narration before portrait blocks
     if (wiz_narration) preBlocks.push({ event: "Narration: Bride Record Narration", duration: 15 });
     // Bride pre-dress
-    preBlocks.push({ event: "Bride (Pre-Dress): Bridemaids Group Shots",    duration: 10, isOutdoor: true });
-    preBlocks.push({ event: "Bride (Pre-Dress): Bridemaids Individual Shots", duration: 10, isOutdoor: true });
+    preBlocks.push({ event: "Bride (Pre-Dress): Bridesmaids Group Shots",    duration: 10, isOutdoor: true });
+    preBlocks.push({ event: "Bride (Pre-Dress): Bridesmaids Individual Shots", duration: 10, isOutdoor: true });
     preBlocks.push({ event: "Bride (Pre-Dress): Hair & Makeup Details",     duration: 10 });
     preBlocks.push({ event: "Bride (Pre-Dress): Putting Dress On",          duration: 10 });
     // Bride dress on (first looks can only occur after Putting Dress On)
     preBlocks.push({ event: "Bride (Dress On): Accessory Shots",            duration: 10 });
     preBlocks.push({ event: "Bride (Dress On): Bride Portraits",            duration: 15, isOutdoor: true });
-    preBlocks.push({ event: "Bride (Dress On): Bridemaids Group Shots",     duration: 10, isOutdoor: true });
-    preBlocks.push({ event: "Bride (Dress On): Bridemaids Individual Shots",duration: 10, isOutdoor: true });
+    preBlocks.push({ event: "Bride (Dress On): Bridesmaids Group Shots",     duration: 10, isOutdoor: true });
+    preBlocks.push({ event: "Bride (Dress On): Bridesmaids Individual Shots",duration: 10, isOutdoor: true });
     // First looks assigned to bride's getting ready location
     pushFLForPhase("bride", preBlocks);
 
@@ -4562,7 +4562,7 @@ export default function MobileApp() {
               {[
                 { key: "groom", label: "Groom", sub: "Couple's first look before the ceremony", val: wiz_firstLookGroom, set: setWiz_firstLookGroom, locVal: wiz_firstLookGroomLocation, setLoc: setWiz_firstLookGroomLocation },
                 { key: "parent", label: "Parent(s)", sub: `${brideLabel} sees parent(s) for the first time`, val: wiz_firstLookParent, set: setWiz_firstLookParent, locVal: wiz_firstLookParentLocation, setLoc: setWiz_firstLookParentLocation },
-                { key: "bridesmaids", label: "Bridesmaids", sub: `${brideLabel} reveals look to the bridal party`, val: wiz_firstLookBridesmaids, set: setWiz_firstLookBridesmaids, locVal: wiz_firstLookBridsmaidsLocation, setLoc: setWiz_firstLookBridsmaidsLocation },
+                { key: "bridesmaids", label: "Bridesmaids", sub: `${brideLabel} reveals look to the bridal party`, val: wiz_firstLookBridesmaids, set: setWiz_firstLookBridesmaids, locVal: wiz_firstLookBridesmaidsLocation, setLoc: setWiz_firstLookBridesmaidsLocation },
               ].map(({ key, label, sub, val, set, locVal, setLoc }) => (
                 <label key={key} style={{ ...wizCheckRowStyle }} onClick={() => set(!val)}>
                   <input type="checkbox" checked={val} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
@@ -5130,7 +5130,7 @@ export default function MobileApp() {
                   <>
                     {wiz_firstLookGroom && reviewRow(`with ${groomLabel}`, wiz_firstLookGroomLocation || "(location not set)")}
                     {wiz_firstLookParent && reviewRow("with Parent(s)", wiz_firstLookParentLocation || "(location not set)")}
-                    {wiz_firstLookBridesmaids && reviewRow("with Bridesmaids", wiz_firstLookBridsmaidsLocation || "(location not set)")}
+                    {wiz_firstLookBridesmaids && reviewRow("with Bridesmaids", wiz_firstLookBridesmaidsLocation || "(location not set)")}
                     {wiz_firstLookOther && reviewRow("Other First Look", wiz_firstLookOtherLocation || "(location not set)")}
                     {wiz_customFirstLooks.map((fl, i) => (
                       <div key={i}>{reviewRow(fl.label || "Custom", fl.location || "(location not set)")}</div>
