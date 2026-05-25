@@ -1494,7 +1494,8 @@ function TimelineRow({
                   aria-pressed={row.isOutdoor}
                   title={row.isOutdoor ? "Outside — click for Indoors" : "Indoors — click for Outside"}
                   style={{
-                    padding: "0 10px",
+                    width: 80,
+                    flexShrink: 0,
                     border: "1px solid #2a2520",
                     background: row.isOutdoor ? "#2a6fd4" : "#c96a20",
                     color: "#f0ece6",
@@ -1502,6 +1503,7 @@ function TimelineRow({
                     borderRadius: 6,
                     display: "inline-flex",
                     alignItems: "center",
+                    justifyContent: "center",
                     gap: 5,
                     fontSize: 11,
                     fontFamily: "'Jost', sans-serif",
@@ -1629,8 +1631,8 @@ function TimelineRow({
         >
           {/* Spacer — aligns with drag handle above */}
           <div style={{ width: 18 }} />
-          {/* Duration */}
-          <div style={{ width: "auto" }}>
+          {/* Duration — centred under the 88px time button */}
+          <div style={{ width: 88, display: "flex", flexDirection: "column", alignItems: "center" }}>
             <label
               style={{
                 fontSize: 10,
@@ -1683,7 +1685,7 @@ function TimelineRow({
             </div>
           </div>
 
-          {/* Notes (center column, replacing Location) */}
+          {/* Notes — same width as event input (flex:1 beside matching spacer) */}
           <div className="wtb-location">
             <label
               style={{
@@ -1698,25 +1700,28 @@ function TimelineRow({
             >
               Notes
             </label>
-            <textarea
-              placeholder="Add any notes for this event... (drag corner to expand)"
-              value={row.notes || ""}
-              onChange={(e) => onChange(index, "notes", e.target.value)}
-              onBlur={() => onBlur(index)}
-              rows={2}
-              style={{
-                width: "100%",
-                minWidth: 0,
-                fontSize: 14,
-                padding: 8,
-                resize: "vertical",
-                background: "transparent",
-                border: "1px solid #2a2520",
-                borderRadius: 4,
-                color: "#ddd0bc",
-                fontFamily: "'Jost', sans-serif",
-              }}
-            />
+            <div style={{ display: "flex", gap: 6 }}>
+              <textarea
+                placeholder="Add any notes for this event... (drag corner to expand)"
+                value={row.notes || ""}
+                onChange={(e) => onChange(index, "notes", e.target.value)}
+                onBlur={() => onBlur(index)}
+                rows={2}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  fontSize: 14,
+                  padding: 8,
+                  resize: "vertical",
+                  background: "transparent",
+                  border: "1px solid #2a2520",
+                  borderRadius: 4,
+                  color: "#ddd0bc",
+                  fontFamily: "'Jost', sans-serif",
+                }}
+              />
+              <div style={{ width: 80, flexShrink: 0 }} />
+            </div>
           </div>
 
         </div>
