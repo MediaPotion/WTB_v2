@@ -488,6 +488,7 @@ const SETTINGS_WIZARD_TABS = [
   { label: "Ceremony",        step: 6 },
   { label: "Portraits",       step: 8 },
   { label: "Reception",       step: 9 },
+  { label: "Draft",           step: 99 },
 ];
 
 /* ---------------- Time Popover ---------------- */
@@ -3542,6 +3543,8 @@ export default function MobileApp() {
     }
 
     setScreen("timeline");
+    setShowSettingsModal(false);
+    window.scrollTo(0, 0);
   };  // ---- Wizard Rendering ----
   const renderWizard = (inModal = false, overrideStep = null) => {
     const effectiveStep = overrideStep !== null ? overrideStep : wizardStep;
@@ -4575,12 +4578,13 @@ export default function MobileApp() {
         <div className="wiz-layout" style={{ padding: "16px 0" }}>
           <div className="wiz-step-col">
             <div style={{ maxWidth: 600, margin: "0 auto", padding: "24px 16px 40px" }}>
-              <h2 style={{ margin: "0 0 6px 0", fontSize: "clamp(22px,4vw,32px)", color: "#ddd0bc", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Ready to Generate</h2>
+              <h2 style={{ margin: "0 0 6px 0", fontSize: "clamp(22px,4vw,32px)", color: "#ddd0bc", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Ready to Generate Draft</h2>
               <p style={{ margin: "0 0 20px 0", fontSize: 14, color: "#6e6358", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>Review your selections below, then click Generate Timeline.</p>
 
               {/* 1. The Couple */}
               <div style={cardStyle}>
                 {sectionHeading("The Couple")}
+                {reviewRow("Titles", `${brideLabel} & ${groomLabel}`)}
                 {reviewRow(`${brideLabel}`, bride || "(not entered)", !bride)}
                 {reviewRow(`${groomLabel}`, groom || "(not entered)", !groom)}
                 {reviewRow("Wedding Date", date || "(not entered)", !date)}
@@ -4600,6 +4604,8 @@ export default function MobileApp() {
               {/* 3. Locations */}
               <div style={cardStyle}>
                 {sectionHeading("Locations")}
+                {reviewRow(`${brideLabel} Getting Ready`, brideReadyValue, brideReadyIncomplete)}
+                {reviewRow(`${groomLabel} Getting Ready`, groomReadyValue, groomReadyIncomplete)}
                 {reviewRow("Ceremony Venue", wiz_ceremonyVenue || "(not entered)", !wiz_ceremonyVenue)}
                 {reviewRow("Ceremony Address", wiz_ceremonyAddress || "(not entered)", !wiz_ceremonyAddress)}
                 {reviewRow(
@@ -4612,8 +4618,6 @@ export default function MobileApp() {
                   wiz_receptionAddress || "(not entered)",
                   !wiz_receptionAddress
                 )}
-                {reviewRow(`${brideLabel} Getting Ready`, brideReadyValue, brideReadyIncomplete)}
-                {reviewRow(`${groomLabel} Getting Ready`, groomReadyValue, groomReadyIncomplete)}
                 {wiz_locations.length > 0
                   ? wiz_locations.map((loc, i) => (
                       <div key={i}>{reviewRow(`Additional Location ${i + 1}`, [loc.name, loc.address].filter(Boolean).join(" — ") || "(unnamed)")}</div>
@@ -4956,6 +4960,7 @@ export default function MobileApp() {
                   setNextId(fixedEvents.length + 1);
                 }
                 setScreen("timeline");
+                window.scrollTo(0, 0);
               }}
               style={{ padding: "12px 32px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 6, fontSize: 16, fontWeight: 300, cursor: "pointer", width: "100%", maxWidth: 360, fontFamily: "'Jost', sans-serif" }}
             >
@@ -5201,7 +5206,7 @@ export default function MobileApp() {
               }}
               onClick={(e) => { if (e.target === e.currentTarget) setShowSettingsModal(false); }}
             >
-              <div style={{ background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 10, maxWidth: 720, width: "100%", padding: 24, position: "relative" }}>
+              <div style={{ background: "#0f0d0b", border: "1px solid #2a2520", borderRadius: 10, maxWidth: 960, width: "100%", padding: 24, position: "relative" }}>
                 {/* Header */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                   <h2 style={{ margin: 0, fontSize: 20, color: "#ddd0bc", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Project Settings</h2>
@@ -5214,7 +5219,7 @@ export default function MobileApp() {
                 </div>
 
                 {/* Tab bar */}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 20, borderBottom: "1px solid #2a2520", paddingBottom: 12 }}>
+                <div style={{ display: "flex", flexWrap: "nowrap", gap: 4, marginBottom: 20, borderBottom: "1px solid #2a2520", paddingBottom: 12, overflowX: "auto" }}>
                   {SETTINGS_WIZARD_TABS.map((tab, i) => (
                     <button
                       key={i}
@@ -5241,7 +5246,7 @@ export default function MobileApp() {
 
                 <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 16 }}>
                   <button
-                    onClick={() => setShowSettingsModal(false)}
+                    onClick={() => { generateTimeline(); }}
                     style={{ padding: "8px 20px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 400, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
                   >
                     Done
