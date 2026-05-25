@@ -1570,14 +1570,14 @@ function TimelineRow({
             gridTemplateColumns: "auto auto 0.6fr 1fr",
             padding: "8px 8px 8px 6px",
             gap: 9,
-            alignItems: "start",
+            alignItems: "stretch",
             background: "#f5f0e8",
           }}
         >
           {/* Spacer — aligns with drag handle above */}
-          <div style={{ width: 18 }} />
+          <div style={{ width: 18, alignSelf: "start" }} />
           {/* Travel time — centred under the 88px time button */}
-          <div style={{ width: 88, display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div style={{ width: 88, display: "flex", flexDirection: "column", alignItems: "center", alignSelf: "start" }}>
             <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Travel time</label>
             <div style={{ position: "relative", width: 65 }}>
               <input
@@ -1594,28 +1594,26 @@ function TimelineRow({
           </div>
 
           {/* Address */}
-          <div>
+          <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
             <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Address</label>
             <textarea
               placeholder="Address..."
               value={row.address || ""}
               onChange={(e) => onChange(index, "address", e.target.value)}
               onBlur={(e) => { onBlur(index); e.target.scrollTop = 0; }}
-              rows={2}
-              style={{ width: "100%", minWidth: 0, fontSize: 14, padding: 8, resize: "none", background: "rgba(255,255,255,0.5)", border: "1px solid #c8bfb0", borderRadius: 4, color: "#1e140a" }}
+              style={{ flex: 1, width: "100%", minWidth: 0, fontSize: 14, padding: 8, resize: "none", background: "rgba(255,255,255,0.5)", border: "1px solid #c8bfb0", borderRadius: 4, color: "#1e140a", boxSizing: "border-box" }}
             />
           </div>
 
           {/* Notes */}
-          <div style={{ minWidth: 0 }}>
+          <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
             <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Notes</label>
             <textarea
               placeholder="Add any notes for this location... (drag corner to expand)"
               value={row.notes || ""}
               onChange={(e) => onChange(index, "notes", e.target.value)}
               onBlur={() => onBlur(index)}
-              rows={2}
-              style={{ width: "100%", boxSizing: "border-box", fontSize: 13, padding: 8, resize: "vertical", background: "rgba(255,255,255,0.5)", border: "1px solid #c8bfb0", borderRadius: 4, color: "#1e140a" }}
+              style={{ flex: 1, width: "100%", boxSizing: "border-box", fontSize: 13, padding: 8, resize: "vertical", background: "rgba(255,255,255,0.5)", border: "1px solid #c8bfb0", borderRadius: 4, color: "#1e140a" }}
             />
           </div>
         </div>
