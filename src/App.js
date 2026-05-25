@@ -1180,6 +1180,7 @@ function TimelineRow({
   const [timeOpen, setTimeOpen] = useState(false);
   const [dropping, setDropping] = useState(false);
   const [showOverlapTip, setShowOverlapTip] = useState(false);
+  const [deleteHovered, setDeleteHovered] = useState(false);
   // Use the isTimeLocked prop instead of local state
 
   // Drop handlers on the whole row
@@ -1294,11 +1295,11 @@ function TimelineRow({
           )}
         </div>
       )}
-      {/* TOP row: Buttons (left) | Time (middle) | Event (+photo/video) (right) */}
+      {/* TOP row: Drag handle (left) | Time | Event (+photo/video) | Delete (right) */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "auto auto 1fr",
+          gridTemplateColumns: "auto auto 1fr auto",
           padding: 6,
           backgroundColor: isConstraint ? "rgba(180,0,0,0.12)" : isLocation ? "#ede7da" : "#0f0d0b",
           borderBottom: isLocation ? "1px solid #c8bfb0" : "1px solid #1e1c19",
@@ -1306,79 +1307,22 @@ function TimelineRow({
           alignItems: "center",
         }}
       >
-        {/* Button group (left) */}
+        {/* Drag handle (left) */}
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
             alignItems: "center",
-            gap: 4,
+            justifyContent: "center",
+            width: 18,
+            cursor: "grab",
+            color: isLocation ? "#a89070" : "#3a3530",
+            fontSize: 15,
+            userSelect: "none",
+            lineHeight: 1,
           }}
+          title="Drag to reorder"
         >
-          {!isConstraint && (!isFirst ? (
-            <button
-              onClick={() => onMoveUp(index)}
-              style={{
-                width: 26,
-                height: 18,
-                fontSize: 12,
-                border: isLocation ? "1px solid #c8bfb0" : "1px solid #2a2520",
-                background: isLocation ? "rgba(255,255,255,0.5)" : "#161310",
-                color: isLocation ? "#7a6548" : "#6e6358",
-                cursor: "pointer",
-                borderRadius: 4,
-                fontWeight: "bold",
-                lineHeight: 1,
-              }}
-              title="Move Up"
-            >
-              ▲
-            </button>
-          ) : (
-            <div style={{ width: 26, height: 18 }} />
-          ))}
-
-          <button
-            onClick={() => onDelete(index)}
-            style={{
-              width: 26,
-              height: 18,
-              fontSize: 14,
-              border: isLocation ? "1px solid #c8bfb0" : "1px solid #2a2520",
-              background: isLocation ? "rgba(255,255,255,0.5)" : "#161310",
-              color: isLocation ? "#7a6548" : "#6e6358",
-              cursor: "pointer",
-              borderRadius: 4,
-              fontWeight: "bold",
-              lineHeight: 1,
-            }}
-            title="Delete"
-          >
-            ×
-          </button>
-
-          {!isConstraint && (!isLast ? (
-            <button
-              onClick={() => onMoveDown(index)}
-              style={{
-                width: 26,
-                height: 18,
-                fontSize: 12,
-                border: isLocation ? "1px solid #c8bfb0" : "1px solid #2a2520",
-                background: isLocation ? "rgba(255,255,255,0.5)" : "#161310",
-                color: isLocation ? "#7a6548" : "#6e6358",
-                cursor: "pointer",
-                borderRadius: 4,
-                fontWeight: "bold",
-                lineHeight: 1,
-              }}
-              title="Move Down"
-            >
-              ▼
-            </button>
-          ) : (
-            <div style={{ width: 26, height: 18 }} />
-          ))}
+          ⠿
         </div>
 
         {/* Time (middle) */}
@@ -1464,15 +1408,17 @@ function TimelineRow({
               >
                 <label style={{ fontSize: 10, color: "#6e6358", fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Event</label>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                  <span style={{ fontSize: 9, color: "#6e6358", fontFamily: "'Jost', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>Captured</span>
                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     <label
                       style={{
                         fontSize: 12,
                         display: "flex",
-                        gap: 6,
+                        gap: 5,
                         alignItems: "center",
-                        color: "#6e6358",
+                        color: photoEnabledGlobal ? "#ddd0bc" : "#6e6358",
                         opacity: photoEnabledGlobal ? 1 : 0.5,
+                        cursor: photoEnabledGlobal ? "pointer" : "default",
                       }}
                     >
                       <input
@@ -1488,10 +1434,11 @@ function TimelineRow({
                       style={{
                         fontSize: 12,
                         display: "flex",
-                        gap: 6,
+                        gap: 5,
                         alignItems: "center",
-                        color: "#6e6358",
+                        color: videoEnabledGlobal ? "#ddd0bc" : "#6e6358",
                         opacity: videoEnabledGlobal ? 1 : 0.5,
+                        cursor: videoEnabledGlobal ? "pointer" : "default",
                       }}
                     >
                       <input
@@ -1567,6 +1514,33 @@ function TimelineRow({
             </>
           )}
         </div>
+
+        {/* Delete button (far right) */}
+        <button
+          onClick={() => onDelete(index)}
+          onMouseEnter={() => setDeleteHovered(true)}
+          onMouseLeave={() => setDeleteHovered(false)}
+          style={{
+            width: 28,
+            height: 28,
+            fontSize: 18,
+            border: "none",
+            background: "none",
+            color: deleteHovered ? "#e05252" : (isLocation ? "#c8bfb0" : "#3a3530"),
+            cursor: "pointer",
+            borderRadius: 4,
+            lineHeight: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "color 0.15s",
+            alignSelf: "center",
+            flexShrink: 0,
+          }}
+          title="Delete"
+        >
+          ×
+        </button>
       </div>
 
       {isConstraint ? (
@@ -1595,7 +1569,7 @@ function TimelineRow({
         >
           {/* Duration */}
           <div style={{ width: "auto" }}>
-            <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Duration</label>
+            <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Travel time</label>
             <div style={{ position: "relative", width: 65 }}>
               <input
                 type="text"
@@ -1606,7 +1580,7 @@ function TimelineRow({
                 onBlur={() => onBlur(index)}
                 style={{ width: "100%", fontSize: 14, padding: "6px 34px 6px 12px", textAlign: "left", border: "1px solid #c8bfb0", borderRadius: 6, boxSizing: "border-box", background: "rgba(255,255,255,0.5)", color: "#1e140a" }}
               />
-              <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "#7a6548", pointerEvents: "none" }}>mins</span>
+              <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "#7a6548", pointerEvents: "none" }}>min</span>
             </div>
           </div>
 
@@ -1627,7 +1601,7 @@ function TimelineRow({
           <div style={{ minWidth: 0 }}>
             <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Notes</label>
             <textarea
-              placeholder="Add any notes for this location..."
+              placeholder="Add any notes for this location... (drag corner to expand)"
               value={row.notes || ""}
               onChange={(e) => onChange(index, "notes", e.target.value)}
               onBlur={() => onBlur(index)}
@@ -1718,7 +1692,7 @@ function TimelineRow({
               Notes
             </label>
             <textarea
-              placeholder="Add any notes for this event..."
+              placeholder="Add any notes for this event... (drag corner to expand)"
               value={row.notes || ""}
               onChange={(e) => onChange(index, "notes", e.target.value)}
               onBlur={() => onBlur(index)}
@@ -5075,7 +5049,7 @@ export default function MobileApp() {
                     style={{
                       opacity: draggedRowId === String(row.id) ? 0.4 : 1,
                       transition: 'opacity 0.2s ease',
-                      cursor: 'move',
+                      cursor: 'default',
                     }}
                   >
                     <TimelineRow
