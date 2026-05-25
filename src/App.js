@@ -179,6 +179,7 @@ const MOBILE_TWEAKS = `
       align-items: start;
     }
     .wtb-sidebar-wrap {
+      min-width: 0;
       position: sticky;
       top: 10px;
       display: flex;
@@ -458,6 +459,24 @@ function parseTimeInput(hourStr, minuteStr, period) {
   let total = hours * 60 + minutes;
   if (period === "PM") total += 720;
   return total;
+}
+
+function computeOverlaps(rows) {
+  // Returns Map<id, string> — each overlapping row ID mapped to the name it conflicts with.
+  // TIME CONSTRAINT blocks (duration 0) are excluded.
+  const sorted = [...rows]
+    .filter(r => r.type !== "constraint")
+    .sort((a, b) => a.time - b.time);
+  const result = new Map();
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = sorted[i - 1];
+    const curr = sorted[i];
+    if (curr.time < prev.time + prev.duration) {
+      if (!result.has(curr.id)) result.set(curr.id, prev.event || "previous event");
+      if (!result.has(prev.id)) result.set(prev.id, curr.event || "next event");
+    }
+  }
+  return result;
 }
 
 /* ---------------- Time Popover ---------------- */
@@ -1142,11 +1161,13 @@ function TimelineRow({
   videoEnabledGlobal,
   onDropEventBlock,
   onDrop,
+  overlapWith,
 }) {
   const t = formatTime(row.time);
   const timeBtnRef = useRef(null);
   const [timeOpen, setTimeOpen] = useState(false);
   const [dropping, setDropping] = useState(false);
+  const [showOverlapTip, setShowOverlapTip] = useState(false);
   // Use the isTimeLocked prop instead of local state
 
   // Drop handlers on the whole row
@@ -1208,7 +1229,7 @@ function TimelineRow({
   const isLocation = row.type === "location";
   const isConstraint = row.type === "constraint";
   // Location blocks are always gray; constraint blocks are transparent with stripe; event blocks use custom or category color
-  const rowBg = isConstraint ? "transparent" : isLocation ? "#B0BEC5" : (row.color || getEventColor(row.event || "", "#ffffff"));
+  const rowBg = isConstraint ? "transparent" : isLocation ? "#b8906a" : (row.color || getEventColor(row.event || "", "#ffffff"));
 
   return (
     <div
@@ -1218,10 +1239,10 @@ function TimelineRow({
       onDrop={handleDrop}
       className={`wtb-row-card${dropping ? " wtb-dropping" : ""}`}
       style={{
-        border: dropping ? "2px dashed #b8906a" : isConstraint ? "2px solid #cc4444" : isLocation ? "2px solid #ffffff" : `2px solid ${rowBg}`,
+        border: dropping ? "2px dashed #b8906a" : isConstraint ? "2px solid #cc4444" : isLocation ? "2px solid #b8906a" : `2px solid ${rowBg}`,
         borderRadius: 8,
         marginBottom: 12,
-        backgroundColor: isLocation ? "#1e1e1e" : isConstraint ? "transparent" : (dropping ? "rgba(184,144,106,0.08)" : "#0f0d0b"),
+        backgroundColor: isLocation ? "#f5f0e8" : isConstraint ? "transparent" : (dropping ? "rgba(184,144,106,0.08)" : "#0f0d0b"),
         backgroundImage: isConstraint ? "repeating-linear-gradient(45deg, #1a0505 0px, #1a0505 10px, #230808 10px, #230808 20px)" : "none",
         overflow: "hidden",
         width: "100%",
@@ -1231,14 +1252,44 @@ function TimelineRow({
       }}
       title={dropping ? "Drop here to add event" : ""}
     >
+      {/* Overlap warning badge */}
+      {overlapWith && (
+        <div
+          style={{ position: "absolute", top: 8, right: 8, zIndex: 20 }}
+          onMouseEnter={() => setShowOverlapTip(true)}
+          onMouseLeave={() => setShowOverlapTip(false)}
+        >
+          {showOverlapTip && (
+            <div style={{
+              position: "absolute", right: 26, top: 0,
+              background: "#1c1816", color: "#f0ece6",
+              fontSize: 11, padding: "5px 9px", borderRadius: 4,
+              width: 210, lineHeight: 1.5,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.55)",
+              border: "1px solid #cc4444",
+              pointerEvents: "none", whiteSpace: "normal",
+            }}>
+              Overlaps with &ldquo;{overlapWith}&rdquo;. Overlapping events are allowed but may indicate a scheduling conflict.
+            </div>
+          )}
+          <div style={{
+            width: 18, height: 18, borderRadius: "50%",
+            background: "#cc2222", color: "#fff",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 12, fontWeight: "bold", cursor: "default",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.45)",
+            userSelect: "none", lineHeight: 1,
+          }}>!</div>
+        </div>
+      )}
       {/* TOP row: Buttons (left) | Time (middle) | Event (+photo/video) (right) */}
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "auto auto 1fr",
           padding: 6,
-          backgroundColor: isConstraint ? "rgba(180,0,0,0.12)" : isLocation ? "#1e1e1e" : "#0f0d0b",
-          borderBottom: "1px solid #1e1c19",
+          backgroundColor: isConstraint ? "rgba(180,0,0,0.12)" : isLocation ? "#ede7da" : "#0f0d0b",
+          borderBottom: isLocation ? "1px solid #c8bfb0" : "1px solid #1e1c19",
           gap: 9,
           alignItems: "center",
         }}
@@ -1259,9 +1310,9 @@ function TimelineRow({
                 width: 26,
                 height: 18,
                 fontSize: 12,
-                border: "1px solid #2a2520",
-                background: "#161310",
-                color: "#6e6358",
+                border: isLocation ? "1px solid #c8bfb0" : "1px solid #2a2520",
+                background: isLocation ? "rgba(255,255,255,0.5)" : "#161310",
+                color: isLocation ? "#7a6548" : "#6e6358",
                 cursor: "pointer",
                 borderRadius: 4,
                 fontWeight: "bold",
@@ -1281,9 +1332,9 @@ function TimelineRow({
               width: 26,
               height: 18,
               fontSize: 14,
-              border: "1px solid #2a2520",
-              background: "#161310",
-              color: "#6e6358",
+              border: isLocation ? "1px solid #c8bfb0" : "1px solid #2a2520",
+              background: isLocation ? "rgba(255,255,255,0.5)" : "#161310",
+              color: isLocation ? "#7a6548" : "#6e6358",
               cursor: "pointer",
               borderRadius: 4,
               fontWeight: "bold",
@@ -1301,9 +1352,9 @@ function TimelineRow({
                 width: 26,
                 height: 18,
                 fontSize: 12,
-                border: "1px solid #2a2520",
-                background: "#161310",
-                color: "#6e6358",
+                border: isLocation ? "1px solid #c8bfb0" : "1px solid #2a2520",
+                background: isLocation ? "rgba(255,255,255,0.5)" : "#161310",
+                color: isLocation ? "#7a6548" : "#6e6358",
                 cursor: "pointer",
                 borderRadius: 4,
                 fontWeight: "bold",
@@ -1337,20 +1388,21 @@ function TimelineRow({
             ref={timeBtnRef}
             onClick={() => setTimeOpen(true)}
             style={{
-              width: 70,
-              padding: "2px 6px",
-              fontSize: 14,
+              width: 88,
+              padding: "4px 6px",
               textAlign: "center",
-              border: `1px solid #2a2520`,
+              border: isLocation ? "1px solid #c8bfb0" : "1px solid #2a2520",
               background: 'transparent',
-              color: '#ddd0bc',
+              color: isLocation ? '#1e140a' : '#ddd0bc',
               borderRadius: 4,
               cursor: 'pointer',
               fontFamily: "'Cormorant Garamond', serif",
+              lineHeight: 1,
             }}
             title="Click to set time"
           >
-            {t.hour}:{t.minute} {t.period}
+            <span style={{ fontSize: 26, fontWeight: 300, display: 'block' }}>{t.hour}:{t.minute}</span>
+            <span style={{ fontSize: 11, letterSpacing: '0.1em', opacity: 0.75 }}>{t.period}</span>
           </button>
         </div>
 
@@ -1364,7 +1416,7 @@ function TimelineRow({
             </div>
           ) : isLocation ? (
             <>
-              <label style={{ fontSize: 10, color: "#6e6358", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>📍 Location Name</label>
+              <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>📍 Location Name</label>
               <input
                 type="text"
                 placeholder="Location name..."
@@ -1380,10 +1432,9 @@ function TimelineRow({
                   fontSize: 14,
                   padding: 8,
                   background: "transparent",
-                  border: "none",
-                  borderBottom: "1px solid #2a2520",
-                  color: "#ddd0bc",
-                  borderRadius: 0,
+                  border: "1px solid #c8bfb0",
+                  color: "#1e140a",
+                  borderRadius: 4,
                   fontFamily: "'Jost', sans-serif",
                 }}
               />
@@ -1400,54 +1451,78 @@ function TimelineRow({
                 }}
               >
                 <label style={{ fontSize: 10, color: "#6e6358", fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Event</label>
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                  <label
-                    style={{
-                      fontSize: 12,
-                      display: "flex",
-                      gap: 6,
-                      alignItems: "center",
-                      color: "#6e6358",
-                      opacity: photoEnabledGlobal ? 1 : 0.5,
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={!!row.photo}
-                      onChange={(e) => onChange(index, "photo", e.target.checked)}
-                      onBlur={() => onBlur(index)}
-                      disabled={!photoEnabledGlobal}
-                    />
-                    Photo
-                  </label>
-                  <label
-                    style={{
-                      fontSize: 12,
-                      display: "flex",
-                      gap: 6,
-                      alignItems: "center",
-                      color: "#6e6358",
-                      opacity: videoEnabledGlobal ? 1 : 0.5,
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={!!row.video}
-                      onChange={(e) => onChange(index, "video", e.target.checked)}
-                      onBlur={() => onBlur(index)}
-                      disabled={!videoEnabledGlobal}
-                    />
-                    Video
-                  </label>
-                  {row.type === "custom" && (
-                    <ColorPicker
-                      currentColor={row.color}
-                      onChange={(color) => {
-                        onChange(index, "color", color);
-                        onBlur(index);
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <label
+                      style={{
+                        fontSize: 12,
+                        display: "flex",
+                        gap: 6,
+                        alignItems: "center",
+                        color: "#6e6358",
+                        opacity: photoEnabledGlobal ? 1 : 0.5,
                       }}
-                    />
-                  )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={!!row.photo}
+                        onChange={(e) => onChange(index, "photo", e.target.checked)}
+                        onBlur={() => onBlur(index)}
+                        disabled={!photoEnabledGlobal}
+                      />
+                      Photo
+                    </label>
+                    <label
+                      style={{
+                        fontSize: 12,
+                        display: "flex",
+                        gap: 6,
+                        alignItems: "center",
+                        color: "#6e6358",
+                        opacity: videoEnabledGlobal ? 1 : 0.5,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={!!row.video}
+                        onChange={(e) => onChange(index, "video", e.target.checked)}
+                        onBlur={() => onBlur(index)}
+                        disabled={!videoEnabledGlobal}
+                      />
+                      Video
+                    </label>
+                    {row.type === "custom" && (
+                      <ColorPicker
+                        currentColor={row.color}
+                        onChange={(color) => {
+                          onChange(index, "color", color);
+                          onBlur(index);
+                        }}
+                      />
+                    )}
+                  </div>
+                  <button
+                    onClick={() => { onChange(index, "isOutdoor", !row.isOutdoor); onBlur(index); }}
+                    aria-pressed={row.isOutdoor}
+                    title={row.isOutdoor ? "Outside — click for Indoors" : "Indoors — click for Outside"}
+                    style={{
+                      padding: "3px 10px",
+                      border: "1px solid #2a2520",
+                      background: row.isOutdoor ? "#2a6fd4" : "#c96a20",
+                      color: "#f0ece6",
+                      cursor: "pointer",
+                      borderRadius: 6,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                      fontSize: 11,
+                      fontFamily: "'Jost', sans-serif",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <span aria-hidden style={{ fontSize: 13, lineHeight: 1 }}>{row.isOutdoor ? "☀️" : "💡"}</span>
+                    <span>{row.isOutdoor ? "Outside" : "Indoors"}</span>
+                  </button>
                 </div>
               </div>
               {/* Event input (also accepts drops) */}
@@ -1470,10 +1545,9 @@ function TimelineRow({
                   fontSize: 14,
                   padding: 8,
                   background: "transparent",
-                  border: "none",
-                  borderBottom: "1px solid #2a2520",
+                  border: "1px solid #2a2520",
                   color: rowBg && rowBg !== "#ffffff" ? rowBg : "#ddd0bc",
-                  borderRadius: 0,
+                  borderRadius: 4,
                   cursor: "pointer",
                   fontFamily: "'Jost', sans-serif",
                 }}
@@ -1496,20 +1570,20 @@ function TimelineRow({
           />
         </div>
       ) : isLocation ? (
-        /* BOTTOM: Location block — Duration | Address, then Notes full-width */
+        /* BOTTOM: Location block — Duration | Address | Notes */
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "auto 1fr",
+            gridTemplateColumns: "auto 1fr 0.6fr",
             padding: 8,
             gap: 8,
             alignItems: "start",
-            background: "#1e1e1e",
+            background: "#f5f0e8",
           }}
         >
           {/* Duration */}
           <div style={{ width: "auto" }}>
-            <label style={{ fontSize: 10, color: "#6e6358", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Duration</label>
+            <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Duration</label>
             <div style={{ position: "relative", width: 65 }}>
               <input
                 type="text"
@@ -1518,47 +1592,46 @@ function TimelineRow({
                 value={row.duration}
                 onChange={(e) => { const val = e.target.value.replace(/[^0-9]/g, ""); onChange(index, "duration", val); }}
                 onBlur={() => onBlur(index)}
-                style={{ width: "100%", fontSize: 14, padding: "6px 34px 6px 12px", textAlign: "left", border: "1px solid #2a2520", borderRadius: 6, boxSizing: "border-box", background: "transparent", color: "#ddd0bc" }}
+                style={{ width: "100%", fontSize: 14, padding: "6px 34px 6px 12px", textAlign: "left", border: "1px solid #c8bfb0", borderRadius: 6, boxSizing: "border-box", background: "rgba(255,255,255,0.5)", color: "#1e140a" }}
               />
-              <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "#6e6358", pointerEvents: "none" }}>mins</span>
+              <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "#7a6548", pointerEvents: "none" }}>mins</span>
             </div>
           </div>
 
           {/* Address */}
           <div>
-            <label style={{ fontSize: 10, color: "#6e6358", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Address</label>
+            <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Address</label>
             <textarea
               placeholder="Address (optional)..."
               value={row.address || ""}
               onChange={(e) => onChange(index, "address", e.target.value)}
               onBlur={(e) => { onBlur(index); e.target.scrollTop = 0; }}
               rows={2}
-              style={{ width: "100%", minWidth: 0, fontSize: 14, padding: 8, resize: "none", background: "transparent", border: "1px solid #2a2520", borderRadius: 4, color: "#ddd0bc" }}
+              style={{ width: "100%", minWidth: 0, fontSize: 14, padding: 8, resize: "none", background: "rgba(255,255,255,0.5)", border: "1px solid #c8bfb0", borderRadius: 4, color: "#1e140a" }}
             />
           </div>
 
-          {/* Notes (full width) */}
-          <div style={{ gridColumn: "1 / -1" }}>
-            <label style={{ fontSize: 10, color: "#6e6358", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Notes</label>
+          {/* Notes */}
+          <div style={{ minWidth: 0 }}>
+            <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Notes</label>
             <textarea
               placeholder="Add any notes for this location..."
               value={row.notes || ""}
               onChange={(e) => onChange(index, "notes", e.target.value)}
               onBlur={() => onBlur(index)}
               rows={2}
-              style={{ width: "100%", boxSizing: "border-box", fontSize: 13, padding: 8, resize: "vertical", background: "transparent", border: "1px solid #2a2520", borderRadius: 4, color: "#ddd0bc" }}
+              style={{ width: "100%", boxSizing: "border-box", fontSize: 13, padding: 8, resize: "vertical", background: "rgba(255,255,255,0.5)", border: "1px solid #c8bfb0", borderRadius: 4, color: "#1e140a" }}
             />
           </div>
         </div>
       ) : (
-        /* BOTTOM: Event block — Duration | Notes | Setting (3 columns) */
+        /* BOTTOM: Event block — Duration | Notes */
         <div
           className="wtb-bottom"
           style={{
             display: "grid",
-            gridTemplateColumns: "auto 1fr auto",
+            gridTemplateColumns: "auto 1fr",
             padding: 8,
-            paddingRight: 4,
             gap: 4,
             alignItems: "start",
           }}
@@ -1594,9 +1667,8 @@ function TimelineRow({
                   fontSize: 14,
                   padding: "6px 34px 6px 12px",
                   textAlign: "left",
-                  border: "none",
-                  borderBottom: "1px solid #2a2520",
-                  borderRadius: 0,
+                  border: "1px solid #2a2520",
+                  borderRadius: 4,
                   boxSizing: "border-box",
                   background: "transparent",
                   color: "#ddd0bc",
@@ -1654,50 +1726,6 @@ function TimelineRow({
             />
           </div>
 
-          {/* Setting (right): two stacked buttons */}
-          <div className="wtb-setting-col" style={{ width: "auto" }}>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 4,
-                transform: "translateY(-20px)",
-              }}
-            >
-              {/* Single outdoor/indoor toggle */}
-              <button
-                onClick={() => {
-                  onChange(index, "isOutdoor", !row.isOutdoor);
-                  onBlur(index);
-                }}
-                aria-pressed={row.isOutdoor}
-                title={row.isOutdoor ? "Outside — click for Indoors" : "Indoors — click for Outside"}
-                style={{
-                  marginTop: "22px",
-                  width: "100%",
-                  padding: "4px 4px",
-                  border: "1px solid #2a2520",
-                  background: row.isOutdoor ? "#2a6fd4" : "#c96a20",
-                  color: "#f0ece6",
-                  cursor: "pointer",
-                  borderRadius: 8,
-                  fontWeight: "bold",
-                  display: "inline-flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 2,
-                  whiteSpace: "nowrap",
-                  fontSize: 10,
-                  fontFamily: "'Jost', sans-serif",
-                }}
-              >
-                <span aria-hidden style={{ fontSize: 16, lineHeight: 1 }}>{row.isOutdoor ? "☀️" : "💡"}</span>
-                <span style={{ lineHeight: 1 }}>{row.isOutdoor ? "Outside" : "Indoors"}</span>
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -1769,56 +1797,53 @@ function hexToRgb(hex) {
   return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
 }
 
-// ── Preview sub-components ────────────────────────────────────────
-function PvHeader({ sc, bride, groom, date, photoStartHour, photoStartMinute, photoStartPeriod, photoEndHour, photoEndMinute, photoEndPeriod, videoStartHour, videoStartMinute, videoStartPeriod, videoEndHour, videoEndMinute, videoEndPeriod, photoEnabled, videoEnabled }) {
-  const s = v => v * sc;
+// ── Preview sub-components (all measurements in raw pt/px — PreviewPage scales via CSS transform) ──
+function PvHeader({ bride, groom, date, photoStartHour, photoStartMinute, photoStartPeriod, photoEndHour, photoEndMinute, photoEndPeriod, videoStartHour, videoStartMinute, videoStartPeriod, videoEndHour, videoEndMinute, videoEndPeriod, photoEnabled, videoEnabled }) {
   const covParts = [];
   if (photoEnabled) covParts.push(`Photo: ${photoStartHour}:${photoStartMinute} ${photoStartPeriod} – ${photoEndHour}:${photoEndMinute} ${photoEndPeriod}`);
   if (videoEnabled) covParts.push(`Video: ${videoStartHour}:${videoStartMinute} ${videoStartPeriod} – ${videoEndHour}:${videoEndMinute} ${videoEndPeriod}`);
   return (
-    <div style={{ height: s(HDR_H), flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: s(5) }}>
-      <div style={{ fontSize: s(7.5), letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: "'Jost', sans-serif", color: '#b8906a', fontWeight: 300 }}>Wedding Potion</div>
-      <div style={{ fontSize: s(24), fontFamily: "'Cormorant Garamond', serif", color: '#1a1a1a', fontWeight: 300, lineHeight: 1 }}>{bride || 'Bride'} &amp; {groom || 'Groom'}</div>
-      <div style={{ fontSize: s(9), fontFamily: "'Jost', sans-serif", color: '#555', fontWeight: 300, letterSpacing: '0.08em' }}>{fmtDateLong(date)}</div>
-      {covParts.length > 0 && <div style={{ fontSize: s(7.5), fontFamily: "'Jost', sans-serif", color: '#888', fontWeight: 300 }}>{covParts.join('  ·  ')}</div>}
-      <div style={{ width: '100%', height: s(0.75), background: '#b8906a', marginTop: s(4) }} />
+    <div style={{ height: HDR_H, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+      <div style={{ fontSize: 7.5, letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: "'Jost', sans-serif", color: '#b8906a', fontWeight: 300 }}>Wedding Potion</div>
+      <div style={{ fontSize: 24, fontFamily: "'Cormorant Garamond', serif", color: '#1a1a1a', fontWeight: 300, lineHeight: 1 }}>{bride || 'Bride'} &amp; {groom || 'Groom'}</div>
+      <div style={{ fontSize: 9, fontFamily: "'Jost', sans-serif", color: '#555', fontWeight: 300, letterSpacing: '0.08em' }}>{fmtDateLong(date)}</div>
+      {covParts.length > 0 && <div style={{ fontSize: 7.5, fontFamily: "'Jost', sans-serif", color: '#888', fontWeight: 300 }}>{covParts.join('  ·  ')}</div>}
+      <div style={{ width: '100%', height: 0.75, background: '#b8906a', marginTop: 4 }} />
     </div>
   );
 }
 
-function PvColHeaders({ sc }) {
-  const s = v => v * sc;
-  const lbl = { fontSize: s(6.5), fontFamily: "'Jost', sans-serif", fontWeight: 400, color: '#b8906a', textTransform: 'uppercase', letterSpacing: '0.1em' };
+function PvColHeaders() {
+  const lbl = { fontSize: 6.5, fontFamily: "'Jost', sans-serif", fontWeight: 400, color: '#b8906a', textTransform: 'uppercase', letterSpacing: '0.1em' };
   return (
-    <div style={{ display: 'flex', height: s(RH_COL), flexShrink: 0, alignItems: 'center', borderBottom: `${s(0.5)}px solid #b8906a`, marginBottom: s(3) }}>
-      <div style={{ ...lbl, width: s(COL_TIME) }}>Time</div>
+    <div style={{ display: 'flex', height: RH_COL, flexShrink: 0, alignItems: 'center', borderBottom: '0.5px solid #b8906a', marginBottom: 3 }}>
+      <div style={{ ...lbl, width: COL_TIME }}>Time</div>
       <div style={{ ...lbl, flex: 1 }}>Event</div>
-      <div style={{ ...lbl, width: s(COL_DUR), textAlign: 'right' }}>Min</div>
-      <div style={{ ...lbl, width: s(COL_SET), textAlign: 'center' }}>Setting</div>
+      <div style={{ ...lbl, width: COL_DUR, textAlign: 'right' }}>Min</div>
+      <div style={{ ...lbl, width: COL_SET, textAlign: 'center' }}>Setting</div>
     </div>
   );
 }
 
-function PvRow({ row, sc }) {
-  const s = v => v * sc;
+function PvRow({ row }) {
   const t = formatTime(row.time);
   const timeStr = `${t.hour}:${t.minute} ${t.period}`;
   if (row.type === 'location') {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: s(RH_LOC), flexShrink: 0, marginBottom: s(RH_GAP), paddingLeft: s(7), paddingRight: s(4), background: '#f8f6f3', borderLeft: `${s(3)}px solid #b8906a` }}>
-        <div style={{ fontSize: s(7.5), color: '#aaa', fontFamily: "'Jost', sans-serif", marginBottom: s(2) }}>{timeStr}</div>
-        <div style={{ fontSize: s(10), color: '#1a1a1a', fontFamily: "'Jost', sans-serif", fontWeight: 500 }}>📍 {row.event || '(Travel)'}</div>
-        {row.address && row.address.trim() && <div style={{ fontSize: s(8), color: '#666', fontFamily: "'Jost', sans-serif", marginTop: s(2) }}>{row.address}</div>}
-        <div style={{ fontSize: s(7.5), color: '#aaa', fontFamily: "'Jost', sans-serif", marginTop: s(2) }}>Travel time: {row.duration} min</div>
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: RH_LOC, flexShrink: 0, marginBottom: RH_GAP, paddingLeft: 7, paddingRight: 4, background: '#f8f6f3', borderLeft: '3px solid #b8906a' }}>
+        <div style={{ fontSize: 7.5, color: '#aaa', fontFamily: "'Jost', sans-serif", marginBottom: 2 }}>{timeStr}</div>
+        <div style={{ fontSize: 10, color: '#1a1a1a', fontFamily: "'Jost', sans-serif", fontWeight: 500 }}>📍 {row.event || '(Travel)'}</div>
+        {row.address && row.address.trim() && <div style={{ fontSize: 8, color: '#666', fontFamily: "'Jost', sans-serif", marginTop: 2 }}>{row.address}</div>}
+        <div style={{ fontSize: 7.5, color: '#aaa', fontFamily: "'Jost', sans-serif", marginTop: 2 }}>Travel time: {row.duration} min</div>
       </div>
     );
   }
   if (row.type === 'constraint') {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', height: s(RH_CON), flexShrink: 0, marginBottom: s(RH_GAP), paddingLeft: s(7), paddingRight: s(4), background: 'repeating-linear-gradient(45deg,#fff8f8,#fff8f8 6px,#fff2f2 6px,#fff2f2 12px)', borderLeft: `${s(3)}px solid #cc4444`, gap: s(10) }}>
-        <div style={{ fontSize: s(8), color: '#999', fontFamily: "'Jost', sans-serif", flexShrink: 0 }}>{timeStr}</div>
-        <div style={{ fontSize: s(8.5), color: '#cc4444', fontFamily: "'Jost', sans-serif", fontWeight: 500 }}>⚠ Time Constraint</div>
-        {row.notes && row.notes.trim() && <div style={{ fontSize: s(7.5), color: '#888', fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', marginLeft: 'auto' }}>{row.notes}</div>}
+      <div style={{ display: 'flex', alignItems: 'center', height: RH_CON, flexShrink: 0, marginBottom: RH_GAP, paddingLeft: 7, paddingRight: 4, background: 'repeating-linear-gradient(45deg,#fff8f8,#fff8f8 6px,#fff2f2 6px,#fff2f2 12px)', borderLeft: '3px solid #cc4444', gap: 10 }}>
+        <div style={{ fontSize: 8, color: '#999', fontFamily: "'Jost', sans-serif", flexShrink: 0 }}>{timeStr}</div>
+        <div style={{ fontSize: 8.5, color: '#cc4444', fontFamily: "'Jost', sans-serif", fontWeight: 500 }}>⚠ Time Constraint</div>
+        {row.notes && row.notes.trim() && <div style={{ fontSize: 7.5, color: '#888', fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', marginLeft: 'auto' }}>{row.notes}</div>}
       </div>
     );
   }
@@ -1826,38 +1851,42 @@ function PvRow({ row, sc }) {
   const noteLines = row.notes && row.notes.trim() ? Math.ceil(row.notes.trim().length / 58) : 0;
   const rowH = RH_EVT + noteLines * RH_NOTE;
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', height: s(rowH), flexShrink: 0, marginBottom: s(RH_GAP), paddingTop: s(4), paddingLeft: s(5), paddingRight: s(4), borderLeft: `${s(2.5)}px solid ${accent}`, borderBottom: `${s(0.4)}px solid #f0ede8` }}>
-      <div style={{ width: s(COL_TIME - 5), fontSize: s(8.5), fontFamily: "'Jost', sans-serif", color: '#333', fontWeight: 500, flexShrink: 0 }}>{timeStr}</div>
+    <div style={{ display: 'flex', alignItems: 'flex-start', height: rowH, flexShrink: 0, marginBottom: RH_GAP, paddingTop: 4, paddingLeft: 5, paddingRight: 4, borderLeft: `2.5px solid ${accent}`, borderBottom: '0.4px solid #f0ede8' }}>
+      <div style={{ width: COL_TIME - 5, fontSize: 8.5, fontFamily: "'Jost', sans-serif", color: '#333', fontWeight: 500, flexShrink: 0 }}>{timeStr}</div>
       <div style={{ flex: 1, overflow: 'hidden' }}>
-        <div style={{ fontSize: s(9), fontFamily: "'Jost', sans-serif", color: '#1a1a1a', lineHeight: 1.25 }}>{row.event || '(empty)'}</div>
-        {row.notes && row.notes.trim() && <div style={{ fontSize: s(8), fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', color: '#777', marginTop: s(2), lineHeight: 1.2 }}>{row.notes}</div>}
+        <div style={{ fontSize: 9, fontFamily: "'Jost', sans-serif", color: '#1a1a1a', lineHeight: 1.25 }}>{row.event || '(empty)'}</div>
+        {row.notes && row.notes.trim() && <div style={{ fontSize: 8, fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', color: '#777', marginTop: 2, lineHeight: 1.2 }}>{row.notes}</div>}
       </div>
-      <div style={{ width: s(COL_DUR), fontSize: s(8.5), fontFamily: "'Jost', sans-serif", color: '#666', textAlign: 'right', flexShrink: 0 }}>{row.duration}</div>
-      <div style={{ width: s(COL_SET), fontSize: s(9), textAlign: 'center', flexShrink: 0 }}>{row.isOutdoor ? '☀' : '⌂'}</div>
+      <div style={{ width: COL_DUR, fontSize: 8.5, fontFamily: "'Jost', sans-serif", color: '#666', textAlign: 'right', flexShrink: 0 }}>{row.duration}</div>
+      <div style={{ width: COL_SET, fontSize: 9, textAlign: 'center', flexShrink: 0 }}>{row.isOutdoor ? '☀' : '⌂'}</div>
     </div>
   );
 }
 
-function PvFooter({ sc, pageNum, totalPages, bride, groom, date }) {
-  const s = v => v * sc;
+function PvFooter({ pageNum, totalPages, bride, groom, date }) {
   return (
-    <div style={{ position: 'absolute', bottom: s(10), left: s(MX), right: s(MX), display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `${s(0.4)}px solid #ddd`, paddingTop: s(5) }}>
-      <div style={{ fontSize: s(7), fontFamily: "'Jost', sans-serif", color: '#bbb' }}>{bride || 'Bride'} &amp; {groom || 'Groom'} · {fmtDateLong(date)}</div>
-      <div style={{ fontSize: s(7), fontFamily: "'Jost', sans-serif", color: '#bbb' }}>{pageNum} of {totalPages}</div>
+    <div style={{ position: 'absolute', bottom: 10, left: MX, right: MX, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '0.4px solid #ddd', paddingTop: 5 }}>
+      <div style={{ fontSize: 7, fontFamily: "'Jost', sans-serif", color: '#bbb' }}>{bride || 'Bride'} &amp; {groom || 'Groom'} · {fmtDateLong(date)}</div>
+      <div style={{ fontSize: 7, fontFamily: "'Jost', sans-serif", color: '#bbb' }}>{pageNum} of {totalPages}</div>
     </div>
   );
 }
 
+// The page is always rendered at PW×PH in layout space.
+// The outer wrapper has dimensions PW*sc × PH*sc (the visual footprint),
+// and CSS transform: scale(sc) shrinks/enlarges the inner page visually
+// without affecting the layout of the surrounding container.
 function PreviewPage({ items, isFirst, pageNum, totalPages, sc, bride, groom, date, photoStartHour, photoStartMinute, photoStartPeriod, photoEndHour, photoEndMinute, photoEndPeriod, videoStartHour, videoStartMinute, videoStartPeriod, videoEndHour, videoEndMinute, videoEndPeriod, photoEnabled, videoEnabled }) {
-  const s = v => v * sc;
   return (
-    <div style={{ width: s(PW), height: s(PH), background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.18)', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', left: s(MX), right: s(MX), top: s(MY_TOP), bottom: s(MY_BOT + FTR_H + 4), overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {isFirst && <PvHeader sc={sc} bride={bride} groom={groom} date={date} photoStartHour={photoStartHour} photoStartMinute={photoStartMinute} photoStartPeriod={photoStartPeriod} photoEndHour={photoEndHour} photoEndMinute={photoEndMinute} photoEndPeriod={photoEndPeriod} videoStartHour={videoStartHour} videoStartMinute={videoStartMinute} videoStartPeriod={videoStartPeriod} videoEndHour={videoEndHour} videoEndMinute={videoEndMinute} videoEndPeriod={videoEndPeriod} photoEnabled={photoEnabled} videoEnabled={videoEnabled} />}
-        <PvColHeaders sc={sc} />
-        {items.map((row, i) => <PvRow key={row.id ?? i} row={row} sc={sc} />)}
+    <div style={{ width: PW * sc, height: PH * sc, flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ width: PW, height: PH, background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.18)', position: 'absolute', top: 0, left: 0, transform: `scale(${sc})`, transformOrigin: 'top left' }}>
+        <div style={{ position: 'absolute', left: MX, right: MX, top: MY_TOP, bottom: MY_BOT + FTR_H + 4, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          {isFirst && <PvHeader bride={bride} groom={groom} date={date} photoStartHour={photoStartHour} photoStartMinute={photoStartMinute} photoStartPeriod={photoStartPeriod} photoEndHour={photoEndHour} photoEndMinute={photoEndMinute} photoEndPeriod={photoEndPeriod} videoStartHour={videoStartHour} videoStartMinute={videoStartMinute} videoStartPeriod={videoStartPeriod} videoEndHour={videoEndHour} videoEndMinute={videoEndMinute} videoEndPeriod={videoEndPeriod} photoEnabled={photoEnabled} videoEnabled={videoEnabled} />}
+          <PvColHeaders />
+          {items.map((row, i) => <PvRow key={row.id ?? i} row={row} />)}
+        </div>
+        <PvFooter pageNum={pageNum} totalPages={totalPages} bride={bride} groom={groom} date={date} />
       </div>
-      <PvFooter sc={sc} pageNum={pageNum} totalPages={totalPages} bride={bride} groom={groom} date={date} />
     </div>
   );
 }
@@ -2281,6 +2310,8 @@ export default function MobileApp() {
   const rows = useMemo(() => {
     return [...userRows].sort((a, b) => a.time - b.time);
   }, [userRows]);
+
+  const overlapMap = useMemo(() => computeOverlaps(userRows), [userRows]);
 
   useEffect(() => {
   }, [wiz_firstLookGroom]);
@@ -5023,6 +5054,7 @@ export default function MobileApp() {
                         }
                       }}
                       onDropEventBlock={(eventData) => handleDropEventBlockToRow(eventData, index)}
+                      overlapWith={overlapMap.get(row.id) || null}
                     />
                   </div>
 
