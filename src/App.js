@@ -1563,19 +1563,21 @@ function TimelineRow({
           />
         </div>
       ) : isLocation ? (
-        /* BOTTOM: Location block — Duration | Address | Notes */
+        /* BOTTOM: Location block — [spacer] | Travel time | Address | Notes */
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "auto 1fr 0.6fr",
-            padding: 8,
-            gap: 8,
+            gridTemplateColumns: "auto auto 1fr 0.6fr",
+            padding: "8px 8px 8px 6px",
+            gap: 9,
             alignItems: "start",
             background: "#f5f0e8",
           }}
         >
-          {/* Duration */}
-          <div style={{ width: "auto" }}>
+          {/* Spacer — aligns with drag handle above */}
+          <div style={{ width: 18 }} />
+          {/* Travel time — centred under the 88px time button */}
+          <div style={{ width: 88, display: "flex", flexDirection: "column", alignItems: "center" }}>
             <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Travel time</label>
             <div style={{ position: "relative", width: 65 }}>
               <input
