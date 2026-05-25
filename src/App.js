@@ -1299,7 +1299,7 @@ function TimelineRow({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "auto auto 1fr auto",
+          gridTemplateColumns: "auto auto 1fr",
           padding: 6,
           backgroundColor: isConstraint ? "rgba(180,0,0,0.12)" : isLocation ? "#ede7da" : "#0f0d0b",
           borderBottom: isLocation ? "1px solid #c8bfb0" : "1px solid #1e1c19",
@@ -1408,7 +1408,6 @@ function TimelineRow({
               >
                 <label style={{ fontSize: 10, color: "#6e6358", fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Event</label>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                  <span style={{ fontSize: 9, color: "#6e6358", fontFamily: "'Jost', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>Captured</span>
                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     <label
                       style={{
@@ -1515,15 +1514,20 @@ function TimelineRow({
           )}
         </div>
 
-        {/* Delete button (far right) */}
+      </div>
+
+        {/* Delete button — absolute top-right corner */}
         <button
           onClick={() => onDelete(index)}
           onMouseEnter={() => setDeleteHovered(true)}
           onMouseLeave={() => setDeleteHovered(false)}
           style={{
-            width: 28,
-            height: 28,
-            fontSize: 18,
+            position: "absolute",
+            top: 4,
+            right: 4,
+            width: 24,
+            height: 24,
+            fontSize: 16,
             border: "none",
             background: "none",
             color: deleteHovered ? "#e05252" : (isLocation ? "#c8bfb0" : "#3a3530"),
@@ -1534,14 +1538,12 @@ function TimelineRow({
             alignItems: "center",
             justifyContent: "center",
             transition: "color 0.15s",
-            alignSelf: "center",
-            flexShrink: 0,
+            zIndex: 1,
           }}
           title="Delete"
         >
           ×
         </button>
-      </div>
 
       {isConstraint ? (
         /* BOTTOM: Constraint block — notes only */
@@ -1588,7 +1590,7 @@ function TimelineRow({
           <div>
             <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Address</label>
             <textarea
-              placeholder="Address (optional)..."
+              placeholder="Address..."
               value={row.address || ""}
               onChange={(e) => onChange(index, "address", e.target.value)}
               onBlur={(e) => { onBlur(index); e.target.scrollTop = 0; }}
