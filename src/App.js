@@ -90,6 +90,22 @@ function getEventColor(label, fallback = "#ffffff") {
   return COLOR_BUCKETS[key] || COLOR_BUCKETS.Other;
 }
 
+const DESKTOP_MIN_WIDTH = "(min-width: 901px)";
+
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia(query).matches : false
+  );
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const onChange = () => setMatches(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, [query]);
+  return matches;
+}
+
 // Drop zone that also contains the AddRowButton
 function RowDropZone({ index, onDropBetween, onAddRow, isLast }) {
   const [over, setOver] = React.useState(false);
@@ -110,6 +126,7 @@ function RowDropZone({ index, onDropBetween, onAddRow, isLast }) {
           onDropBetween?.(e, index);
         }
       }}
+      className="wtb-drop-zone"
       style={{
         position: 'relative',
         height: over ? 60 : 40, // Grow to row height on hover
@@ -199,7 +216,130 @@ const MOBILE_TWEAKS = `
   }
 
   @media (max-width: 900px) {
-    .wtb-sidebar { display: none; }
+    .wtb-sidebar-wrap,
+    .wtb-sidebar { display: none !important; }
+    .wtb-shell {
+      grid-template-columns: 1fr !important;
+      gap: 0 !important;
+    }
+    .wtb-timeline-screen {
+      padding: 0 8px 10px !important;
+      overflow-x: hidden;
+    }
+    .wtb-timeline-scroll {
+      padding: 0 4px 20px !important;
+    }
+    .wtb-controls-desktop { display: none !important; }
+    .wtb-timeline-scroll.wtb-has-mobile-dock {
+      padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+    .wtb-drop-zone {
+      height: auto !important;
+      min-height: 0 !important;
+      margin: 4px 0 !important;
+      border: none !important;
+      background: transparent !important;
+    }
+    .wtb-drag-handle { display: none !important; }
+    .wtb-row-reorder {
+      display: flex !important;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      width: 40px;
+      flex-shrink: 0;
+      border-right: 1px solid #2a2520;
+      background: #1e1a16;
+    }
+    .wtb-row-reorder button {
+      flex: 1;
+      min-height: 28px;
+      border: none;
+      background: transparent;
+      color: #b8906a;
+      font-size: 16px;
+      cursor: pointer;
+      font-family: 'Jost', sans-serif;
+      padding: 0;
+    }
+    .wtb-row-reorder button:disabled {
+      color: #3a3530;
+      cursor: not-allowed;
+    }
+    .wtb-setting-btn--meta { display: inline-flex !important; }
+    .wtb-setting-btn--inline { display: none !important; }
+    .wtb-event-meta { flex-wrap: wrap !important; }
+    .wtb-location-grid {
+      grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) !important;
+      gap: 8px !important;
+    }
+    .wtb-location-grid .wtb-location-travel {
+      width: 72px !important;
+    }
+    .wtb-location-grid .wtb-location-travel > div {
+      width: 58px !important;
+    }
+    .wtb-bottom {
+      grid-template-columns: auto 1fr !important;
+    }
+    .wtb-bottom .wtb-notes-spacer { display: none !important; }
+    .timeline-row[draggable="true"] { cursor: default; }
+    .wtb-row-card:hover {
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    .wiz-step-col { padding: 0 4px; box-sizing: border-box; }
+  }
+
+  .wtb-controls-desktop { display: block; }
+  .wtb-row-reorder { display: none; }
+
+  /* Desktop: setting toggle beside event input; mobile: beside Video (see max-width rule) */
+  .wtb-setting-btn--meta { display: none; }
+  .wtb-setting-btn--inline { display: inline-flex; }
+
+  .wtb-setting-btn--meta,
+  .wtb-setting-btn--inline {
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 11px;
+    font-family: 'Jost', sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+    border-radius: 6;
+    border: 1px solid #2a2520;
+    flex-shrink: 0;
+  }
+  .wtb-setting-btn--meta {
+    padding: 4px 8px;
+    height: 28px;
+  }
+
+  .wtb-location-grid {
+    display: grid;
+    grid-template-columns: auto minmax(0, 0.85fr) minmax(0, 1fr);
+    align-items: stretch;
+    gap: 9px;
+  }
+  .wtb-location-grid .wtb-location-travel {
+    width: 88px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-self: start;
+  }
+  .wtb-location-grid .wtb-location-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .wtb-location-grid textarea {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .wtb-side-title {
@@ -279,30 +419,180 @@ const MOBILE_TWEAKS = `
   }
 
   @media (max-width: 480px) {
-    .wtb-bottom {
-      grid-template-columns: auto minmax(0,1fr) max-content !important;
-      gap: 4px !important;
-      padding-right: 12px !important;
-      align-items: start !important;
+    .wtb-toolbar-btn {
+      padding: 8px 10px !important;
+      font-size: 12px !important;
     }
-    .wtb-bottom > div:nth-child(3) {
-      width: auto !important;
-      justify-self: end !important;
-      align-items: stretch !important;
+    .wtb-row-time-col button span:first-child {
+      font-size: 22px !important;
     }
-    .wtb-bottom > div:nth-child(3) button {
-      width: 100% !important;
-      display: flex !important;
-    }
-    .wtb-location textarea {
-      width: 100% !important;
-      min-width: 0 !important;
-      box-sizing: border-box !important;
-    }
-    .wtb-notes {
-      grid-column: 1 / -1 !important;
-      margin-top: 2px !important;
-    }
+  }
+
+  .wtb-mobile-header-top {
+    position: relative;
+    padding: 2px 48px 6px 8px;
+    margin: 0 -8px;
+  }
+  .wtb-mobile-gear-anchor {
+    position: absolute;
+    top: 2px;
+    right: 0;
+    z-index: 210;
+  }
+  .wtb-mobile-undo-dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 180;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    background: #0f0d0b;
+    border-top: 1px solid #161310;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.35);
+  }
+  .wtb-mobile-undo-dock .wtb-mobile-undo,
+  .wtb-mobile-undo-dock .wtb-mobile-redo {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+    max-width: 200px;
+  }
+  .wtb-mobile-gear-btn {
+    width: 40px;
+    height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid #2a2520;
+    border-radius: 4px;
+    color: #ddd0bc;
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .wtb-mobile-gear-btn[aria-expanded="true"] {
+    border-color: #b8906a;
+    color: #b8906a;
+  }
+  .wtb-mobile-gear-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    min-width: 196px;
+    background: #1a1714;
+    border: 1px solid #2a2520;
+    border-radius: 4px;
+    z-index: 200;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .wtb-mobile-gear-menu-item {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid #2a2520;
+    color: #ddd0bc;
+    text-align: left;
+    font-size: 13px;
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    cursor: pointer;
+    box-sizing: border-box;
+  }
+  .wtb-mobile-gear-menu-item:last-child {
+    border-bottom: none;
+  }
+  .wtb-mobile-gear-menu-item:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .wtb-mobile-gear-menu-item--primary {
+    color: #b8906a;
+  }
+  .wtb-mobile-undo,
+  .wtb-mobile-redo {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 300;
+    font-family: 'Jost', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 5;
+    cursor: pointer;
+  }
+  .wtb-mobile-undo:disabled,
+  .wtb-mobile-redo:disabled {
+    cursor: not-allowed;
+  }
+  .wtb-mobile-view-tabs {
+    display: flex;
+    border-bottom: 1px solid #161310;
+    background: #0f0d0b;
+    margin: 0 -8px;
+    flex-shrink: 0;
+  }
+  .wtb-mobile-view-tab {
+    flex: 1;
+    padding: 10px 8px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #6e6358;
+    font-size: 11px;
+    font-family: 'Jost', sans-serif;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-bottom: -1px;
+  }
+  .wtb-mobile-view-tab.active {
+    color: #b8906a;
+    border-bottom-color: #b8906a;
+  }
+  .wtb-mobile-preview-panel {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    padding: 0 0 12px;
+  }
+  .wtb-mobile-preview-panel > div {
+    flex: 1;
+    min-height: 0;
+  }
+  .wtb-toolbar-btn {
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 300;
+    font-family: 'Jost', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    border: 1px solid #2a2520;
+    background: transparent;
+    color: #ddd0bc;
+  }
+  .wtb-toolbar-btn-primary {
+    background: #b8906a;
+    color: #060504;
+    border: none;
+  }
+  .wtb-toolbar-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 
   .time-range { display: flex; align-items: center; gap: 4px; }
@@ -1202,6 +1492,7 @@ function TimelineRow({
   onDropEventBlock,
   onDrop,
   overlapWith,
+  isMobile = false,
 }) {
   const t = formatTime(row.time);
   const timeBtnRef = useRef(null);
@@ -1297,8 +1588,9 @@ function TimelineRow({
       }}
       title={dropping ? "Drop here to add event" : ""}
     >
-      {/* Drag handle strip — full height, left edge */}
+      {/* Drag handle (desktop) / reorder buttons (mobile) */}
       <div
+        className="wtb-drag-handle"
         style={{
           width: 36,
           flexShrink: 0,
@@ -1316,6 +1608,26 @@ function TimelineRow({
         title="Drag to reorder"
       >
         ⠿
+      </div>
+      <div className="wtb-row-reorder" aria-label="Reorder row">
+        <button
+          type="button"
+          disabled={isFirst}
+          onClick={() => onMoveUp?.(index)}
+          title="Move up"
+          aria-label="Move up"
+        >
+          ↑
+        </button>
+        <button
+          type="button"
+          disabled={isLast}
+          onClick={() => onMoveDown?.(index)}
+          title="Move down"
+          aria-label="Move down"
+        >
+          ↓
+        </button>
       </div>
 
       {/* Card content wrapper */}
@@ -1351,8 +1663,9 @@ function TimelineRow({
           )}
         </div>
       )}
-      {/* TOP row: Time | Event (+photo/video) | Delete (right) */}
+      {/* TOP row: Time | Event (+photo/video) */}
       <div
+        className="wtb-row-top"
         style={{
           display: "grid",
           gridTemplateColumns: "auto 1fr",
@@ -1363,13 +1676,12 @@ function TimelineRow({
           alignItems: "center",
         }}
       >
-        {/* Time (left) */}
-        <div>
+        <div className="wtb-row-time-col">
           <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
             <label
               style={{
                 fontSize: 10,
-                color: "#6e6358",
+                color: isLocation ? "#7a6548" : "#6e6358",
                 fontFamily: "'Jost', sans-serif",
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
@@ -1386,27 +1698,24 @@ function TimelineRow({
               padding: "4px 6px",
               textAlign: "center",
               border: isLocation ? "1px solid #c8bfb0" : "1px solid #2a2520",
-              background: 'transparent',
-              color: isLocation ? '#1e140a' : '#ddd0bc',
+              background: "transparent",
+              color: isLocation ? "#1e140a" : "#ddd0bc",
               borderRadius: 4,
-              cursor: 'pointer',
+              cursor: "pointer",
               fontFamily: "'Cormorant Garamond', serif",
               lineHeight: 1,
             }}
             title="Click to set time"
           >
-            <span style={{ fontSize: 26, fontWeight: 300, display: 'block' }}>{t.hour}:{t.minute}</span>
-            <span style={{ fontSize: 11, letterSpacing: '0.1em', opacity: 0.75 }}>{t.period}</span>
+            <span style={{ fontSize: 26, fontWeight: 300, display: "block" }}>{t.hour}:{t.minute}</span>
+            <span style={{ fontSize: 11, letterSpacing: "0.1em", opacity: 0.75 }}>{t.period}</span>
           </button>
         </div>
 
-        {/* Event / Location Name column (right) */}
         <div>
           {isConstraint ? (
-            <div>
-              <div style={{ fontSize: 14, fontWeight: "bold", color: "#ff6b6b", padding: "8px 0" }}>
-                ⚠️ TIME CONSTRAINT
-              </div>
+            <div style={{ fontSize: 14, fontWeight: "bold", color: "#ff6b6b", padding: "8px 0" }}>
+              ⚠️ TIME CONSTRAINT
             </div>
           ) : isLocation ? (
             <>
@@ -1435,8 +1744,8 @@ function TimelineRow({
             </>
           ) : (
             <>
-              {/* Header row: Event label + Photo/Video (left) */}
               <div
+                className="wtb-event-meta"
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -1445,65 +1754,76 @@ function TimelineRow({
                 }}
               >
                 <label style={{ fontSize: 10, color: "#6e6358", fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Event</label>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4 }}>
-                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    <label
-                      style={{
-                        fontSize: 12,
-                        display: "flex",
-                        gap: 5,
-                        alignItems: "center",
-                        color: photoEnabledGlobal ? "#ddd0bc" : "#6e6358",
-                        opacity: photoEnabledGlobal ? 1 : 0.5,
-                        cursor: photoEnabledGlobal ? "pointer" : "default",
+                <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      display: "flex",
+                      gap: 5,
+                      alignItems: "center",
+                      color: photoEnabledGlobal ? "#ddd0bc" : "#6e6358",
+                      opacity: photoEnabledGlobal ? 1 : 0.5,
+                      cursor: photoEnabledGlobal ? "pointer" : "default",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!!row.photo}
+                      onChange={(e) => onChange(index, "photo", e.target.checked)}
+                      onBlur={() => onBlur(index)}
+                      disabled={!photoEnabledGlobal}
+                    />
+                    Photo
+                  </label>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      display: "flex",
+                      gap: 5,
+                      alignItems: "center",
+                      color: videoEnabledGlobal ? "#ddd0bc" : "#6e6358",
+                      opacity: videoEnabledGlobal ? 1 : 0.5,
+                      cursor: videoEnabledGlobal ? "pointer" : "default",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!!row.video}
+                      onChange={(e) => onChange(index, "video", e.target.checked)}
+                      onBlur={() => onBlur(index)}
+                      disabled={!videoEnabledGlobal}
+                    />
+                    Video
+                  </label>
+                  <button
+                    type="button"
+                    className="wtb-setting-btn--meta"
+                    onClick={() => { onChange(index, "isOutdoor", !row.isOutdoor); onBlur(index); }}
+                    aria-pressed={row.isOutdoor}
+                    title={row.isOutdoor ? "Outside — click for Indoors" : "Indoors — click for Outside"}
+                    style={{
+                      background: row.isOutdoor ? "#2a6fd4" : "#c96a20",
+                      color: "#f0ece6",
+                    }}
+                  >
+                    <span aria-hidden style={{ fontSize: 13, lineHeight: 1 }}>{row.isOutdoor ? "☀️" : "💡"}</span>
+                    <span>{row.isOutdoor ? "Outside" : "Indoors"}</span>
+                  </button>
+                  {row.type === "custom" && (
+                    <ColorPicker
+                      currentColor={row.color}
+                      onChange={(color) => {
+                        onChange(index, "color", color);
+                        onBlur(index);
                       }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={!!row.photo}
-                        onChange={(e) => onChange(index, "photo", e.target.checked)}
-                        onBlur={() => onBlur(index)}
-                        disabled={!photoEnabledGlobal}
-                      />
-                      Photo
-                    </label>
-                    <label
-                      style={{
-                        fontSize: 12,
-                        display: "flex",
-                        gap: 5,
-                        alignItems: "center",
-                        color: videoEnabledGlobal ? "#ddd0bc" : "#6e6358",
-                        opacity: videoEnabledGlobal ? 1 : 0.5,
-                        cursor: videoEnabledGlobal ? "pointer" : "default",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={!!row.video}
-                        onChange={(e) => onChange(index, "video", e.target.checked)}
-                        onBlur={() => onBlur(index)}
-                        disabled={!videoEnabledGlobal}
-                      />
-                      Video
-                    </label>
-                    {row.type === "custom" && (
-                      <ColorPicker
-                        currentColor={row.color}
-                        onChange={(color) => {
-                          onChange(index, "color", color);
-                          onBlur(index);
-                        }}
-                      />
-                    )}
-                  </div>
+                    />
+                  )}
                 </div>
               </div>
-              {/* Event input + Indoor/Outdoor button inline */}
-              <div style={{ display: "flex", gap: 6, alignItems: "stretch" }}>
+              <div className="wtb-event-input-row" style={{ display: "flex", gap: 6, alignItems: "stretch" }}>
                 <input
                   type="text"
-                  placeholder="Click to select or drop an event..."
+                  placeholder={isMobile ? "Tap to select an event…" : "Click to select or drop an event..."}
                   value={row.event}
                   onChange={(e) => onChange(index, "event", e.target.value)}
                   onBlur={() => {
@@ -1528,24 +1848,16 @@ function TimelineRow({
                   }}
                 />
                 <button
+                  type="button"
+                  className="wtb-setting-btn--inline"
                   onClick={() => { onChange(index, "isOutdoor", !row.isOutdoor); onBlur(index); }}
                   aria-pressed={row.isOutdoor}
                   title={row.isOutdoor ? "Outside — click for Indoors" : "Indoors — click for Outside"}
                   style={{
                     width: 80,
-                    flexShrink: 0,
                     border: "1px solid #2a2520",
                     background: row.isOutdoor ? "#2a6fd4" : "#c96a20",
                     color: "#f0ece6",
-                    cursor: "pointer",
-                    borderRadius: 6,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 5,
-                    fontSize: 11,
-                    fontFamily: "'Jost', sans-serif",
-                    whiteSpace: "nowrap",
                     alignSelf: "stretch",
                   }}
                 >
@@ -1556,17 +1868,15 @@ function TimelineRow({
             </>
           )}
         </div>
-
       </div>
 
-        {/* Delete button — absolute top-right corner */}
         <button
           onClick={() => {
             if (!deletePending) {
               setDeletePending(true);
               if (cardRef.current) {
                 cardRef.current.style.animation = "none";
-                void cardRef.current.offsetHeight; // force reflow so animation always restarts
+                void cardRef.current.offsetHeight;
                 cardRef.current.style.animation = "wtb-delete 2s ease-in forwards";
               }
               deleteTimerRef.current = setTimeout(() => onDelete(index), 2000);
@@ -1614,18 +1924,14 @@ function TimelineRow({
       ) : isLocation ? (
         /* BOTTOM: Location block — Travel time | Address | Notes */
         <div
+          className="wtb-location-grid"
           style={{
-            display: "grid",
-            gridTemplateColumns: "auto 0.6fr 1fr",
             padding: "8px 8px 8px 6px",
-            gap: 9,
-            alignItems: "stretch",
             background: "#f5f0e8",
           }}
         >
-          {/* Travel time — centred under the 88px time button */}
-          <div style={{ width: 88, display: "flex", flexDirection: "column", alignItems: "center", alignSelf: "start" }}>
-            <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Travel time</label>
+          <div className="wtb-location-travel">
+            <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "100%", textAlign: "center" }}>Travel time</label>
             <div style={{ position: "relative", width: 65 }}>
               <input
                 type="text"
@@ -1640,27 +1946,27 @@ function TimelineRow({
             </div>
           </div>
 
-          {/* Address */}
-          <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+          <div className="wtb-location-field">
             <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Address</label>
             <textarea
               placeholder="Address..."
               value={row.address || ""}
               onChange={(e) => onChange(index, "address", e.target.value)}
               onBlur={(e) => { onBlur(index); e.target.scrollTop = 0; }}
-              style={{ flex: 1, width: "100%", minWidth: 0, fontSize: 14, padding: 8, resize: "none", background: "rgba(255,255,255,0.5)", border: "1px solid #c8bfb0", borderRadius: 4, color: "#1e140a", boxSizing: "border-box" }}
+              rows={3}
+              style={{ fontSize: 14, padding: 8, resize: "vertical", background: "rgba(255,255,255,0.5)", border: "1px solid #c8bfb0", borderRadius: 4, color: "#1e140a" }}
             />
           </div>
 
-          {/* Notes */}
-          <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+          <div className="wtb-location-field">
             <label style={{ fontSize: 10, color: "#7a6548", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Notes</label>
             <textarea
-              placeholder="Add any notes for this location... (drag corner to expand)"
+              placeholder="Add any notes for this location..."
               value={row.notes || ""}
               onChange={(e) => onChange(index, "notes", e.target.value)}
               onBlur={() => onBlur(index)}
-              style={{ flex: 1, width: "100%", boxSizing: "border-box", fontSize: 13, padding: 8, resize: "vertical", background: "rgba(255,255,255,0.5)", border: "1px solid #c8bfb0", borderRadius: 4, color: "#1e140a" }}
+              rows={3}
+              style={{ fontSize: 13, padding: 8, resize: "vertical", background: "rgba(255,255,255,0.5)", border: "1px solid #c8bfb0", borderRadius: 4, color: "#1e140a" }}
             />
           </div>
         </div>
@@ -1676,7 +1982,6 @@ function TimelineRow({
             alignItems: "start",
           }}
         >
-          {/* Duration — centred under the 88px time button */}
           <div style={{ width: 88, display: "flex", flexDirection: "column", alignItems: "center" }}>
             <label
               style={{
@@ -1730,7 +2035,6 @@ function TimelineRow({
             </div>
           </div>
 
-          {/* Notes — same width as event input (flex:1 beside matching spacer) */}
           <div className="wtb-location">
             <label
               style={{
@@ -1765,10 +2069,9 @@ function TimelineRow({
                   fontFamily: "'Jost', sans-serif",
                 }}
               />
-              <div style={{ width: 80, flexShrink: 0 }} />
+              <div className="wtb-notes-spacer" style={{ width: 80, flexShrink: 0 }} />
             </div>
           </div>
-
         </div>
       )}
 
@@ -2090,7 +2393,7 @@ function TimelinePreview({ rows, bride, groom, date, photoStartHour, photoStartM
 }
 
 /* ---------------- Sidebar (desktop only) ---------------- */
-function EventSidebar({ onUndo, onRedo, canUndo, canRedo, rows, bride, groom, date, photoStartHour, photoStartMinute, photoStartPeriod, photoEndHour, photoEndMinute, photoEndPeriod, videoStartHour, videoStartMinute, videoStartPeriod, videoEndHour, videoEndMinute, videoEndPeriod, photoEnabled, videoEnabled }) {
+function EventSidebar({ rows, bride, groom, date, photoStartHour, photoStartMinute, photoStartPeriod, photoEndHour, photoEndMinute, photoEndPeriod, videoStartHour, videoStartMinute, videoStartPeriod, videoEndHour, videoEndMinute, videoEndPeriod, photoEnabled, videoEnabled }) {
   const [activeTab, setActiveTab] = useState('blocks');
   const previewProps = { rows, bride, groom, date, photoStartHour, photoStartMinute, photoStartPeriod, photoEndHour, photoEndMinute, photoEndPeriod, videoStartHour, videoStartMinute, videoStartPeriod, videoEndHour, videoEndMinute, videoEndPeriod, photoEnabled, videoEnabled };
   return (
@@ -2167,6 +2470,9 @@ function EventSidebar({ onUndo, onRedo, canUndo, canRedo, rows, bride, groom, da
 
 /* ---------------- App ---------------- */
 export default function MobileApp() {
+  const isDesktop = useMediaQuery(DESKTOP_MIN_WIDTH);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [mobileMainTab, setMobileMainTab] = useState("timeline"); // "timeline" | "preview" (mobile only)
   const [date, setDate] = useState("");
   const [bride, setBride] = useState("");
   const [groom, setGroom] = useState("");
@@ -2229,6 +2535,7 @@ export default function MobileApp() {
   const [exporting, setExporting] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const exportMenuRef = useRef(null);
+  const mobileGearMenuRef = useRef(null);
   const mainScrollRef = useRef(null);
   const [draggedRowId, setDraggedRowId] = useState(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
@@ -2357,6 +2664,15 @@ export default function MobileApp() {
   }, [userRows]);
 
   const overlapMap = useMemo(() => computeOverlaps(userRows), [userRows]);
+
+  useEffect(() => {
+    if (isDesktop) {
+      setShowMobileMenu(false);
+      setMobileMainTab("timeline");
+    } else {
+      setShowExportMenu(false);
+    }
+  }, [isDesktop]);
 
   useEffect(() => {
   }, [wiz_firstLookGroom]);
@@ -3088,9 +3404,18 @@ export default function MobileApp() {
     setWiz_locations(prev => prev.filter(l => l.id !== id));
   };
 
-  // Close export menu when clicking outside
+  const closeMobileGearMenu = () => setShowMobileMenu(false);
+
+  // Close export / mobile gear menus when clicking outside
   useEffect(() => {
-    const handler = (e) => { if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) setShowExportMenu(false); };
+    const handler = (e) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
+        setShowExportMenu(false);
+      }
+      if (mobileGearMenuRef.current && !mobileGearMenuRef.current.contains(e.target)) {
+        setShowMobileMenu(false);
+      }
+    };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
@@ -3098,6 +3423,7 @@ export default function MobileApp() {
   const exportPDF = async () => {
     setExporting(true);
     setShowExportMenu(false);
+    closeMobileGearMenu();
     try {
       const { jsPDF } = await import('jspdf');
       const doc = new jsPDF({ unit: 'pt', format: 'letter' });
@@ -5137,24 +5463,113 @@ export default function MobileApp() {
         </div>
       ) : (
         /* ============ TIMELINE SCREEN ============ */
-        <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", background: "#060504", zIndex: 1, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>
+        <div className="wtb-timeline-screen" style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", background: "#060504", zIndex: 1, color: "#ddd0bc", fontFamily: "'Jost', sans-serif" }}>
           {/* Header: names/date + controls */}
-          <div style={{ flexShrink: 0, background: "#060504", padding: "4px 10px 0" }}>
-            {/* Names & date */}
-            <div style={{ textAlign: "center", marginBottom: 6 }}>
-              <div style={{ fontSize: "clamp(18px, 5vw, 26px)", fontWeight: 300, color: "#ddd0bc", lineHeight: 1.2, fontFamily: "'Cormorant Garamond', serif" }}>
-                {bride || groom ? [bride, groom].filter(Boolean).join(" & ") : "Wedding Timeline Builder"}
-              </div>
-              {date && (
-                <div style={{ fontSize: 14, color: "#6e6358", marginTop: 2, fontFamily: "'Jost', sans-serif", fontWeight: 200 }}>
-                  {new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          <div style={{ flexShrink: 0, background: "#060504", padding: isDesktop ? "4px 10px 0" : "4px 8px 0" }}>
+            {/* Names & date (+ mobile gear top-right) */}
+            {!isDesktop ? (
+              <div className="wtb-mobile-header-top">
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: "clamp(18px, 5vw, 26px)", fontWeight: 300, color: "#ddd0bc", lineHeight: 1.2, fontFamily: "'Cormorant Garamond', serif" }}>
+                    {bride || groom ? [bride, groom].filter(Boolean).join(" & ") : "Wedding Timeline Builder"}
+                  </div>
+                  {date && (
+                    <div style={{ fontSize: 14, color: "#6e6358", marginTop: 2, fontFamily: "'Jost', sans-serif", fontWeight: 200 }}>
+                      {new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+                <div className="wtb-mobile-gear-anchor" ref={mobileGearMenuRef}>
+                  <button
+                    type="button"
+                    className="wtb-mobile-gear-btn"
+                    onClick={() => setShowMobileMenu((v) => !v)}
+                    aria-expanded={showMobileMenu}
+                    aria-haspopup="menu"
+                    aria-label="Timeline menu"
+                    title="Menu"
+                  >
+                    ⚙
+                  </button>
+                  {showMobileMenu && (
+                    <div className="wtb-mobile-gear-menu" role="menu">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="wtb-mobile-gear-menu-item"
+                        onClick={() => { setWizardStep(1); setScreen("welcome"); closeMobileGearMenu(); }}
+                      >
+                        New Timeline
+                      </button>
+                      <label role="menuitem" className="wtb-mobile-gear-menu-item" style={{ cursor: "pointer", margin: 0 }}>
+                        Load Project
+                        <input
+                          type="file"
+                          accept=".json"
+                          onChange={(e) => { loadProject(e); closeMobileGearMenu(); }}
+                          style={{ display: "none" }}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="wtb-mobile-gear-menu-item wtb-mobile-gear-menu-item--primary"
+                        onClick={() => { saveProject(); closeMobileGearMenu(); }}
+                      >
+                        Save Project
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="wtb-mobile-gear-menu-item"
+                        onClick={exportPDF}
+                        disabled={exporting}
+                      >
+                        {exporting ? "Exporting PDF…" : "Export as PDF"}
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="wtb-mobile-gear-menu-item"
+                        onClick={() => { exportTimeline(); closeMobileGearMenu(); }}
+                      >
+                        Export as TXT
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="wtb-mobile-gear-menu-item"
+                        onClick={() => { copyTimeline(); closeMobileGearMenu(); }}
+                      >
+                        {copyConfirm ? "Copied!" : "Copy Timeline"}
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="wtb-mobile-gear-menu-item"
+                        onClick={() => { setShowSettingsModal(true); closeMobileGearMenu(); }}
+                      >
+                        Project Settings
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", marginBottom: 6 }}>
+                <div style={{ fontSize: "clamp(18px, 5vw, 26px)", fontWeight: 300, color: "#ddd0bc", lineHeight: 1.2, fontFamily: "'Cormorant Garamond', serif" }}>
+                  {bride || groom ? [bride, groom].filter(Boolean).join(" & ") : "Wedding Timeline Builder"}
+                </div>
+                {date && (
+                  <div style={{ fontSize: 14, color: "#6e6358", marginTop: 2, fontFamily: "'Jost', sans-serif", fontWeight: 200 }}>
+                    {new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                  </div>
+                )}
+              </div>
+            )}
 
-            {/* Controls row */}
-            <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", background: "#0f0d0b", borderBottom: "1px solid #161310", borderTop: "1px solid #161310", padding: "8px 10px", margin: "0 -10px 0" }}>
-              {/* Left group */}
+            {/* Controls — desktop */}
+            <div className="wtb-controls-desktop" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", background: "#0f0d0b", borderBottom: "1px solid #161310", borderTop: "1px solid #161310", padding: "8px 10px", margin: "0 -10px 0" }}>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
                   onClick={() => { setWizardStep(1); setScreen("welcome"); }}
@@ -5181,7 +5596,6 @@ export default function MobileApp() {
                   Project Settings
                 </button>
               </div>
-              {/* Undo / Redo — absolutely centred */}
               <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", display: "flex", gap: 8 }}>
                 <button
                   onClick={undo}
@@ -5198,7 +5612,6 @@ export default function MobileApp() {
                   <span style={{ fontSize: 15, lineHeight: 1 }}>↻</span> Redo
                 </button>
               </div>
-              {/* Right group */}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
                   onClick={copyTimeline}
@@ -5206,7 +5619,7 @@ export default function MobileApp() {
                 >
                   {copyConfirm ? "Copied!" : "Copy Timeline"}
                 </button>
-                <div ref={exportMenuRef} style={{ position: "relative" }}>
+                <div ref={isDesktop ? exportMenuRef : null} style={{ position: "relative" }}>
                   <button
                     onClick={() => setShowExportMenu(v => !v)}
                     style={{ padding: "6px 14px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
@@ -5233,15 +5646,56 @@ export default function MobileApp() {
                 </div>
               </div>
             </div>
-            {/* Padding below sticky header */}
-            <div style={{ height: 12, background: "#060504" }} />
+
+            {/* Mobile: toggle timeline editor vs PDF preview */}
+            {!isDesktop && (
+              <div className="wtb-mobile-view-tabs" role="tablist" aria-label="Timeline views">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={mobileMainTab === "timeline"}
+                  className={`wtb-mobile-view-tab${mobileMainTab === "timeline" ? " active" : ""}`}
+                  onClick={() => setMobileMainTab("timeline")}
+                >
+                  Timeline Events
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={mobileMainTab === "preview"}
+                  className={`wtb-mobile-view-tab${mobileMainTab === "preview" ? " active" : ""}`}
+                  onClick={() => { setMobileMainTab("preview"); closeMobileGearMenu(); }}
+                >
+                  Preview
+                </button>
+              </div>
+            )}
+
+            <div
+              style={{
+                height: !isDesktop && mobileMainTab === "preview" ? 4 : 8,
+                background: "#060504",
+                flexShrink: 0,
+              }}
+            />
           </div>
 
           {/* App shell: main content + (desktop) sidebar */}
           <div className="wtb-shell" style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
             {/* MAIN — scrolls independently */}
-            <div ref={mainScrollRef} style={{ overflowY: "auto", height: "100%", padding: "0 10px 20px" }}>
-          {/* Timeline */}
+            <div
+              ref={mainScrollRef}
+              className={`wtb-timeline-scroll${!isDesktop && mobileMainTab === "timeline" ? " wtb-has-mobile-dock" : ""}`}
+              style={{
+                overflowY: "auto",
+                height: "100%",
+                padding: isDesktop || mobileMainTab === "timeline" ? "0 10px 20px" : "0 4px 8px",
+                display: "flex",
+                flexDirection: "column",
+                minHeight: 0,
+              }}
+            >
+          {(isDesktop || mobileMainTab === "timeline") && (
           <div
             style={{
               background: "#060504",
@@ -5271,9 +5725,9 @@ export default function MobileApp() {
               {rows.map((row, index) => (
                 <React.Fragment key={row.id}>
                   <div 
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, row.id)}
-                    onDragEnd={handleDragEnd}
+                    draggable={isDesktop}
+                    onDragStart={isDesktop ? (e) => handleDragStart(e, row.id) : undefined}
+                    onDragEnd={isDesktop ? handleDragEnd : undefined}
                     className={`timeline-row ${draggedRowId === String(row.id) ? 'dragging' : ''}`}
                     style={{
                       opacity: draggedRowId === String(row.id) ? 0.4 : 1,
@@ -5308,8 +5762,9 @@ export default function MobileApp() {
                           saveToHistory(recalculated);
                         }
                       }}
-                      onDropEventBlock={(eventData) => handleDropEventBlockToRow(eventData, index)}
+                      onDropEventBlock={isDesktop ? (eventData) => handleDropEventBlockToRow(eventData, index) : undefined}
                       overlapWith={overlapMap.get(row.id) || null}
+                      isMobile={!isDesktop}
                     />
                   </div>
 
@@ -5354,8 +5809,35 @@ export default function MobileApp() {
               </button>
             </div>
           </div>
+          )}
+
+          {!isDesktop && mobileMainTab === "preview" && (
+            <div className="wtb-mobile-preview-panel">
+              <TimelinePreview
+                rows={rows}
+                bride={bride}
+                groom={groom}
+                date={date}
+                photoStartHour={photoStartHour}
+                photoStartMinute={photoStartMinute}
+                photoStartPeriod={photoStartPeriod}
+                photoEndHour={photoEndHour}
+                photoEndMinute={photoEndMinute}
+                photoEndPeriod={photoEndPeriod}
+                videoStartHour={videoStartHour}
+                videoStartMinute={videoStartMinute}
+                videoStartPeriod={videoStartPeriod}
+                videoEndHour={videoEndHour}
+                videoEndMinute={videoEndMinute}
+                videoEndPeriod={videoEndPeriod}
+                photoEnabled={photoEnabled}
+                videoEnabled={videoEnabled}
+              />
+            </div>
+          )}
 
           {/* Event Selector Modal */}
+          {(isDesktop || mobileMainTab === "timeline") && (
           <EventBlockSelector
             isVisible={showEventSelector}
             onSelect={handleEventSelect}
@@ -5370,33 +5852,32 @@ export default function MobileApp() {
               selectedRowIndex !== null ? rows[selectedRowIndex]?.time : undefined
             }
           />
+          )}
         </div>
 
-        {/* SIDEBAR (desktop only) */}
-        <EventSidebar
-          onUndo={undo}
-          onRedo={redo}
-          canUndo={history.length > 0}
-          canRedo={redoStack.length > 0}
-          rows={rows}
-          bride={bride}
-          groom={groom}
-          date={date}
-          photoStartHour={photoStartHour}
-          photoStartMinute={photoStartMinute}
-          photoStartPeriod={photoStartPeriod}
-          photoEndHour={photoEndHour}
-          photoEndMinute={photoEndMinute}
-          photoEndPeriod={photoEndPeriod}
-          videoStartHour={videoStartHour}
-          videoStartMinute={videoStartMinute}
-          videoStartPeriod={videoStartPeriod}
-          videoEndHour={videoEndHour}
-          videoEndMinute={videoEndMinute}
-          videoEndPeriod={videoEndPeriod}
-          photoEnabled={photoEnabled}
-          videoEnabled={videoEnabled}
-        />
+        {/* Sidebar: event blocks + preview (desktop only; mobile uses tap-to-select modal) */}
+        {isDesktop && (
+          <EventSidebar
+            rows={rows}
+            bride={bride}
+            groom={groom}
+            date={date}
+            photoStartHour={photoStartHour}
+            photoStartMinute={photoStartMinute}
+            photoStartPeriod={photoStartPeriod}
+            photoEndHour={photoEndHour}
+            photoEndMinute={photoEndMinute}
+            photoEndPeriod={photoEndPeriod}
+            videoStartHour={videoStartHour}
+            videoStartMinute={videoStartMinute}
+            videoStartPeriod={videoStartPeriod}
+            videoEndHour={videoEndHour}
+            videoEndMinute={videoEndMinute}
+            videoEndPeriod={videoEndPeriod}
+            photoEnabled={photoEnabled}
+            videoEnabled={videoEnabled}
+          />
+        )}
       </div>
 
           {/* Project Settings Modal */}
@@ -5456,6 +5937,38 @@ export default function MobileApp() {
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Mobile: fixed undo/redo at bottom (Timeline Events tab only) */}
+          {!isDesktop && mobileMainTab === "timeline" && (
+            <div className="wtb-mobile-undo-dock" role="toolbar" aria-label="Undo and redo">
+              <button
+                type="button"
+                className="wtb-mobile-undo"
+                onClick={undo}
+                disabled={history.length === 0}
+                title="Undo"
+                style={{
+                  background: history.length > 0 ? "#4a6070" : "#1a2228",
+                  color: history.length > 0 ? "#ddd0bc" : "#3a4a52",
+                }}
+              >
+                <span style={{ fontSize: 15, lineHeight: 1 }}>↺</span> Undo
+              </button>
+              <button
+                type="button"
+                className="wtb-mobile-redo"
+                onClick={redo}
+                disabled={redoStack.length === 0}
+                title="Redo"
+                style={{
+                  background: redoStack.length > 0 ? "#4a6070" : "#1a2228",
+                  color: redoStack.length > 0 ? "#ddd0bc" : "#3a4a52",
+                }}
+              >
+                <span style={{ fontSize: 15, lineHeight: 1 }}>↻</span> Redo
+              </button>
             </div>
           )}
         </div>
