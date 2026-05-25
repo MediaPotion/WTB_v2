@@ -324,6 +324,33 @@ const MOBILE_TWEAKS = `
     transform: translateY(-1px);
     box-shadow: 0 4px 16px rgba(184,144,106,0.12) !important;
   }
+  .wtb-row-card.wtb-deleting {
+    pointer-events: none;
+  }
+
+  @keyframes wtb-delete {
+    /* Vigorous shake: 0–25% (0–0.5 s), 8 full oscillations */
+    0%    { transform: translateX(0)     scale(1); opacity: 1; }
+    1.5%  { transform: translateX(-22px) scale(1); }
+    3%    { transform: translateX( 22px) scale(1); }
+    4.5%  { transform: translateX(-22px) scale(1); }
+    6%    { transform: translateX( 22px) scale(1); }
+    7.5%  { transform: translateX(-22px) scale(1); }
+    9%    { transform: translateX( 22px) scale(1); }
+    10.5% { transform: translateX(-22px) scale(1); }
+    12%   { transform: translateX( 22px) scale(1); }
+    13.5% { transform: translateX(-18px) scale(1); }
+    15%   { transform: translateX( 18px) scale(1); }
+    16.5% { transform: translateX(-18px) scale(1); }
+    18%   { transform: translateX( 18px) scale(1); }
+    19.5% { transform: translateX(-12px) scale(1); }
+    21%   { transform: translateX( 12px) scale(1); }
+    22.5% { transform: translateX( -6px) scale(1); }
+    24%   { transform: translateX(  6px) scale(1); }
+    25%   { transform: translateX(0)     scale(1); opacity: 1; }
+    /* Shrink to nothing: 25–100% (0.5–2 s) */
+    100%  { transform: translateX(0)     scale(0); opacity: 0; }
+  }
 
   /* Wizard layout */
   .wiz-layout {
@@ -1179,11 +1206,14 @@ function TimelineRow({
 }) {
   const t = formatTime(row.time);
   const timeBtnRef = useRef(null);
+  const cardRef = useRef(null);
   const [timeOpen, setTimeOpen] = useState(false);
   const [dropping, setDropping] = useState(false);
   const [showOverlapTip, setShowOverlapTip] = useState(false);
   const [deleteHovered, setDeleteHovered] = useState(false);
-  // Use the isTimeLocked prop instead of local state
+  const [deletePending, setDeletePending] = useState(false);
+  const deleteTimerRef = useRef(null);
+  useEffect(() => () => clearTimeout(deleteTimerRef.current), []);
 
   // Drop handlers on the whole row
   const allowDrop = (e) => {
@@ -1252,9 +1282,10 @@ function TimelineRow({
       onDragEnter={allowDrop}
       onDragLeave={leaveDrop}
       onDrop={handleDrop}
-      className={`wtb-row-card${dropping ? " wtb-dropping" : ""}`}
+      ref={cardRef}
+      className={`wtb-row-card${dropping ? " wtb-dropping" : ""}${deletePending ? " wtb-deleting" : ""}`}
       style={{
-        border: dropping ? "2px dashed #b8906a" : isConstraint ? "2px solid #cc4444" : isLocation ? "2px solid #b8906a" : `2px solid ${rowBg}`,
+        border: deletePending ? "2px solid #cc4444" : dropping ? "2px dashed #b8906a" : isConstraint ? "2px solid #cc4444" : isLocation ? "2px solid #b8906a" : `2px solid ${rowBg}`,
         borderRadius: 8,
         marginBottom: 12,
         backgroundColor: isLocation ? "#f5f0e8" : isConstraint ? "transparent" : (dropping ? "rgba(184,144,106,0.08)" : "#0f0d0b"),
@@ -1262,7 +1293,6 @@ function TimelineRow({
         overflow: "hidden",
         width: "100%",
         position: "relative",
-        transition: "all 0.2s ease",
         minHeight: "60px",
         display: "flex",
       }}
@@ -1532,7 +1562,17 @@ function TimelineRow({
 
         {/* Delete button — absolute top-right corner */}
         <button
-          onClick={() => onDelete(index)}
+          onClick={() => {
+            if (!deletePending) {
+              setDeletePending(true);
+              if (cardRef.current) {
+                cardRef.current.style.animation = "none";
+                void cardRef.current.offsetHeight; // force reflow so animation always restarts
+                cardRef.current.style.animation = "wtb-delete 2s ease-in forwards";
+              }
+              deleteTimerRef.current = setTimeout(() => onDelete(index), 2000);
+            }
+          }}
           onMouseEnter={() => setDeleteHovered(true)}
           onMouseLeave={() => setDeleteHovered(false)}
           style={{
@@ -1541,11 +1581,12 @@ function TimelineRow({
             right: 4,
             width: 24,
             height: 24,
+            padding: 0,
             fontSize: 16,
             border: "none",
             background: "none",
             color: deleteHovered ? "#e05252" : (isLocation ? "#c8bfb0" : "#3a3530"),
-            cursor: "pointer",
+            cursor: deletePending ? "default" : "pointer",
             borderRadius: 4,
             lineHeight: 1,
             display: "flex",
@@ -2123,10 +2164,6 @@ function EventSidebar({ onUndo, onRedo, canUndo, canRedo, rows, bride, groom, da
           <TimelinePreview {...previewProps} />
         )}
       </aside>
-      <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={onUndo} disabled={!canUndo} style={{ flex: 1, padding: "8px 0", backgroundColor: canUndo ? "#b8906a" : "#1e1c19", color: canUndo ? "#060504" : "#3a3530", border: "none", borderRadius: 4, cursor: canUndo ? "pointer" : "not-allowed", fontSize: 14, fontFamily: "'Jost', sans-serif" }}>Undo</button>
-        <button onClick={onRedo} disabled={!canRedo} style={{ flex: 1, padding: "8px 0", backgroundColor: "transparent", color: canRedo ? "#b8906a" : "#3a3530", border: canRedo ? "1px solid #b8906a" : "1px solid #2a2520", borderRadius: 4, cursor: canRedo ? "pointer" : "not-allowed", fontSize: 14, fontFamily: "'Jost', sans-serif" }}>Redo</button>
-      </div>
     </div>
   );
 }
@@ -4996,60 +5033,84 @@ export default function MobileApp() {
       ) : (
         /* ============ TIMELINE SCREEN ============ */
         <>
-          {/* Names & date */}
-          <div style={{ textAlign: "center", marginBottom: 6 }}>
-            <div style={{ fontSize: "clamp(18px, 5vw, 26px)", fontWeight: 300, color: "#ddd0bc", lineHeight: 1.2, fontFamily: "'Cormorant Garamond', serif" }}>
-              {bride || groom ? [bride, groom].filter(Boolean).join(" & ") : "Wedding Timeline Builder"}
-            </div>
-            {date && (
-              <div style={{ fontSize: 14, color: "#6e6358", marginTop: 2, fontFamily: "'Jost', sans-serif", fontWeight: 200 }}>
-                {new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          {/* Sticky header: names/date + controls */}
+          <div style={{ position: "sticky", top: 0, zIndex: 100, background: "#060504", margin: "0 -10px", padding: "4px 10px 0" }}>
+            {/* Names & date */}
+            <div style={{ textAlign: "center", marginBottom: 6 }}>
+              <div style={{ fontSize: "clamp(18px, 5vw, 26px)", fontWeight: 300, color: "#ddd0bc", lineHeight: 1.2, fontFamily: "'Cormorant Garamond', serif" }}>
+                {bride || groom ? [bride, groom].filter(Boolean).join(" & ") : "Wedding Timeline Builder"}
               </div>
-            )}
-          </div>
+              {date && (
+                <div style={{ fontSize: 14, color: "#6e6358", marginTop: 2, fontFamily: "'Jost', sans-serif", fontWeight: 200 }}>
+                  {new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                </div>
+              )}
+            </div>
 
-          {/* Controls row */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10, flexWrap: "wrap", background: "#0f0d0b", borderBottom: "1px solid #161310", padding: "8px 0", margin: "0 -10px 10px", paddingLeft: 10, paddingRight: 10 }}>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button
-                onClick={() => { setWizardStep(1); setScreen("welcome"); }}
-                style={{ padding: "5px 12px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 6, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
-              >
-                New Timeline
-              </button>
-              <label
-                style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, display: "inline-block", fontFamily: "'Jost', sans-serif" }}
-              >
-                Load Project
-                <input type="file" accept=".json" onChange={loadProject} style={{ display: "none" }} />
-              </label>
-              <button
-                onClick={saveProject}
-                style={{ padding: "6px 14px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
-              >
-                Save Project
-              </button>
-              <button
-                onClick={() => setShowSettingsModal(true)}
-                style={{ padding: "5px 12px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 6, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
-              >
-                Project Settings
-              </button>
+            {/* Controls row */}
+            <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", background: "#0f0d0b", borderBottom: "1px solid #161310", borderTop: "1px solid #161310", padding: "8px 10px", margin: "0 -10px 0" }}>
+              {/* Left group */}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  onClick={() => { setWizardStep(1); setScreen("welcome"); }}
+                  style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
+                >
+                  New Timeline
+                </button>
+                <label
+                  style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, display: "inline-block", fontFamily: "'Jost', sans-serif" }}
+                >
+                  Load Project
+                  <input type="file" accept=".json" onChange={loadProject} style={{ display: "none" }} />
+                </label>
+                <button
+                  onClick={saveProject}
+                  style={{ padding: "6px 14px", backgroundColor: "#b8906a", color: "#060504", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
+                >
+                  Save Project
+                </button>
+                <button
+                  onClick={() => setShowSettingsModal(true)}
+                  style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
+                >
+                  Project Settings
+                </button>
+              </div>
+              {/* Undo / Redo — absolutely centred */}
+              <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", display: "flex", gap: 8 }}>
+                <button
+                  onClick={undo}
+                  disabled={history.length === 0}
+                  style={{ padding: "6px 14px", background: history.length > 0 ? "#4a6070" : "#1a2228", color: history.length > 0 ? "#ddd0bc" : "#3a4a52", border: "none", borderRadius: 4, cursor: history.length > 0 ? "pointer" : "not-allowed", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", display: "flex", alignItems: "center", gap: 5 }}
+                >
+                  <span style={{ fontSize: 15, lineHeight: 1 }}>↺</span> Undo
+                </button>
+                <button
+                  onClick={redo}
+                  disabled={redoStack.length === 0}
+                  style={{ padding: "6px 14px", background: redoStack.length > 0 ? "#4a6070" : "#1a2228", color: redoStack.length > 0 ? "#ddd0bc" : "#3a4a52", border: "none", borderRadius: 4, cursor: redoStack.length > 0 ? "pointer" : "not-allowed", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", display: "flex", alignItems: "center", gap: 5 }}
+                >
+                  <span style={{ fontSize: 15, lineHeight: 1 }}>↻</span> Redo
+                </button>
+              </div>
+              {/* Right group */}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  onClick={copyTimeline}
+                  style={{ padding: "6px 14px", backgroundColor: copyConfirm ? "#b8906a" : "transparent", color: copyConfirm ? "#060504" : "#ddd0bc", border: copyConfirm ? "1px solid #b8906a" : "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
+                >
+                  {copyConfirm ? "Copied!" : "Copy Timeline"}
+                </button>
+                <button
+                  onClick={exportTimeline}
+                  style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
+                >
+                  Export Timeline
+                </button>
+              </div>
             </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button
-                onClick={copyTimeline}
-                style={{ padding: "6px 14px", backgroundColor: copyConfirm ? "#b8906a" : "transparent", color: copyConfirm ? "#060504" : "#ddd0bc", border: copyConfirm ? "1px solid #b8906a" : "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
-              >
-                {copyConfirm ? "Copied!" : "Copy Timeline"}
-              </button>
-              <button
-                onClick={exportTimeline}
-                style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
-              >
-                Export Timeline
-              </button>
-            </div>
+            {/* Padding below sticky header */}
+            <div style={{ height: 12, background: "#060504" }} />
           </div>
 
           {/* App shell: main content + (desktop) sidebar */}
