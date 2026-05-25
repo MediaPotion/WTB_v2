@@ -1459,57 +1459,60 @@ function TimelineRow({
                       />
                     )}
                   </div>
-                  <button
-                    onClick={() => { onChange(index, "isOutdoor", !row.isOutdoor); onBlur(index); }}
-                    aria-pressed={row.isOutdoor}
-                    title={row.isOutdoor ? "Outside — click for Indoors" : "Indoors — click for Outside"}
-                    style={{
-                      padding: "3px 10px",
-                      border: "1px solid #2a2520",
-                      background: row.isOutdoor ? "#2a6fd4" : "#c96a20",
-                      color: "#f0ece6",
-                      cursor: "pointer",
-                      borderRadius: 6,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 5,
-                      fontSize: 11,
-                      fontFamily: "'Jost', sans-serif",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    <span aria-hidden style={{ fontSize: 13, lineHeight: 1 }}>{row.isOutdoor ? "☀️" : "💡"}</span>
-                    <span>{row.isOutdoor ? "Outside" : "Indoors"}</span>
-                  </button>
                 </div>
               </div>
-              {/* Event input (also accepts drops) */}
-              <input
-                type="text"
-                placeholder="Click to select or drop an event..."
-                value={row.event}
-                onChange={(e) => onChange(index, "event", e.target.value)}
-                onBlur={() => {
-                  onBlur(index);
-                  onEventBlur && onEventBlur(index);
-                }}
-                onClick={() => onEventClick(index)}
-                onDragOver={allowDrop}
-                onDragEnter={allowDrop}
-                onDragLeave={leaveDrop}
-                onDrop={handleDrop}
-                style={{
-                  width: "100%",
-                  fontSize: 14,
-                  padding: 8,
-                  background: "transparent",
-                  border: "1px solid #2a2520",
-                  color: rowBg && rowBg !== "#ffffff" ? rowBg : "#ddd0bc",
-                  borderRadius: 4,
-                  cursor: "pointer",
-                  fontFamily: "'Jost', sans-serif",
-                }}
-              />
+              {/* Event input + Indoor/Outdoor button inline */}
+              <div style={{ display: "flex", gap: 6, alignItems: "stretch" }}>
+                <input
+                  type="text"
+                  placeholder="Click to select or drop an event..."
+                  value={row.event}
+                  onChange={(e) => onChange(index, "event", e.target.value)}
+                  onBlur={() => {
+                    onBlur(index);
+                    onEventBlur && onEventBlur(index);
+                  }}
+                  onClick={() => onEventClick(index)}
+                  onDragOver={allowDrop}
+                  onDragEnter={allowDrop}
+                  onDragLeave={leaveDrop}
+                  onDrop={handleDrop}
+                  style={{
+                    flex: 1,
+                    fontSize: 14,
+                    padding: 8,
+                    background: "transparent",
+                    border: "1px solid #2a2520",
+                    color: rowBg && rowBg !== "#ffffff" ? rowBg : "#ddd0bc",
+                    borderRadius: 4,
+                    cursor: "pointer",
+                    fontFamily: "'Jost', sans-serif",
+                  }}
+                />
+                <button
+                  onClick={() => { onChange(index, "isOutdoor", !row.isOutdoor); onBlur(index); }}
+                  aria-pressed={row.isOutdoor}
+                  title={row.isOutdoor ? "Outside — click for Indoors" : "Indoors — click for Outside"}
+                  style={{
+                    padding: "0 10px",
+                    border: "1px solid #2a2520",
+                    background: row.isOutdoor ? "#2a6fd4" : "#c96a20",
+                    color: "#f0ece6",
+                    cursor: "pointer",
+                    borderRadius: 6,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
+                    fontSize: 11,
+                    fontFamily: "'Jost', sans-serif",
+                    whiteSpace: "nowrap",
+                    alignSelf: "stretch",
+                  }}
+                >
+                  <span aria-hidden style={{ fontSize: 13, lineHeight: 1 }}>{row.isOutdoor ? "☀️" : "💡"}</span>
+                  <span>{row.isOutdoor ? "Outside" : "Indoors"}</span>
+                </button>
+              </div>
             </>
           )}
         </div>
