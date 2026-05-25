@@ -9,7 +9,6 @@ const SETTINGS_WIZARD_TABS = [
   { label: "Ceremony",        step: 6 },
   { label: "Portraits",       step: 8 },
   { label: "Reception",       step: 9 },
-  { label: "Draft",           step: 99 },
 ];
 
 const PROJECT_VERSION = 2;

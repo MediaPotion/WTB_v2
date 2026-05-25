@@ -1,4 +1,5 @@
 import React from "react";
+import { resolveWeddingLocations } from "../lib/weddingLocations";
 import { WizardStep1 } from "../components/wizard/WizardStep1";
 import { WizardStep2 } from "../components/wizard/WizardStep2";
 import { WizardStep3 } from "../components/wizard/WizardStep3";
@@ -15,12 +16,14 @@ function renderWizard(props) {
   const totalWizardSteps = 8;
   const displayStep = effectiveStep > 7 ? effectiveStep - 1 : effectiveStep;
 
+  const { ceremony, reception, brideReady, groomReady, differentReadyLocations } =
+    resolveWeddingLocations(props);
   const allWizLocations = [
-    ...(props.wiz_ceremonyVenue ? [props.wiz_ceremonyVenue] : []),
-    ...(!props.wiz_receptionSameAsCeremony && props.wiz_receptionVenue ? [props.wiz_receptionVenue] : []),
-    ...(!props.wiz_brideReadyAtCeremony && !props.wiz_brideReadyAtReception && props.wiz_brideReadyAddress ? [props.wiz_brideReadyAddress] : []),
-    ...(!props.wiz_groomReadyAtCeremony && !props.wiz_groomReadyAtReception && !props.wiz_groomReadyAtBride && props.wiz_groomReadyAddress ? [props.wiz_groomReadyAddress] : []),
-    ...props.wiz_locations.filter(l => l.name).map(l => l.name),
+    ceremony.name,
+    ...(props.wiz_receptionSameAsCeremony ? [] : [reception.name]),
+    brideReady.name,
+    ...(differentReadyLocations ? [groomReady.name] : []),
+    ...props.wiz_locations.filter((l) => l.name).map((l) => l.name),
   ];
 
   const wizToggleStyle = (selected) => ({

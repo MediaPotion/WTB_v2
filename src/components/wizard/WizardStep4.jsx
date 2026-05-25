@@ -79,8 +79,13 @@ function WizardStep4(props) {
             { key: "brideParty", label: `${brideLabel} & Party Portraits`, sub: "Bridal party group portraits", val: wiz_preCeremonyBrideParty, set: setWiz_preCeremonyBrideParty },
             { key: "groomParty", label: `${groomLabel} & Party Portraits`, sub: "Groomsmen group portraits", val: wiz_preCeremonyGroomParty, set: setWiz_preCeremonyGroomParty },
           ].map(({ key, label, sub, val, set }) => (
-            <label key={key} style={{ ...wizCheckRowStyle }} onClick={() => set(!val)}>
-              <input type="checkbox" checked={val} onChange={() => {}} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
+            <label key={key} style={{ ...wizCheckRowStyle }}>
+              <input
+                type="checkbox"
+                checked={!!val}
+                onChange={(e) => set(e.target.checked)}
+                style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }}
+              />
               <div>
                 <div style={{ fontSize: 15, fontWeight: 400, color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}>{label}</div>
                 <div style={{ fontSize: 13, color: "var(--wtb-text-muted)", marginTop: 2 }}>{sub}</div>
