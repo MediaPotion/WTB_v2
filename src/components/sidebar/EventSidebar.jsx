@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { EVENT_BLOCKS } from "../../constants/events";
 import { getEventColor } from "../../constants/colors";
 import { TimelinePreview } from "../../lib/exportPdf";
+import { DraggableSidebarBlock } from "./DraggableSidebarBlock";
 
 function EventSidebar({ rows, bride, groom, date, photoStartHour, photoStartMinute, photoStartPeriod, photoEndHour, photoEndMinute, photoEndPeriod, videoStartHour, videoStartMinute, videoStartPeriod, videoEndHour, videoEndMinute, videoEndPeriod, photoEnabled, videoEnabled }) {
   const [activeTab, setActiveTab] = useState('blocks');
@@ -20,18 +21,15 @@ function EventSidebar({ rows, bride, groom, date, photoStartHour, photoStartMinu
             <div className="wtb-palette">
               {/* Location / Travel block */}
               <div style={{ fontSize: 10, color: "#ffffff", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 4, fontFamily: "'Jost', sans-serif", fontWeight: 400 }}>Travel</div>
-              <button
-                draggable
-                onDragStart={(e) => {
-                  if (e.dataTransfer) e.dataTransfer.effectAllowed = "copy";
-                  e.dataTransfer.setData("application/json", JSON.stringify({ type: "location", event: "", duration: 15 }));
-                }}
-                style={{ background: "#161310", border: "2px solid #ffffff", color: "#ddd0bc", marginBottom: 8 }}
+              <DraggableSidebarBlock
+                id="sidebar-location"
+                data={{ type: "location", event: "", duration: 15 }}
+                style={{ background: "#161310", border: "2px solid #ffffff", color: "#ddd0bc", marginBottom: 8, width: "100%", textAlign: "left" }}
                 title="Drag to add a location / travel block"
               >
                 <span>Location / Travel</span>
                 <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px", whiteSpace: "nowrap" }}>15 min</span>
-              </button>
+              </DraggableSidebarBlock>
               {(() => {
                 const groups = [];
                 const groupMap = {};
@@ -49,19 +47,16 @@ function EventSidebar({ rows, bride, groom, date, photoStartHour, photoStartMinu
                     <div key={category} style={{ marginBottom: 8, breakInside: "avoid", WebkitColumnBreakInside: "avoid" }}>
                       <div style={{ fontSize: 10, color: categoryColor, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 4, paddingTop: 6, borderTop: "1px solid #1e1c19", fontFamily: "'Jost', sans-serif", fontWeight: 400, textAlign: "center" }}>{category}</div>
                       {groupMap[category].map(({ label, shortLabel, dur, block }) => (
-                        <button
+                        <DraggableSidebarBlock
                           key={block}
-                          draggable
-                          onDragStart={(e) => {
-                            if (e.dataTransfer) e.dataTransfer.effectAllowed = "copy";
-                            e.dataTransfer.setData("application/json", JSON.stringify({ event: label, duration: dur }));
-                          }}
-                          style={{ background: "#161310", border: `2px solid ${getEventColor(label)}`, color: "#ddd0bc" }}
+                          id={`sidebar-${block}`}
+                          data={{ event: label, duration: dur }}
+                          style={{ background: "#161310", border: `2px solid ${getEventColor(label)}`, color: "#ddd0bc", width: "100%", textAlign: "left" }}
                           title="Drag to timeline"
                         >
                           <span>{shortLabel}</span>
                           <span style={{ fontSize: 12, color: "#6e6358", fontWeight: "bold", marginLeft: "16px", whiteSpace: "nowrap" }}>{dur} min</span>
-                        </button>
+                        </DraggableSidebarBlock>
                       ))}
                     </div>
                   );

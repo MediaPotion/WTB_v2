@@ -10,7 +10,8 @@ import { exportTimeline as exportTimelineLib, copyTimeline as copyTimelineLib } 
 import { exportPDF as exportPDFLib, TimelinePreview } from "../lib/exportPdf";
 import { useProjectStorage } from "../hooks/useProjectStorage";
 import { RowDropZone } from "../components/timeline/RowDropZone";
-import { TimelineRow } from "../components/timeline/TimelineRow";
+import { SortableTimelineRow } from "../components/timeline/SortableTimelineRow";
+import { TimelineDndProvider } from "../components/timeline/TimelineDnd";
 import { EventBlockSelector } from "../components/timeline/EventBlockSelector";
 import { EventSidebar } from "../components/sidebar/EventSidebar";
 import { WelcomeScreen } from "./WelcomeScreen";
@@ -84,8 +85,6 @@ export default function MobileApp() {
   const exportMenuRef = useRef(null);
   const mobileGearMenuRef = useRef(null);
   const mainScrollRef = useRef(null);
-  const [draggedRowId, setDraggedRowId] = useState(null);
-  const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [showEventSelector, setShowEventSelector] = useState(false);
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
@@ -256,6 +255,8 @@ export default function MobileApp() {
   const rows = useMemo(() => {
     return [...userRows].sort((a, b) => a.time - b.time);
   }, [userRows]);
+
+  const sortableRowIds = useMemo(() => rows.map((r) => String(r.id)), [rows]);
 
   const overlapMap = useMemo(() => computeOverlaps(userRows), [userRows]);
   const timelineCoverage = useMemo(() => computeTimelineCoverage(rows), [rows]);
@@ -779,86 +780,41 @@ export default function MobileApp() {
     saveToHistory(cascaded);
   };
 
-  // Drag and drop handlers for row reordering
-  const handleDragStart = (e, rowId) => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', rowId);
-    // Normalize to string so UI comparisons are consistent
-    setDraggedRowId(String(rowId));
-    // Add a small delay to ensure the drag image is set
-    setTimeout(() => {
-      e.target.style.opacity = '0.4';
-    }, 0);
-  };
-
-  const handleDragOver = (e, targetRowId) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    
-    if (targetRowId !== draggedRowId) {
-      setIsDraggingOver(true);
-    }
-    
-    // Add visual feedback for the drop target
-    const targetElement = e.currentTarget;
-    if (targetElement) {
-      targetElement.style.borderTop = '2px solid #b8906a';
-      targetElement.style.marginTop = '4px';
-    }
-  };
-
-  const handleDragLeave = (e) => {
-    setIsDraggingOver(false);
-    // Remove visual feedback when leaving the drop target
-    const targetElement = e.currentTarget;
-    if (targetElement) {
-      targetElement.style.borderTop = 'none';
-      targetElement.style.marginTop = '0';
-    }
-  };
-
-  const handleDragEnd = (e) => {
-    // Reset styles
-    e.target.style.opacity = '1';
-    setDraggedRowId(null);
-    setIsDraggingOver(false);
-    // Remove any lingering drop indicators
-    document.querySelectorAll('.timeline-row').forEach(el => {
-      el.style.borderTop = 'none';
-      el.style.marginTop = '0';
-    });
-  };
-
-
-  // Handle dropping a dragged row between rows (at insertion index)
-  const handleDropBetween = (e, insertIndex) => {
-    if (!e?.dataTransfer?.types?.includes('text/plain')) return;
-    e.preventDefault();
-    const sourceRowId = e.dataTransfer.getData('text/plain');
-    if (!sourceRowId) return;
-
-
+  const reorderRowAtIndex = (sourceRowId, insertIndex) => {
     const working = [...userRows];
-    const sourceIndex = working.findIndex((r) => r.id.toString() === sourceRowId);
-    if (sourceIndex === -1) {
-      console.error('[DnD] ERROR: source row not found');
+    const sourceIndex = working.findIndex((r) => r.id.toString() === String(sourceRowId));
+    if (sourceIndex === -1) return;
+
+    const [moved] = working.splice(sourceIndex, 1);
+    let targetIndex = insertIndex;
+    if (sourceIndex < insertIndex) targetIndex = Math.max(0, insertIndex - 1);
+    working.splice(targetIndex, 0, moved);
+
+    saveToHistory(cascadeTimesByOrder(working));
+  };
+
+  const handleTimelineDragComplete = ({ activeId, overId, activeData }) => {
+    if (activeData?.type === "sidebar-block") {
+      if (overId.startsWith("row-")) {
+        const rowId = Number(overId.replace("row-", ""));
+        const displayIndex = rows.findIndex((r) => r.id === rowId);
+        if (displayIndex >= 0) handleDropEventBlockToRow(activeData.payload, displayIndex);
+      }
       return;
     }
 
-    // Remove the source row
-    const [moved] = working.splice(sourceIndex, 1);
-    // Adjust target insert index if needed (after removal, indices shift)
-    let targetIndex = insertIndex;
-    if (sourceIndex < insertIndex) targetIndex = Math.max(0, insertIndex - 1);
-
-
-    // Insert at the drop zone's index
-    working.splice(targetIndex, 0, moved);
-
-    const recalculated = cascadeTimesByOrder(working);
-    saveToHistory(recalculated);
-    setDraggedRowId(null);
-    setIsDraggingOver(false);
+    if (activeData?.type === "timeline-row") {
+      let insertIndex;
+      if (overId.startsWith("between-")) {
+        insertIndex = parseInt(overId.replace("between-", ""), 10);
+      } else if (overId.startsWith("row-")) {
+        const rowId = Number(overId.replace("row-", ""));
+        insertIndex = rows.findIndex((r) => r.id === rowId);
+      }
+      if (insertIndex !== undefined && !Number.isNaN(insertIndex) && insertIndex >= 0) {
+        reorderRowAtIndex(activeId, insertIndex);
+      }
+    }
   };
 
   const startNewTimeline = () => {
@@ -1630,6 +1586,10 @@ export default function MobileApp() {
           </div>
 
           {/* App shell: main content + (desktop) sidebar */}
+          <TimelineDndProvider
+            rowIds={sortableRowIds}
+            onDragComplete={handleTimelineDragComplete}
+          >
           <div className="wtb-shell" style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
             {/* MAIN — scrolls independently */}
             <div
@@ -1670,48 +1630,35 @@ export default function MobileApp() {
 
             <div style={{ width: "100%" }}>
               {/* Top drop zone (before first row) */}
-              <RowDropZone index={0} onDropBetween={handleDropBetween} onAddRow={() => addRowAtIndex(0)} />
+              <RowDropZone index={0} onAddRow={() => addRowAtIndex(0)} />
               {rows.map((row, index) => (
                 <React.Fragment key={row.id}>
-                  <div 
-                    draggable={isDesktop}
-                    onDragStart={isDesktop ? (e) => handleDragStart(e, row.id) : undefined}
-                    onDragEnd={isDesktop ? handleDragEnd : undefined}
-                    className={`timeline-row ${draggedRowId === String(row.id) ? 'dragging' : ''}`}
-                    style={{
-                      opacity: draggedRowId === String(row.id) ? 0.4 : 1,
-                      transition: 'opacity 0.2s ease',
-                      cursor: 'default',
-                    }}
-                  >
-                    <TimelineRow
-                      row={row}
-                      index={index}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      onDelete={handleDelete}
-                      onEventClick={handleEventClick}
-                      onMoveUp={handleMoveUp}
-                      onMoveDown={handleMoveDown}
-                      isFirst={index === 0}
-                      isLast={index === rows.length - 1}
-                      onEventBlur={handleEventBlur}
-                      photoEnabledGlobal={photoEnabled}
-                      videoEnabledGlobal={videoEnabled}
-                      onTimeSet={(h, m, p) =>
-                        handleTimeSet(index, parseTimeInput(h, m, p))
-                      }
-                      onDropEventBlock={isDesktop ? (eventData) => handleDropEventBlockToRow(eventData, index) : undefined}
-                      overlapWith={overlapMap.get(row.id) || null}
-                      isMobile={!isDesktop}
-                    />
-                  </div>
+                  <SortableTimelineRow
+                    row={row}
+                    sortDisabled={!isDesktop}
+                    index={index}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    onDelete={handleDelete}
+                    onEventClick={handleEventClick}
+                    onMoveUp={handleMoveUp}
+                    onMoveDown={handleMoveDown}
+                    isFirst={index === 0}
+                    isLast={index === rows.length - 1}
+                    onEventBlur={handleEventBlur}
+                    photoEnabledGlobal={photoEnabled}
+                    videoEnabledGlobal={videoEnabled}
+                    onTimeSet={(h, m, p) =>
+                      handleTimeSet(index, parseTimeInput(h, m, p))
+                    }
+                    overlapWith={overlapMap.get(row.id) || null}
+                    isMobile={!isDesktop}
+                  />
 
-                  <RowDropZone 
-                    index={index + 1} 
-                    onDropBetween={handleDropBetween} 
-                    onAddRow={() => addRowAtIndex(index + 1)} 
-                    isLast={index === rows.length - 1} 
+                  <RowDropZone
+                    index={index + 1}
+                    onAddRow={() => addRowAtIndex(index + 1)}
+                    isLast={index === rows.length - 1}
                   />
                 </React.Fragment>
               ))}
@@ -1818,6 +1765,7 @@ export default function MobileApp() {
           />
         )}
       </div>
+          </TimelineDndProvider>
 
           {/* Project Settings Modal */}
           {showSettingsModal && (

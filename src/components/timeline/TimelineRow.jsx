@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useDroppable, useDndContext } from "@dnd-kit/core";
 import { getEventColor } from "../../constants/colors";
 import { formatTime } from "../../lib/time";
 import { TimePopover } from "./TimePopover";
@@ -18,8 +19,10 @@ function TimelineRow({
   onTimeSet,
   photoEnabledGlobal,
   videoEnabledGlobal,
-  onDropEventBlock,
-  onDrop,
+  dragHandleRef,
+  dragHandleListeners,
+  dragHandleAttributes,
+  isDragging = false,
   overlapWith,
   isMobile = false,
 }) {
@@ -27,67 +30,18 @@ function TimelineRow({
   const timeBtnRef = useRef(null);
   const cardRef = useRef(null);
   const [timeOpen, setTimeOpen] = useState(false);
-  const [dropping, setDropping] = useState(false);
+  const { active } = useDndContext();
+  const isSidebarDrag = active?.data?.current?.type === "sidebar-block";
+  const { setNodeRef: setDropRef, isOver: isDropOver } = useDroppable({
+    id: `row-${row.id}`,
+    data: { type: "row", rowId: row.id },
+  });
+  const dropping = isSidebarDrag && isDropOver;
   const [showOverlapTip, setShowOverlapTip] = useState(false);
   const [deleteHovered, setDeleteHovered] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
   const deleteTimerRef = useRef(null);
   useEffect(() => () => clearTimeout(deleteTimerRef.current), []);
-
-  // Drop handlers on the whole row
-  const allowDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.dataTransfer) {
-      // Prefer copy for event blocks, move for row reordering
-      if (e.dataTransfer.types?.includes("application/json")) {
-        e.dataTransfer.dropEffect = "copy";
-      } else {
-        e.dataTransfer.dropEffect = "move";
-      }
-    }
-    // Only show the dropping indicator for event blocks from the sidebar
-    if (e.dataTransfer?.types?.includes("application/json")) {
-      setDropping(true);
-    }
-  };
-  
-  const leaveDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDropping(false);
-  };
-  
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDropping(false);
-    
-    try {
-      // First try to get application/json data (for event blocks)
-      const jsonData = e.dataTransfer.getData("application/json");
-      if (jsonData) {
-        try {
-          const data = JSON.parse(jsonData);
-          if (data && typeof data.duration === "number") {
-            onDropEventBlock?.(data);
-            return;
-          }
-        } catch (parseError) {
-          console.error("Error parsing JSON data:", parseError);
-        }
-      }
-      
-      // Then try text/plain (for row reordering)
-      const rowId = e.dataTransfer.getData("text/plain");
-      if (rowId && onDrop) {
-        // Pass the TARGET row id (this row) to the parent so it can reorder correctly
-        onDrop(e, row.id);
-      }
-    } catch (error) {
-      console.error("Error handling drop:", error);
-    }
-  };
 
   const isLocation = row.type === "location";
   const isConstraint = row.type === "constraint";
@@ -96,12 +50,11 @@ function TimelineRow({
 
   return (
     <div
-      onDragOver={allowDrop}
-      onDragEnter={allowDrop}
-      onDragLeave={leaveDrop}
-      onDrop={handleDrop}
-      ref={cardRef}
-      className={`wtb-row-card${dropping ? " wtb-dropping" : ""}${deletePending ? " wtb-deleting" : ""}`}
+      ref={(node) => {
+        cardRef.current = node;
+        setDropRef(node);
+      }}
+      className={`wtb-row-card${dropping ? " wtb-dropping" : ""}${deletePending ? " wtb-deleting" : ""}${isDragging ? " wtb-row-dragging" : ""}`}
       style={{
         border: deletePending ? "2px solid #cc4444" : dropping ? "2px dashed #b8906a" : isConstraint ? "2px solid #cc4444" : isLocation ? "2px solid #b8906a" : `2px solid ${rowBg}`,
         borderRadius: 8,
@@ -118,14 +71,18 @@ function TimelineRow({
     >
       {/* Drag handle (desktop) / reorder buttons (mobile) */}
       <div
+        ref={dragHandleRef}
         className="wtb-drag-handle"
+        {...(dragHandleListeners || {})}
+        {...(dragHandleAttributes || {})}
         style={{
           width: 36,
           flexShrink: 0,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          cursor: "grab",
+          cursor: dragHandleListeners ? "grab" : "default",
+          touchAction: dragHandleListeners ? "none" : undefined,
           borderRight: isLocation ? "1px solid #c8bfb0" : "1px solid #2a2520",
           background: isLocation ? "#c4b8a0" : "#1e1a16",
           color: isLocation ? "#6e5c3e" : "#7a6a58",
@@ -254,10 +211,6 @@ function TimelineRow({
                 value={row.event || ""}
                 onChange={(e) => onChange(index, "event", e.target.value)}
                 onBlur={() => onBlur(index)}
-                onDragOver={allowDrop}
-                onDragEnter={allowDrop}
-                onDragLeave={leaveDrop}
-                onDrop={handleDrop}
                 style={{
                   width: "100%",
                   fontSize: 14,
@@ -350,10 +303,6 @@ function TimelineRow({
                     onEventBlur && onEventBlur(index);
                   }}
                   onClick={() => onEventClick(index)}
-                  onDragOver={allowDrop}
-                  onDragEnter={allowDrop}
-                  onDragLeave={leaveDrop}
-                  onDrop={handleDrop}
                   style={{
                     flex: 1,
                     fontSize: 14,
