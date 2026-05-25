@@ -2539,6 +2539,12 @@ export default function MobileApp() {
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [showEventSelector, setShowEventSelector] = useState(false);
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
+  const isDirtyRef = useRef(false);
+  const isApplyingProjectRef = useRef(false);
+  const dirtyTrackingEnabledRef = useRef(false);
+  const suppressDirtyRef = useRef(false);
 
   // ---- Wizard State ----
   const [wizardStep, setWizardStep] = useState(1);
@@ -2672,8 +2678,80 @@ export default function MobileApp() {
     }
   }, [isDesktop]);
 
+  const isTimelineEmpty = () => {
+    const hasRowContent = userRows.some(
+      (r) =>
+        (r.event && r.event.trim()) ||
+        (r.location && r.location.trim()) ||
+        (r.notes && r.notes.trim())
+    );
+    const hasMeta = !!(
+      String(date || "").trim() ||
+      String(bride || "").trim() ||
+      String(groom || "").trim()
+    );
+    return !hasRowContent && !hasMeta;
+  };
+
+  const markDirty = () => {
+    if (!isTimelineEmpty()) {
+      setIsDirty(true);
+      isDirtyRef.current = true;
+    }
+  };
+
+  const clearDirty = () => {
+    setIsDirty(false);
+    isDirtyRef.current = false;
+  };
+
   useEffect(() => {
-  }, [wiz_firstLookGroom]);
+    if (screen !== "welcome") {
+      dirtyTrackingEnabledRef.current = true;
+    }
+  }, [screen]);
+
+  useEffect(() => {
+    if (!dirtyTrackingEnabledRef.current || isApplyingProjectRef.current) return;
+    if (suppressDirtyRef.current) {
+      suppressDirtyRef.current = false;
+      return;
+    }
+    markDirty();
+  }, [
+    userRows,
+    fixedEvents,
+    date,
+    bride,
+    groom,
+    brideLabel,
+    groomLabel,
+    photoStartHour,
+    photoStartMinute,
+    photoStartPeriod,
+    photoEndHour,
+    photoEndMinute,
+    photoEndPeriod,
+    videoStartHour,
+    videoStartMinute,
+    videoStartPeriod,
+    videoEndHour,
+    videoEndMinute,
+    videoEndPeriod,
+    photoEnabled,
+    videoEnabled,
+  ]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (isDirtyRef.current && !isTimelineEmpty()) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty, userRows, date, bride, groom]);
 
   // Preserve existing times by default; only the chain action should advance times
   const recalculateTimes = (rowsIn, startIndex = 0) => {
@@ -3251,32 +3329,98 @@ export default function MobileApp() {
     return base + "." + ext;
   };
 
-  const saveProject = () => {
-    const projectData = {
-      date,
-      bride,
-      groom,
-      brideLabel,
-      groomLabel,
-      photoStartHour,
-      photoStartMinute,
-      photoStartPeriod,
-      photoEndHour,
-      photoEndMinute,
-      photoEndPeriod,
-      videoStartHour,
-      videoStartMinute,
-      videoStartPeriod,
-      videoEndHour,
-      videoEndMinute,
-      videoEndPeriod,
-      photoEnabled,
-      videoEnabled,
-      userRows,
-      fixedEvents,
-    };
+  const buildProjectData = () => ({
+    date,
+    bride,
+    groom,
+    brideLabel,
+    groomLabel,
+    photoStartHour,
+    photoStartMinute,
+    photoStartPeriod,
+    photoEndHour,
+    photoEndMinute,
+    photoEndPeriod,
+    videoStartHour,
+    videoStartMinute,
+    videoStartPeriod,
+    videoEndHour,
+    videoEndMinute,
+    videoEndPeriod,
+    photoEnabled,
+    videoEnabled,
+    userRows,
+    fixedEvents,
+  });
 
-    const dataStr = JSON.stringify(projectData, null, 2);
+  const applyProjectData = (projectData) => {
+    suppressDirtyRef.current = true;
+    setDate(projectData.date || "");
+    setBride(projectData.bride || "");
+    setGroom(projectData.groom || "");
+    setBrideLabel(projectData.brideLabel || "Bride");
+    setGroomLabel(projectData.groomLabel || "Groom");
+
+    setPhotoStartHour(projectData.photoStartHour || "12");
+    setPhotoStartMinute(projectData.photoStartMinute || "00");
+    setPhotoStartPeriod(projectData.photoStartPeriod || "PM");
+    setPhotoEndHour(projectData.photoEndHour || "5");
+    setPhotoEndMinute(projectData.photoEndMinute || "00");
+    setPhotoEndPeriod(projectData.photoEndPeriod || "PM");
+
+    setVideoStartHour(projectData.videoStartHour || "12");
+    setVideoStartMinute(projectData.videoStartMinute || "00");
+    setVideoStartPeriod(projectData.videoStartPeriod || "PM");
+    setVideoEndHour(projectData.videoEndHour || "5");
+    setVideoEndMinute(projectData.videoEndMinute || "00");
+    setVideoEndPeriod(projectData.videoEndPeriod || "PM");
+
+    setPhotoEnabled(
+      typeof projectData.photoEnabled === "boolean" ? projectData.photoEnabled : true
+    );
+    setVideoEnabled(
+      typeof projectData.videoEnabled === "boolean" ? projectData.videoEnabled : true
+    );
+
+    const loadedRows = projectData.userRows;
+    setUserRows(
+      loadedRows && loadedRows.length > 0
+        ? loadedRows.map((r) => ({
+            photo: true,
+            video: true,
+            notes: "",
+            ...r,
+          }))
+        : [
+            {
+              id: 1,
+              location: "",
+              time: 12 * 60,
+              event: "",
+              duration: 30,
+              isOutdoor: false,
+              photo: true,
+              video: true,
+              notes: "",
+              isTimeLocked: false,
+            },
+          ]
+    );
+
+    if (loadedRows && loadedRows.length > 0) {
+      const maxId = Math.max(...loadedRows.map((r) => r.id || 0));
+      setNextId(maxId + 1);
+    } else if (projectData.nextId) {
+      setNextId(projectData.nextId);
+    }
+
+    setFixedEvents(projectData.fixedEvents || []);
+    setHistory([]);
+    setRedoStack([]);
+  };
+
+  const saveProject = () => {
+    const dataStr = JSON.stringify(buildProjectData(), null, 2);
     const dataBlob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement("a");
@@ -3284,6 +3428,7 @@ export default function MobileApp() {
     link.download = buildDefaultFilename("json");
     link.click();
     URL.revokeObjectURL(url);
+    clearDirty();
   };
 
   const loadProject = (event) => {
@@ -3294,77 +3439,34 @@ export default function MobileApp() {
     reader.onload = (e) => {
       try {
         const projectData = JSON.parse(e.target.result);
-        setDate(projectData.date || "");
-        setBride(projectData.bride || "");
-        setGroom(projectData.groom || "");
-        setBrideLabel(projectData.brideLabel || "Bride");
-        setGroomLabel(projectData.groomLabel || "Groom");
-
-        setPhotoStartHour(projectData.photoStartHour || "12");
-        setPhotoStartMinute(projectData.photoStartMinute || "00");
-        setPhotoStartPeriod(projectData.photoStartPeriod || "PM");
-        setPhotoEndHour(projectData.photoEndHour || "5");
-        setPhotoEndMinute(projectData.photoEndMinute || "00");
-        setPhotoEndPeriod(projectData.photoEndPeriod || "PM");
-
-        setVideoStartHour(projectData.videoStartHour || "12");
-        setVideoStartMinute(projectData.videoStartMinute || "00");
-        setVideoStartPeriod(projectData.videoStartPeriod || "PM");
-        setVideoEndHour(projectData.videoEndHour || "5");
-        setVideoEndMinute(projectData.videoEndMinute || "00");
-        setVideoEndPeriod(projectData.videoEndPeriod || "PM");
-
-        setPhotoEnabled(
-          typeof projectData.photoEnabled === "boolean"
-            ? projectData.photoEnabled
-            : true
-        );
-        setVideoEnabled(
-          typeof projectData.videoEnabled === "boolean"
-            ? projectData.videoEnabled
-            : true
-        );
-
-        setUserRows(
-          (projectData.userRows && projectData.userRows.length > 0
-            ? projectData.userRows.map((r) => ({
-                photo: true,
-                video: true,
-                notes: "",
-                ...r,
-              }))
-            : [
-                {
-                  id: 1,
-                  location: "",
-                  time: 12 * 60,
-                  event: "",
-                  duration: 30,
-                  isOutdoor: false,
-                  photo: true,
-                  video: true,
-                  notes: "",
-                  isTimeLocked: false,
-                },
-              ]) || []
-        );
-
-        const loadedRows = projectData.userRows;
-        if (loadedRows && loadedRows.length > 0) {
-          const maxId = Math.max(...loadedRows.map((r) => r.id || 0));
-          setNextId(maxId + 1);
-        }
-
-        setFixedEvents(projectData.fixedEvents || []);
-
-        setHistory([]);
-        setRedoStack([]);
+        isApplyingProjectRef.current = true;
+        applyProjectData(projectData);
+        clearDirty();
         setScreen("timeline");
+        isApplyingProjectRef.current = false;
       } catch (err) {
         alert("Error loading project file");
+        isApplyingProjectRef.current = false;
       }
     };
     reader.readAsText(file);
+    event.target.value = "";
+  };
+
+  const startNewTimeline = () => {
+    clearDirty();
+    setShowUnsavedConfirm(false);
+    setWizardStep(1);
+    setScreen("welcome");
+    setShowMobileMenu(false);
+  };
+
+  const requestNewTimeline = () => {
+    if (isDirty && !isTimelineEmpty()) {
+      setShowUnsavedConfirm(true);
+      return;
+    }
+    startNewTimeline();
   };
 
   // Wizard location helpers
@@ -5472,7 +5574,7 @@ export default function MobileApp() {
                         type="button"
                         role="menuitem"
                         className="wtb-mobile-gear-menu-item"
-                        onClick={() => { setWizardStep(1); setScreen("welcome"); closeMobileGearMenu(); }}
+                        onClick={() => { requestNewTimeline(); closeMobileGearMenu(); }}
                       >
                         New Timeline
                       </button>
@@ -5547,7 +5649,7 @@ export default function MobileApp() {
             <div className="wtb-controls-desktop" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", background: "#0f0d0b", borderBottom: "1px solid #161310", borderTop: "1px solid #161310", padding: "8px 10px", margin: "0 -10px 0" }}>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
-                  onClick={() => { setWizardStep(1); setScreen("welcome"); }}
+                  onClick={requestNewTimeline}
                   style={{ padding: "6px 14px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 4, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
                 >
                   New Timeline
@@ -5946,6 +6048,52 @@ export default function MobileApp() {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {showUnsavedConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.65)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10000,
+            padding: 20,
+          }}
+          onClick={() => setShowUnsavedConfirm(false)}
+        >
+          <div
+            style={{
+              background: "#161310",
+              border: "1px solid #2a2520",
+              borderRadius: 10,
+              padding: "24px 28px",
+              maxWidth: 420,
+              width: "100%",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p style={{ margin: "0 0 20px 0", fontSize: 15, color: "#ddd0bc", lineHeight: 1.5, fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>
+              You have unsaved changes. Are you sure you want to start a new timeline? Your current timeline will be lost.
+            </p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowUnsavedConfirm(false)}
+                style={{ padding: "10px 20px", background: "transparent", color: "#ddd0bc", border: "1px solid #2a2520", borderRadius: 6, fontSize: 14, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={startNewTimeline}
+                style={{ padding: "10px 20px", background: "#b8906a", color: "#060504", border: "none", borderRadius: 6, fontSize: 14, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
