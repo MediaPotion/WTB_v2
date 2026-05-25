@@ -500,7 +500,9 @@ function TimePopover({ open, value, onSet, onClose }) {
   useEffect(() => {
     if (open && value) {
       setHh(value.hour?.toString() || "12");
-      setMm(value.minute?.toString().padStart(2, "0") || "00");
+      const rawMin = parseInt(value.minute, 10) || 0;
+      const snapped = Math.round(rawMin / 5) * 5 % 60;
+      setMm(String(snapped).padStart(2, "0"));
       setAp(value.period || "PM");
     }
   }, [open, value]);
@@ -515,8 +517,8 @@ function TimePopover({ open, value, onSet, onClose }) {
   if (!open) return null;
 
   const hours = Array.from({ length: 12 }, (_, i) => String(i + 1));
-  const minutes = Array.from({ length: 60 }, (_, i) =>
-    String(i).padStart(2, "0")
+  const minutes = Array.from({ length: 12 }, (_, i) =>
+    String(i * 5).padStart(2, "0")
   );
 
   return (
