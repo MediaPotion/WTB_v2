@@ -145,7 +145,7 @@ function WizardStep6(props) {
 
         {showGoldenHourResult && (
           <p style={{ fontSize: 14, color: "var(--wtb-accent)", margin: "0 0 12px", lineHeight: 1.5, fontFamily: "'Jost', sans-serif" }}>
-            Based on your {dateLabel} wedding near {coordLabel}, golden hour will be from approximately {formatMinutes(gh.start)} to {formatMinutes(gh.sunset)} — a {gh.windowMinutes} minute window.
+            Based on your {dateLabel} wedding near {coordLabel}, golden hour will be from approximately {formatMinutes(gh.start)} to {formatMinutes(gh.sunset)} — a 45 minute window.
           </p>
         )}
 

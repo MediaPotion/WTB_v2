@@ -15,7 +15,7 @@ const MONTH_GH_START = {
   11: 16 * 60 + 0,
 };
 
-const SUNSET_OFFSET = 50;
+const SUNSET_OFFSET = 45;
 
 export function formatMinutes(mins) {
   const h24 = Math.floor(mins / 60) % 24;
@@ -167,8 +167,8 @@ function sunsetMinutesUtc(dateStr, lat, lon) {
  * Golden hour from coordinates using US Eastern civil time (EDT/EST by wedding date).
  *
  * Test cases (lat 44.76, lng -85.62, Traverse City area):
- * - 2026-05-29: sunset ~9:00 PM EDT, golden hour start ~8:15 PM EDT
- * - 2026-12-15: sunset ~5:15 PM EST, golden hour start ~4:25 PM EST
+ * - 2026-05-29: sunset ~9:07 PM EDT, golden hour start ~8:22 PM EDT (45 min window)
+ * - 2026-12-15: sunset ~5:15 PM EST, golden hour start ~4:30 PM EST (45 min window)
  */
 export function getGoldenHourFromCoords(dateStr, lat, lon, _utcOffsetHours) {
   if (!dateStr || lat == null || lon == null) return null;
