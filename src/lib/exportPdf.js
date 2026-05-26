@@ -299,18 +299,33 @@ function TimelinePreview({ rows, bride, groom, date, photoStartHour, photoStartM
   );
 }
 
-export async function exportPDF(params) {
-  setExporting(true);
-  setShowExportMenu(false);
-  closeMobileGearMenu();
-  try {
-    const { jsPDF } = await import('jspdf');
-    const doc = new jsPDF({ unit: 'pt', format: 'letter' });
-    const allPages = layoutPreviewPages(userRows);
-    const brideFirst = (bride || 'Bride').trim().split(/\s+/)[0];
-    const groomFirst = (groom || 'Groom').trim().split(/\s+/)[0];
+async function buildTimelinePdfDoc(params) {
+  const {
+    userRows,
+    bride,
+    groom,
+    date,
+    photoStartHour,
+    photoStartMinute,
+    photoStartPeriod,
+    photoEndHour,
+    photoEndMinute,
+    photoEndPeriod,
+    videoStartHour,
+    videoStartMinute,
+    videoStartPeriod,
+    videoEndHour,
+    videoEndMinute,
+    videoEndPeriod,
+    photoEnabled,
+    videoEnabled,
+  } = params;
 
-    allPages.forEach((pageRows, pi) => {
+  const { jsPDF } = await import('jspdf');
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const allPages = layoutPreviewPages(userRows);
+
+  allPages.forEach((pageRows, pi) => {
       if (pi > 0) doc.addPage();
       if (pi === 0) {
         let hy = MY_TOP + 14;
@@ -391,11 +406,60 @@ export async function exportPDF(params) {
       doc.text(`${bride || 'Bride'} & ${groom || 'Groom'} - ${fmtDateLong(date)}`, MX, ftrY);
       doc.text(`${pi + 1} of ${allPages.length}`, PW - MX, ftrY, { align: 'right' });
     });
+
+  return doc;
+}
+
+function openPdfForPrint(doc) {
+  doc.autoPrint({ variant: 'non-conform' });
+  const url = doc.output('bloburl');
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('title', 'Print timeline');
+  iframe.style.cssText =
+    'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+  iframe.src = url;
+  document.body.appendChild(iframe);
+  iframe.onload = () => {
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    } catch {
+      const win = window.open(url, '_blank');
+      if (!win) window.alert('Please allow pop-ups to print your timeline.');
+    }
+    setTimeout(() => {
+      if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+      URL.revokeObjectURL(url);
+    }, 120000);
+  };
+}
+
+export async function exportPDF(params) {
+  const { setExporting, setShowExportMenu, closeMobileGearMenu } = params;
+  setExporting?.(true);
+  setShowExportMenu?.(false);
+  closeMobileGearMenu?.();
+  try {
+    const doc = await buildTimelinePdfDoc(params);
+    const brideFirst = (params.bride || 'Bride').trim().split(/\s+/)[0];
+    const groomFirst = (params.groom || 'Groom').trim().split(/\s+/)[0];
     doc.save(`${brideFirst}-${groomFirst}-Wedding-Timeline.pdf`);
   } catch (err) {
     console.error('PDF export failed:', err);
   } finally {
-    setExporting(false);
+    setExporting?.(false);
+  }
+}
+
+export async function printTimeline(params) {
+  const { setShowExportMenu, closeMobileGearMenu } = params;
+  setShowExportMenu?.(false);
+  closeMobileGearMenu?.();
+  try {
+    const doc = await buildTimelinePdfDoc(params);
+    openPdfForPrint(doc);
+  } catch (err) {
+    console.error('Print failed:', err);
   }
 }
 

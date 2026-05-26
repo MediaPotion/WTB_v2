@@ -14,7 +14,7 @@ import { generateTimeline as generateTimelineLib } from "../lib/generateTimeline
 import { buildWizardAnswers } from "../lib/buildWizardAnswers";
 import { geocodeCeremonyLocation } from "../lib/goldenHour";
 import { exportTimeline as exportTimelineLib, copyTimeline as copyTimelineLib } from "../lib/exportTxt";
-import { exportPDF as exportPDFLib, TimelinePreview } from "../lib/exportPdf";
+import { exportPDF as exportPDFLib, printTimeline as printTimelineLib, TimelinePreview } from "../lib/exportPdf";
 import { useProjectStorage } from "../hooks/useProjectStorage";
 import { RowDropZone } from "../components/timeline/RowDropZone";
 import { SortableTimelineRow } from "../components/timeline/SortableTimelineRow";
@@ -953,6 +953,7 @@ export default function MobileApp() {
   }, []);
 
   const exportPDF = () => exportPDFLib(exportParams);
+  const printTimeline = () => printTimelineLib(exportParams);
   const exportTimeline = () => exportTimelineLib(exportParams);
   const copyTimeline = () => copyTimelineLib(exportParams);
 
@@ -1432,7 +1433,9 @@ export default function MobileApp() {
   return (
     <div className={screen !== "timeline" ? "wtb-app-root" : undefined}>
       <style>{THEME_CSS}{MOBILE_TWEAKS}</style>
-      <ThemeToggle theme={theme} onToggle={toggleTheme} />
+      {(isDesktop || screen !== "timeline") && (
+        <ThemeToggle theme={theme} onToggle={toggleTheme} />
+      )}
 
       {screen === "welcome" ? (
         <WelcomeScreen
@@ -1522,20 +1525,22 @@ export default function MobileApp() {
                   )}
                   <TimelineCoverageCounter coverage={timelineCoverage} />
                 </div>
-                <div className="wtb-mobile-gear-anchor" ref={mobileGearMenuRef}>
-                  <button
-                    type="button"
-                    className="wtb-mobile-gear-btn"
-                    onClick={() => setShowMobileMenu((v) => !v)}
-                    aria-expanded={showMobileMenu}
-                    aria-haspopup="menu"
-                    aria-label="Timeline menu"
-                    title="Menu"
-                  >
-                    ⚙
-                  </button>
-                  {showMobileMenu && (
-                    <div className="wtb-mobile-gear-menu" role="menu">
+                <div className="wtb-mobile-header-actions" ref={mobileGearMenuRef}>
+                  <ThemeToggle theme={theme} onToggle={toggleTheme} inline />
+                  <div className="wtb-mobile-gear-anchor">
+                    <button
+                      type="button"
+                      className="wtb-mobile-gear-btn"
+                      onClick={() => setShowMobileMenu((v) => !v)}
+                      aria-expanded={showMobileMenu}
+                      aria-haspopup="menu"
+                      aria-label="Timeline menu"
+                      title="Menu"
+                    >
+                      ⚙
+                    </button>
+                    {showMobileMenu && (
+                      <div className="wtb-mobile-gear-menu" role="menu">
                       <button
                         type="button"
                         role="menuitem"
@@ -1565,6 +1570,22 @@ export default function MobileApp() {
                         type="button"
                         role="menuitem"
                         className="wtb-mobile-gear-menu-item"
+                        onClick={() => { copyTimeline(); closeMobileGearMenu(); }}
+                      >
+                        {copyConfirm ? "Copied!" : "Copy Timeline"}
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="wtb-mobile-gear-menu-item"
+                        onClick={() => { printTimeline(); closeMobileGearMenu(); }}
+                      >
+                        Print
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="wtb-mobile-gear-menu-item"
                         onClick={exportPDF}
                         disabled={exporting}
                       >
@@ -1582,20 +1603,13 @@ export default function MobileApp() {
                         type="button"
                         role="menuitem"
                         className="wtb-mobile-gear-menu-item"
-                        onClick={() => { copyTimeline(); closeMobileGearMenu(); }}
-                      >
-                        {copyConfirm ? "Copied!" : "Copy Timeline"}
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className="wtb-mobile-gear-menu-item"
                         onClick={() => { setShowSettingsModal(true); closeMobileGearMenu(); }}
                       >
                         Project Settings
                       </button>
                     </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (
@@ -1662,6 +1676,13 @@ export default function MobileApp() {
                   style={{ padding: "6px 14px", backgroundColor: copyConfirm ? "var(--wtb-accent)" : "transparent", color: copyConfirm ? "var(--wtb-on-accent)" : "var(--wtb-text)", border: copyConfirm ? "1px solid var(--wtb-accent)" : "1px solid var(--wtb-border)", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
                 >
                   {copyConfirm ? "Copied!" : "Copy Timeline"}
+                </button>
+                <button
+                  type="button"
+                  onClick={printTimeline}
+                  style={{ padding: "6px 14px", background: "transparent", color: "var(--wtb-text)", border: "1px solid var(--wtb-border)", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
+                >
+                  Print
                 </button>
                 <div ref={isDesktop ? exportMenuRef : null} style={{ position: "relative" }}>
                   <button

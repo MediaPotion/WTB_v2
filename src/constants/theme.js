@@ -131,13 +131,12 @@ const THEME_CSS = `
     outline-offset: 2px;
   }
 
-  @media (max-width: 900px) {
-    .wtb-mobile-header-top {
-      padding-right: 88px !important;
-    }
-    .wtb-mobile-gear-anchor {
-      right: 48px !important;
-    }
+  .wtb-theme-toggle--inline {
+    position: static;
+    top: auto;
+    right: auto;
+    z-index: auto;
+    flex-shrink: 0;
   }
 `;
 

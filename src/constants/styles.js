@@ -278,14 +278,22 @@ const MOBILE_TWEAKS = `
 
   .wtb-mobile-header-top {
     position: relative;
-    padding: 2px 48px 6px 8px;
+    padding: 2px 96px 6px 8px;
     margin: 0 -8px;
   }
-  .wtb-mobile-gear-anchor {
+  .wtb-mobile-header-actions {
     position: absolute;
     top: 2px;
     right: 0;
     z-index: 210;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  .wtb-mobile-gear-anchor {
+    position: relative;
+    flex-shrink: 0;
   }
   .wtb-mobile-undo-dock {
     position: fixed;
@@ -317,9 +325,10 @@ const MOBILE_TWEAKS = `
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
+    background: var(--wtb-surface);
     border: 1px solid var(--wtb-border);
-    border-radius: 4px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px var(--wtb-shadow);
     color: var(--wtb-text);
     font-size: 20px;
     cursor: pointer;
