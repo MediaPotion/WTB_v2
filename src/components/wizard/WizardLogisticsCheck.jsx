@@ -178,8 +178,9 @@ function WizardLogisticsCheck(props) {
             fixHighlight={fixHighlightId === w.id}
             justResolved={justResolvedIds.has(w.id)}
             onToggle={() => toggleWindow(w.id)}
-            showControls={needsControls && expanded}
+            showControls={(needsControls || w.status === "overflow") && expanded}
             windows={report.windows}
+            rows={rows}
             inlineHints={inlineHints}
             {...props}
           />

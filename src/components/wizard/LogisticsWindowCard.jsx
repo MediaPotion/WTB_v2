@@ -13,6 +13,7 @@ function LogisticsWindowCard({
   windows,
   inlineHints,
   fixHighlight,
+  rows,
   ...controlProps
 }) {
   const ref = useRef(null);
@@ -143,6 +144,7 @@ function LogisticsWindowCard({
               windowId={w.id}
               window={w}
               windows={windows}
+              rows={rows}
               inlineHints={inlineHints}
               highlightAll={fixHighlight}
               {...controlProps}

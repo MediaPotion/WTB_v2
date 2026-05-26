@@ -126,6 +126,13 @@ export function formatWindowTimeSummary(window, justResolved) {
   if (st === "overflow") {
     return `${avail} minutes available — ${used} minutes scheduled — ${window.overflowMinutes} minutes over`;
   }
+  if (
+    window.id === "E" &&
+    window.coverageOvertimeMinutes > 0 &&
+    window.coverageOvertimeMinutes <= 15
+  ) {
+    return `${avail} minutes available — ${used} minutes scheduled — runs ${window.coverageOvertimeMinutes} min past coverage end (within flexible grace)`;
+  }
   return `${avail} minutes available — ${used} minutes scheduled — ${window.remainingMinutes} minutes remaining`;
 }
 

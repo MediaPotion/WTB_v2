@@ -172,5 +172,11 @@ describe("calculateLogistics reads generated rows", () => {
         assignedIds.add(key);
       }
     }
+
+    const openDance = rows.find((r) => r.event === "Reception: Open Dance Floor");
+    expect(openDance).toBeDefined();
+    expect(openDance.time).toBeGreaterThanOrEqual(ghRow.time + GOLDEN_HOUR_PORTRAIT_DURATION);
+    expect(openDance.isOutdoor).toBeFalsy();
+    expect(ghRow.isOutdoor).toBe(true);
   });
 });

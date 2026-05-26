@@ -6,6 +6,7 @@ import {
   formatMinutes,
 } from "../../lib/goldenHour";
 import { findGoldenHourOverlap } from "./logisticsPresentation";
+import { LogisticsOverflowControls } from "./LogisticsOverflowControls";
 
 const labelStyle = {
   display: "block",
@@ -106,7 +107,14 @@ const RECEPTION_TOGGLES = [
   { match: (e) => e.includes("Open Dance"), key: "open", label: "Open dance floor", minutes: 0, prop: "wiz_openDanceFloor", setter: "setWiz_openDanceFloor" },
 ];
 
-function LogisticsWindowControls({ windowId, window: w, windows, inlineHints, highlightAll, ...props }) {
+function LogisticsWindowControls({ windowId, window: w, windows, inlineHints, highlightAll, rows, ...props }) {
+  if (w.status === "overflow") {
+    return (
+      <div className="wtb-logistics-window-controls">
+        <LogisticsOverflowControls window={w} rows={rows} {...props} />
+      </div>
+    );
+  }
   const {
     wizToggleStyle,
     wizCheckRowStyle,

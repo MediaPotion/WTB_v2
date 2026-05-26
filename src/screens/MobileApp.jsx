@@ -260,6 +260,7 @@ export default function MobileApp() {
   const [wiz_grandEntranceSub, setWiz_grandEntranceSub] = useState("couple"); // "full" | "couple"
   const [wiz_customReceptionEvents, setWiz_customReceptionEvents] = useState([]);
   const [wiz_customReceptionEventNextId, setWiz_customReceptionEventNextId] = useState(1);
+  const [wiz_logisticsEventAdjustments, setWiz_logisticsEventAdjustments] = useState({});
 
   const isTimelineEmpty = () => {
     const hasRowContent = userRows.some(
@@ -1125,6 +1126,14 @@ export default function MobileApp() {
     wiz_photoCoverageHours,
     wiz_videoCoverageHours,
     wiz_appliedLogisticsSuggestions,
+    wiz_logisticsEventAdjustments,
+    wiz_customReceptionEvents,
+    photoEndHour,
+    photoEndMinute,
+    photoEndPeriod,
+    videoEndHour,
+    videoEndMinute,
+    videoEndPeriod,
   });
 
   const logisticsStatus = useMemo(
@@ -1264,7 +1273,11 @@ export default function MobileApp() {
     wiz_portraitSessions, setWiz_portraitSessions, wiz_portraitSessionNextId, setWiz_portraitSessionNextId,
     wiz_grandEntranceSub, setWiz_grandEntranceSub, wiz_customReceptionEvents, setWiz_customReceptionEvents, wiz_customReceptionEventNextId, setWiz_customReceptionEventNextId,
     wiz_appliedLogisticsSuggestions, setWiz_appliedLogisticsSuggestions,
+    wiz_logisticsEventAdjustments, setWiz_logisticsEventAdjustments,
     photoStartHour, photoStartMinute, photoStartPeriod, setPhotoStartHour, setPhotoStartMinute, setPhotoStartPeriod,
+    photoEndHour, photoEndMinute, photoEndPeriod, setPhotoEndHour, setPhotoEndMinute, setPhotoEndPeriod,
+    videoEndHour, videoEndMinute, videoEndPeriod, setVideoEndHour, setVideoEndMinute, setVideoEndPeriod,
+    photoEnabled, videoEnabled,
     wizSectionHeading,
     wizToggleStyle,
     wizCheckRowStyle,

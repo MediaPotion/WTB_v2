@@ -117,8 +117,28 @@ function resolveCoverageBounds(answers, rows) {
 
   if (coverageStart != null) {
     const ends = [];
+    const photoEndHour = pick(answers, "photoEndHour", "wiz_photoEndHour");
+    if (photoEnabled && photoEndHour != null) {
+      ends.push(
+        parseTimeInput(
+          photoEndHour,
+          pick(answers, "photoEndMinute", "wiz_photoEndMinute") || "00",
+          pick(answers, "photoEndPeriod", "wiz_photoEndPeriod") || "PM"
+        )
+      );
+    }
     if (photoEnabled && !Number.isNaN(photoHours) && photoHours > 0) {
       ends.push(coverageStart + photoHours * 60);
+    }
+    const videoEndHour = pick(answers, "videoEndHour", "wiz_videoEndHour");
+    if (videoEnabled && videoEndHour != null) {
+      ends.push(
+        parseTimeInput(
+          videoEndHour,
+          pick(answers, "videoEndMinute", "wiz_videoEndMinute") || "00",
+          pick(answers, "videoEndPeriod", "wiz_videoEndPeriod") || "PM"
+        )
+      );
     }
     if (videoEnabled && !Number.isNaN(videoHours) && videoHours > 0) {
       ends.push(coverageStart + videoHours * 60);
@@ -126,6 +146,10 @@ function resolveCoverageBounds(answers, rows) {
     if (ends.length > 0) {
       coverageEnd = Math.max(...ends, dayEndFromRows ?? 0);
     }
+  }
+
+  if (dayEndFromRows != null) {
+    coverageEnd = Math.max(coverageEnd ?? dayEndFromRows, dayEndFromRows);
   }
 
   return {
@@ -147,10 +171,21 @@ function schedulableEventsInRange(rows, start, end, options = {}) {
   });
 }
 
+const COVERAGE_OVERTIME_GRACE_MINUTES = 15;
+
 function windowStatus(remainingMinutes) {
   if (remainingMinutes < 0) return "overflow";
   if (remainingMinutes <= 15) return "tight";
   return "ok";
+}
+
+/** Late Reception: coverage end is soft — ≤15 min over is a warning, not a hard conflict. */
+function windowStatusForCoverageWindow(windowId, remainingMinutes) {
+  if (windowId !== "E") return windowStatus(remainingMinutes);
+  if (remainingMinutes >= 0) return remainingMinutes <= 15 ? "tight" : "ok";
+  const overBy = Math.abs(remainingMinutes);
+  if (overBy <= COVERAGE_OVERTIME_GRACE_MINUTES) return "tight";
+  return "overflow";
 }
 
 function hasGoldenHourScheduled(rows) {
@@ -182,7 +217,11 @@ function buildWindowReport({ id, label, startTime, endTime, events, travelSubtra
   const availableMinutes = Math.max(0, endTime - startTime - travelSubtract);
   const usedMinutes = sumSchedulableDurations(events);
   const remainingMinutes = availableMinutes - usedMinutes;
-  const status = windowStatus(remainingMinutes);
+  const status = windowStatusForCoverageWindow(id, remainingMinutes);
+  const overflowMinutes =
+    status === "overflow" ? Math.abs(remainingMinutes) : 0;
+  const coverageOvertimeMinutes =
+    id === "E" && remainingMinutes < 0 ? Math.abs(remainingMinutes) : 0;
   return {
     id,
     label,
@@ -194,7 +233,8 @@ function buildWindowReport({ id, label, startTime, endTime, events, travelSubtra
     status,
     events,
     travelSubtract,
-    overflowMinutes: status === "overflow" ? Math.abs(remainingMinutes) : 0,
+    overflowMinutes,
+    coverageOvertimeMinutes,
   };
 }
 

@@ -1,5 +1,6 @@
 import { formatTime, parseTimeInput } from "./time";
-import { resolveGoldenHourForAnswers } from "./goldenHour";
+import { resolveGoldenHourForAnswers, GOLDEN_HOUR_PORTRAIT_DURATION } from "./goldenHour";
+import { durationOverride } from "./logisticsEventAdjustments";
 import { resolveWeddingLocations } from "./weddingLocations";
 import { resolveRowTierFields } from "./rowTier";
 
@@ -166,11 +167,20 @@ export function generateTimeline(wizardAnswers) {
     includeGoldenHour: wiz_includeGoldenHourFlag,
     venueLat: wiz_venueLat,
     venueLng: wiz_venueLng,
+    logisticsEventAdjustments: wiz_logisticsEventAdjustments = {},
+    customReceptionEvents: wiz_customReceptionEvents = [],
   } = wizardAnswers;
 
   const includeGoldenHourPortraits =
     wiz_goldenHourFlag === true ||
     wiz_includeGoldenHourFlag === true;
+
+  const ghSchedule = includeGoldenHourPortraits
+    ? resolveGoldenHourForAnswers(wizardAnswers)
+    : null;
+  const ghStart = ghSchedule?.start ?? null;
+  const ghEnd =
+    ghStart != null ? ghStart + GOLDEN_HOUR_PORTRAIT_DURATION : null;
 
   const skipPreCeremonyDrone = wiz_appliedLogisticsSuggestions.some(
     (s) => s.type === "move_drone"
@@ -466,10 +476,50 @@ export function generateTimeline(wizardAnswers) {
     // === Phase 5: Reception venue ===
     const receptionBlocks = [];
     let recT = receptionStartTime;
+    let ghPlaced = false;
+    const adjustments = wiz_logisticsEventAdjustments || {};
+
+    const bumpPastGoldenHour = (t) => {
+      if (ghStart == null || ghEnd == null) return t;
+      if (t >= ghStart && t < ghEnd) return ghEnd;
+      return t;
+    };
+
+    const placeGoldenHourPortraits = () => {
+      if (ghStart == null || ghPlaced) return;
+      const block = {
+        event: GOLDEN_HOUR_EVENT,
+        duration: GOLDEN_HOUR_PORTRAIT_DURATION,
+        isOutdoor: true,
+      };
+      block.time = ghStart;
+      receptionBlocks.push(block);
+      ghPlaced = true;
+      recT = Math.max(recT, ghEnd);
+    };
+
     const addRec = (block, atTime) => {
-      const t = atTime != null ? atTime : recT;
+      const eventName = block.event || "";
+      const duration = durationOverride(adjustments, eventName, block.duration);
+      if (duration == null) return;
+
+      if (eventName !== GOLDEN_HOUR_EVENT && ghStart != null) {
+        if (!ghPlaced && recT >= ghStart) {
+          placeGoldenHourPortraits();
+        }
+      }
+
+      let t = atTime != null ? atTime : bumpPastGoldenHour(recT);
+      if (eventName !== GOLDEN_HOUR_EVENT) {
+        t = bumpPastGoldenHour(t);
+      } else {
+        t = ghStart;
+        ghPlaced = true;
+      }
+
+      block.duration = duration;
       block.time = t;
-      recT = Math.max(recT, t + block.duration);
+      recT = Math.max(recT, t + duration);
       receptionBlocks.push(block);
     };
 
@@ -480,17 +530,16 @@ export function generateTimeline(wizardAnswers) {
     if (!wiz_receptionSameAsCeremony && !receptionVenueAlreadyMarked) {
       addRec({ type: "location", event: effectiveReceptionVenue, address: effectiveReceptionAddress, duration: 0, notes: "" });
     }
-    // A/V setup always first at reception, Grand Entrance always immediately after
     addRec({ event: "Reception: Audio/Video Setup", duration: 20 });
     if (wiz_grandEntrance) addRec({ event: "Reception: Grand Entrances", duration: 10 });
-    if (wiz_cakeCutting)   addRec({ event: "Reception: Cake Cutting", duration: 5 });
-    if (wiz_firstDance)    addRec({ event: "Reception: Bride & Groom Dance", duration: 5 });
+    if (wiz_cakeCutting) addRec({ event: "Reception: Cake Cutting", duration: 5 });
+    if (wiz_firstDance) addRec({ event: "Reception: Bride & Groom Dance", duration: 5 });
     if (wiz_brideParentDance) addRec({ event: "Reception: Bride & Parent Dance", duration: 5 });
     if (wiz_groomParentDance) addRec({ event: "Reception: Groom & Parent Dance", duration: 5 });
-    if (wiz_specialDance)  addRec({ event: "Reception: Special Dance", duration: 5 });
+    if (wiz_specialDance) addRec({ event: "Reception: Special Dance", duration: 5 });
     if (wiz_dinner) {
       const dinnerTime = parseTimeInput(wiz_dinnerStartHour, wiz_dinnerStartMinute, wiz_dinnerStartPeriod);
-      recT = Math.max(recT, dinnerTime);
+      recT = bumpPastGoldenHour(Math.max(recT, dinnerTime));
       addRec({ event: "Reception: Dinner", duration: 60, notes: wiz_dinnerStyle ? `Style: ${wiz_dinnerStyle}` : "" });
     }
     if (wiz_speeches) {
@@ -501,15 +550,43 @@ export function generateTimeline(wizardAnswers) {
         notes: `${wiz_speechCount} speaker${wiz_speechCount !== 1 ? "s" : ""} × ${perSpeaker} min`,
       });
     }
-    if (includeGoldenHourPortraits) {
-      const gh = resolveGoldenHourForAnswers(wizardAnswers);
-      if (gh?.start != null) {
-        addRec({ event: GOLDEN_HOUR_EVENT, duration: 20 }, gh.start);
+
+    if (includeGoldenHourPortraits && ghStart != null) {
+      recT = bumpPastGoldenHour(recT);
+      if (!ghPlaced) placeGoldenHourPortraits();
+      else recT = Math.max(recT, ghEnd);
+    }
+
+    const postGoldenHourEvents = [];
+    if (wiz_openDanceFloor) {
+      const openDur = durationOverride(adjustments, "Reception: Open Dance Floor", 20);
+      if (openDur != null) {
+        postGoldenHourEvents.push("Reception: Open Dance Floor");
+        addRec({ event: "Reception: Open Dance Floor", duration: openDur });
       }
     }
-    if (wiz_openDanceFloor) addRec({ event: "Reception: Open Dance Floor", duration: 20 });
-    if (wiz_garterToss)     addRec({ event: "Reception: Garder Belt Toss", duration: 15 });
-    if (wiz_bouquetToss)    addRec({ event: "Reception: Bouquet Toss", duration: 15 });
+    if (wiz_garterToss) {
+      const garterDur = durationOverride(adjustments, "Reception: Garder Belt Toss", 15);
+      if (garterDur != null) {
+        postGoldenHourEvents.push("Reception: Garder Belt Toss");
+        addRec({ event: "Reception: Garder Belt Toss", duration: garterDur });
+      }
+    }
+    if (wiz_bouquetToss) {
+      const bouquetDur = durationOverride(adjustments, "Reception: Bouquet Toss", 15);
+      if (bouquetDur != null) {
+        postGoldenHourEvents.push("Reception: Bouquet Toss");
+        addRec({ event: "Reception: Bouquet Toss", duration: bouquetDur });
+      }
+    }
+    (wiz_customReceptionEvents || []).forEach((ev) => {
+      const label = String(ev.label || "").trim();
+      if (!label) return;
+      const dur = durationOverride(adjustments, label, parseInt(ev.duration, 10) || 15);
+      if (dur == null) return;
+      postGoldenHourEvents.push(label);
+      addRec({ event: label, duration: dur });
+    });
 
     // ---- Assemble rows ----
     const allBlocks = [
@@ -544,6 +621,18 @@ export function generateTimeline(wizardAnswers) {
       }
     }
 
+    if (ghStart != null && ghEnd != null && postGoldenHourEvents.length > 0) {
+      let tail = ghEnd;
+      for (const eventName of postGoldenHourEvents) {
+        const block = allBlocks.find((b) => b.event === eventName);
+        if (!block) continue;
+        if (block.time < ghEnd || (block.time >= ghStart && block.time < ghEnd)) {
+          block.time = tail;
+        }
+        tail = Math.max(tail, block.time + (block.duration || 0));
+      }
+    }
+
   const flexibility = {
     dinnerFlexibility: wiz_dinnerFlexibility,
     receptionStartFlexibility: wiz_receptionStartFlexibility,
@@ -568,7 +657,8 @@ export function generateTimeline(wizardAnswers) {
       time: block.time,
       duration: block.duration,
       location: block.location || "",
-      isOutdoor: block.isOutdoor || false,
+      isOutdoor:
+        block.event === GOLDEN_HOUR_EVENT ? true : block.isOutdoor || false,
       photo: photoEnabled,
       video: videoEnabled,
       notes: block.notes || "",
