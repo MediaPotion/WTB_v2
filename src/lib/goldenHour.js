@@ -1,19 +1,8 @@
 import { parseTimeInput } from "./time";
 
-const MONTH_GH_START = {
-  0: 16 * 60 + 30,
-  1: 17 * 60 + 0,
-  2: 17 * 60 + 30,
-  3: 18 * 60 + 0,
-  4: 18 * 60 + 30,
-  5: 19 * 60 + 0,
-  6: 19 * 60 + 0,
-  7: 18 * 60 + 30,
-  8: 18 * 60 + 0,
-  9: 17 * 60 + 30,
-  10: 16 * 60 + 30,
-  11: 16 * 60 + 0,
-};
+/** Default coords (Traverse City / Northern Michigan) when geocoding is unavailable. */
+export const NORTHERN_MICHIGAN_DEFAULT_LAT = 44.76;
+export const NORTHERN_MICHIGAN_DEFAULT_LON = -85.62;
 
 const SUNSET_OFFSET = 45;
 
@@ -73,15 +62,6 @@ export function getEasternUtcOffsetHours(dateStr) {
 function equationOfTimeMinutes(day) {
   const b = ((360 / 365) * (day - 81) * Math.PI) / 180;
   return 9.87 * Math.sin(2 * b) - 7.53 * Math.cos(b) - 1.5 * Math.sin(b);
-}
-
-function estimateFromDate(dateStr) {
-  if (!dateStr) return null;
-  const d = new Date(dateStr + "T12:00:00");
-  if (Number.isNaN(d.getTime())) return null;
-  const start = MONTH_GH_START[d.getMonth()] ?? 18 * 60;
-  const sunset = start + SUNSET_OFFSET;
-  return { start, sunset, windowMinutes: SUNSET_OFFSET, source: "estimate" };
 }
 
 async function nominatimSearch(query) {
@@ -187,8 +167,15 @@ export function getGoldenHourFromCoords(dateStr, lat, lon, _utcOffsetHours) {
   };
 }
 
+/** Same solar + Eastern DST path as geocoded coords, using Northern Michigan defaults. */
 export function getGoldenHourWindowSync(dateStr, _address) {
-  return estimateFromDate(dateStr);
+  if (!dateStr) return null;
+  const result = getGoldenHourFromCoords(
+    dateStr,
+    NORTHERN_MICHIGAN_DEFAULT_LAT,
+    NORTHERN_MICHIGAN_DEFAULT_LON
+  );
+  return result ? { ...result, source: "estimate" } : null;
 }
 
 export function goldenHourOverlapsReception(gh, receptionHour, receptionMinute, receptionPeriod) {
