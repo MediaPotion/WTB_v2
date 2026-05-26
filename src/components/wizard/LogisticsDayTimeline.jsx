@@ -1,12 +1,8 @@
 import React, { useMemo, useRef, useState, useLayoutEffect } from "react";
-import {
-  LOGISTICS_STATUS,
-  assignWindowLanes,
-  buildHourTicks,
-} from "./logisticsPresentation";
+import { formatClockLabel } from "../../lib/time";
+import { LOGISTICS_STATUS, assignWindowLanes } from "./logisticsPresentation";
 import {
   buildBoundaryMarkers,
-  buildRulerMarkers,
   layoutTimeLabels,
   segmentLabelForWidth,
   segmentShowsIconOnly,
@@ -52,7 +48,6 @@ function LogisticsDayTimeline({
 
   const span = Math.max(dayEnd - dayStart, 1);
   const { laneCount, laneById } = useMemo(() => assignWindowLanes(windows), [windows]);
-  const hourTicks = useMemo(() => buildHourTicks(dayStart, dayEnd), [dayStart, dayEnd]);
 
   const trackHeight =
     PAD_Y * 2 + laneCount * LANE_HEIGHT + Math.max(0, laneCount - 1) * LANE_GAP;
@@ -73,14 +68,6 @@ function LogisticsDayTimeline({
 
   const boundaryHasStagger = boundaryLabels.some((m) => m.visible && m.staggerRow === 1);
   const boundaryAreaHeight = boundaryHasStagger ? LABEL_ROW_H * 2 + 4 : LABEL_ROW_H + 4;
-
-  const rulerRaw = useMemo(() => buildRulerMarkers(hourTicks), [hourTicks]);
-  const rulerLabels = useMemo(
-    () => layoutTimeLabels(rulerRaw, barWidthPx),
-    [rulerRaw, barWidthPx]
-  );
-  const rulerHasStagger = rulerLabels.some((m) => m.visible && m.staggerRow === 1);
-  const rulerAreaHeight = rulerHasStagger ? LABEL_ROW_H * 2 + 10 : 28;
 
   const ceremonyLeft = ceremonyStart != null ? pct(ceremonyStart, dayStart, span) : null;
   const ceremonyWidth =
@@ -103,7 +90,7 @@ function LogisticsDayTimeline({
           if (!m.visible) return null;
           return (
             <span
-              key={m.key}
+              key={`${m.key}-${m.minutes}`}
               className="wtb-logistics-boundary-label"
               style={{
                 position: "absolute",
@@ -183,30 +170,6 @@ function LogisticsDayTimeline({
                 </span>
               )}
             </div>
-          );
-        })}
-      </div>
-
-      <div
-        className="wtb-logistics-ruler"
-        style={{ position: "relative", height: rulerAreaHeight, marginTop: 10 }}
-      >
-        <div className="wtb-logistics-ruler-line" />
-        {rulerLabels.map((m) => {
-          if (!m.visible) return null;
-          return (
-            <span
-              key={m.key}
-              className="wtb-logistics-ruler-tick"
-              style={{
-                position: "absolute",
-                left: `${m.pct}%`,
-                top: 6 + m.staggerRow * LABEL_ROW_H,
-                transform: "translateX(-50%)",
-              }}
-            >
-              {m.label}
-            </span>
           );
         })}
       </div>

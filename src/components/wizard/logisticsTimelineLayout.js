@@ -11,7 +11,7 @@ const SHORT_LABELS = {
   "Reception": "Reception",
 };
 
-/** Priority: ceremony (3) > window boundary (2) > hour ruler (1). */
+/** Priority: ceremony (3) > window boundary (2). */
 export function buildBoundaryMarkers(windows, ceremonyStart, ceremonyEnd) {
   const items = [];
   if (ceremonyStart != null) {
@@ -44,17 +44,15 @@ export function buildBoundaryMarkers(windows, ceremonyStart, ceremonyEnd) {
       priority: 2,
     });
   });
-  return items.sort((a, b) => a.minutes - b.minutes);
-}
 
-export function buildRulerMarkers(hourTicks) {
-  return hourTicks.map((tick, i) => ({
-    key: `hour-${tick.minutes}-${i}`,
-    minutes: tick.minutes,
-    label: tick.label,
-    pct: tick.pct,
-    priority: 1,
-  }));
+  const byMinutes = new Map();
+  for (const item of items) {
+    const existing = byMinutes.get(item.minutes);
+    if (!existing || item.priority > existing.priority) {
+      byMinutes.set(item.minutes, item);
+    }
+  }
+  return [...byMinutes.values()].sort((a, b) => a.minutes - b.minutes);
 }
 
 /**
