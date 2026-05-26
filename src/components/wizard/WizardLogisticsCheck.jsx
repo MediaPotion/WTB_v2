@@ -555,7 +555,7 @@ function WizardLogisticsCheck(props) {
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
             <button
               type="button"
-              onClick={() => setWizardStep(9)}
+              onClick={() => setWizardStep(6)}
               style={{
                 padding: "12px 28px",
                 border: "1px solid var(--wtb-accent)",
@@ -574,7 +574,7 @@ function WizardLogisticsCheck(props) {
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 <button
                   type="button"
-                  onClick={() => setWizardStep(9)}
+                  onClick={() => setWizardStep(6)}
                   style={{
                     padding: "12px 24px",
                     border: "1px solid var(--wtb-border)",

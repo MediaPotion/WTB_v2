@@ -27,7 +27,7 @@ function resolveBrideReady(wizardAnswers, ceremony, reception) {
     return { name: reception.name, address: reception.address };
   }
   return {
-    name: wizardAnswers.brideReadyAddress || "Getting Ready Location",
+    name: wizardAnswers.brideReadyAddress || "Bride's Getting Ready Location",
     address: wizardAnswers.brideReadyStreet || "",
   };
 }
