@@ -3,15 +3,18 @@ import { formatClockLabel } from "../../lib/time";
 import { LOGISTICS_STATUS, assignWindowLanes } from "./logisticsPresentation";
 import {
   buildBoundaryMarkers,
+  ceremonySegmentDisplay,
   layoutTimeLabels,
   segmentLabelForWidth,
   segmentShowsIconOnly,
+  TIME_LABEL_BAR_GAP_PX,
+  TIME_LABEL_HEIGHT_PX,
 } from "./logisticsTimelineLayout";
 
 const LANE_HEIGHT = 28;
 const LANE_GAP = 5;
 const PAD_Y = 6;
-const LABEL_ROW_H = 16;
+const BOUNDARY_BLOCK_H = TIME_LABEL_HEIGHT_PX + TIME_LABEL_BAR_GAP_PX;
 
 function pct(minutes, dayStart, span) {
   return ((minutes - dayStart) / span) * 100;
@@ -66,9 +69,6 @@ function LogisticsDayTimeline({
     [boundaryRaw, barWidthPx]
   );
 
-  const boundaryHasStagger = boundaryLabels.some((m) => m.visible && m.staggerRow === 1);
-  const boundaryAreaHeight = boundaryHasStagger ? LABEL_ROW_H * 2 + 4 : LABEL_ROW_H + 4;
-
   const ceremonyLeft = ceremonyStart != null ? pct(ceremonyStart, dayStart, span) : null;
   const ceremonyWidth =
     ceremonyStart != null && ceremonyEnd != null
@@ -79,99 +79,128 @@ function LogisticsDayTimeline({
       ? (ceremonyWidth / 100) * barWidthPx
       : 0;
   const ceremonyTop = PAD_Y;
+  const ceremonyDisplay = ceremonySegmentDisplay(ceremonyWidthPx);
+  const ceremonyTooltip = `Ceremony — ${formatClockLabel(ceremonyStart)} to ${formatClockLabel(ceremonyEnd)}`;
 
   return (
     <div className="wtb-logistics-timeline-wrap" ref={wrapRef}>
-      <div
-        className="wtb-logistics-boundary-markers"
-        style={{ position: "relative", height: boundaryAreaHeight, marginBottom: 4 }}
-      >
-        {boundaryLabels.map((m) => {
-          if (!m.visible) return null;
-          return (
-            <span
-              key={`${m.key}-${m.minutes}`}
-              className="wtb-logistics-boundary-label"
-              style={{
-                position: "absolute",
-                left: `${m.pct}%`,
-                top: m.staggerRow * LABEL_ROW_H,
-                transform: "translateX(-50%)",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {m.label}
-            </span>
-          );
-        })}
-      </div>
+      <div className="wtb-logistics-timeline-stack">
+        <div
+          className="wtb-logistics-boundary-layer"
+          style={{ height: BOUNDARY_BLOCK_H }}
+          aria-hidden
+        >
+          {boundaryLabels.map((m) => {
+            if (!m.visible || m.placement !== "above") return null;
+            return (
+              <div
+                key={`${m.key}-above`}
+                className="wtb-logistics-boundary-marker"
+                style={{ left: `${m.pct}%` }}
+              >
+                <span className="wtb-logistics-boundary-label">{m.label}</span>
+                <span className="wtb-logistics-boundary-line" />
+              </div>
+            );
+          })}
+        </div>
 
-      <div
-        className="wtb-logistics-track"
-        style={{ position: "relative", height: trackHeight, width: "100%" }}
-      >
-        {ceremonyWidth != null && (
-          <div
-            className="wtb-logistics-segment wtb-logistics-ceremony"
-            title={`Ceremony — ${formatClockLabel(ceremonyStart)} to ${formatClockLabel(ceremonyEnd)}`}
-            style={{
-              position: "absolute",
-              left: `${ceremonyLeft}%`,
-              width: `${ceremonyWidth}%`,
-              top: ceremonyTop,
-              height: LANE_HEIGHT,
-              zIndex: 4,
-            }}
-          >
-            {segmentLabelForWidth("Ceremony", ceremonyWidthPx) && (
-              <span className="wtb-logistics-segment-inner-label wtb-logistics-ceremony-text">
-                {segmentLabelForWidth("Ceremony", ceremonyWidthPx)}
-              </span>
-            )}
-          </div>
-        )}
-
-        {windows.map((w) => {
-          const left = pct(w.startTime, dayStart, span);
-          const width = Math.max(pct(w.endTime, dayStart, span) - left, 1.2);
-          const widthPx = barWidthPx ? (width / 100) * barWidthPx : 0;
-          const resolved = justResolvedIds.has(w.id);
-          const st = resolved
-            ? LOGISTICS_STATUS.ok
-            : LOGISTICS_STATUS[w.status] || LOGISTICS_STATUS.ok;
-          const lane = laneById[w.id] ?? 0;
-          const top = PAD_Y + lane * (LANE_HEIGHT + LANE_GAP);
-          const isOverflow = w.status === "overflow" && !resolved;
-          const iconOnly = segmentShowsIconOnly(widthPx);
-          const displayLabel = segmentLabelForWidth(w.label, widthPx);
-          const tooltip = `${w.label}: ${formatClockLabel(w.startTime)} – ${formatClockLabel(w.endTime)}`;
-
-          return (
+        <div
+          className="wtb-logistics-track"
+          style={{ position: "relative", height: trackHeight, width: "100%" }}
+        >
+          {ceremonyWidth != null && (
             <div
-              key={w.id}
-              className={`wtb-logistics-segment${isOverflow ? " wtb-logistics-segment--overflow" : ""}${resolved ? " wtb-logistics-segment--resolved" : ""}`}
-              title={tooltip}
+              className={`wtb-logistics-segment wtb-logistics-ceremony${
+                ceremonyDisplay.mode === "vertical"
+                  ? " wtb-logistics-ceremony--vertical-label"
+                  : ""
+              }`}
+              title={ceremonyTooltip}
               style={{
                 position: "absolute",
-                left: `${left}%`,
-                width: `${width}%`,
-                top,
+                left: `${ceremonyLeft}%`,
+                width: `${ceremonyWidth}%`,
+                top: ceremonyTop,
                 height: LANE_HEIGHT,
-                background: st.bg,
-                borderColor: st.color,
-                zIndex: 2,
+                zIndex: 4,
               }}
             >
-              {displayLabel && !iconOnly ? (
-                <span className="wtb-logistics-segment-inner-label">{displayLabel}</span>
-              ) : (
-                <span className="wtb-logistics-segment-icon" style={{ color: st.color }}>
-                  {st.icon}
+              {ceremonyDisplay.mode === "horizontal" && (
+                <span className="wtb-logistics-segment-inner-label wtb-logistics-ceremony-text">
+                  {ceremonyDisplay.label}
+                </span>
+              )}
+              {ceremonyDisplay.mode === "vertical" && (
+                <span className="wtb-logistics-segment-inner-label wtb-logistics-ceremony-text wtb-logistics-ceremony-text--vertical">
+                  {ceremonyDisplay.label}
                 </span>
               )}
             </div>
-          );
-        })}
+          )}
+
+          {windows.map((w) => {
+            const left = pct(w.startTime, dayStart, span);
+            const width = Math.max(pct(w.endTime, dayStart, span) - left, 1.2);
+            const widthPx = barWidthPx ? (width / 100) * barWidthPx : 0;
+            const resolved = justResolvedIds.has(w.id);
+            const st = resolved
+              ? LOGISTICS_STATUS.ok
+              : LOGISTICS_STATUS[w.status] || LOGISTICS_STATUS.ok;
+            const lane = laneById[w.id] ?? 0;
+            const top = PAD_Y + lane * (LANE_HEIGHT + LANE_GAP);
+            const isOverflow = w.status === "overflow" && !resolved;
+            const iconOnly = segmentShowsIconOnly(widthPx);
+            const displayLabel = segmentLabelForWidth(w.label, widthPx);
+            const tooltip = `${w.label}: ${formatClockLabel(w.startTime)} – ${formatClockLabel(w.endTime)}`;
+
+            return (
+              <div
+                key={w.id}
+                className={`wtb-logistics-segment${isOverflow ? " wtb-logistics-segment--overflow" : ""}${resolved ? " wtb-logistics-segment--resolved" : ""}`}
+                title={tooltip}
+                style={{
+                  position: "absolute",
+                  left: `${left}%`,
+                  width: `${width}%`,
+                  top,
+                  height: LANE_HEIGHT,
+                  background: st.bg,
+                  borderColor: st.color,
+                  zIndex: 2,
+                }}
+              >
+                {displayLabel && !iconOnly ? (
+                  <span className="wtb-logistics-segment-inner-label">{displayLabel}</span>
+                ) : (
+                  <span className="wtb-logistics-segment-icon" style={{ color: st.color }}>
+                    {st.icon}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div
+          className="wtb-logistics-boundary-layer wtb-logistics-boundary-layer--below"
+          style={{ height: BOUNDARY_BLOCK_H }}
+          aria-hidden
+        >
+          {boundaryLabels.map((m) => {
+            if (!m.visible || m.placement !== "below") return null;
+            return (
+              <div
+                key={`${m.key}-below`}
+                className="wtb-logistics-boundary-marker wtb-logistics-boundary-marker--below"
+                style={{ left: `${m.pct}%` }}
+              >
+                <span className="wtb-logistics-boundary-line" />
+                <span className="wtb-logistics-boundary-label">{m.label}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

@@ -654,11 +654,52 @@ const MOBILE_TWEAKS = `
     width: 100%;
     margin-bottom: 28px;
   }
+  .wtb-logistics-timeline-stack {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  .wtb-logistics-boundary-layer {
+    position: relative;
+    width: 100%;
+    flex-shrink: 0;
+  }
+  .wtb-logistics-boundary-marker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    transform: translateX(-50%);
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .wtb-logistics-boundary-marker--below {
+    flex-direction: column;
+  }
   .wtb-logistics-boundary-label {
     font-size: 10px;
     color: var(--wtb-text-muted);
     font-family: 'Jost', sans-serif;
     opacity: 0.85;
+    white-space: nowrap;
+    line-height: 16px;
+    flex-shrink: 0;
+  }
+  .wtb-logistics-boundary-marker .wtb-logistics-boundary-label {
+    margin-bottom: auto;
+  }
+  .wtb-logistics-boundary-marker--below .wtb-logistics-boundary-label {
+    margin-bottom: 0;
+    margin-top: auto;
+  }
+  .wtb-logistics-boundary-line {
+    width: 1px;
+    flex: 1;
+    min-height: 20px;
+    background: rgba(184, 144, 106, 0.45);
+    opacity: 0.7;
   }
   .wtb-logistics-track {
     background: rgba(184, 144, 106, 0.12);
@@ -719,6 +760,21 @@ const MOBILE_TWEAKS = `
   }
   .wtb-logistics-ceremony-text {
     color: var(--wtb-accent);
+  }
+  .wtb-logistics-ceremony--vertical-label {
+    overflow: visible;
+  }
+  .wtb-logistics-ceremony-text--vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    white-space: nowrap;
+    font-size: 9px;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    overflow: visible;
+    text-overflow: clip;
+    flex: 0 0 auto;
+    max-height: none;
   }
   .wtb-logistics-ruler-line {
     position: absolute;

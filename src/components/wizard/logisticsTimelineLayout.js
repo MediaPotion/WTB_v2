@@ -1,7 +1,10 @@
 import { formatClockLabel } from "../../lib/time";
 
-export const MIN_TIME_LABEL_GAP_PX = 40;
+export const MIN_TIME_LABEL_GAP_PX = 50;
+export const TIME_LABEL_BAR_GAP_PX = 20;
+export const TIME_LABEL_HEIGHT_PX = 16;
 export const HIDE_SEGMENT_LABEL_BELOW_PX = 60;
+export const CEREMONY_TOOLTIP_ONLY_BELOW_PX = 20;
 
 const SHORT_LABELS = {
   "Getting Ready & Pre-Ceremony": "Pre-Ceremony",
@@ -56,45 +59,62 @@ export function buildBoundaryMarkers(windows, ceremonyStart, ceremonyEnd) {
 }
 
 /**
- * Place time labels with min pixel gap; lower priority hidden or staggered to row 2.
- * @returns markers with visible, staggerRow (0|1), px
+ * Stagger boundary time labels above/below the bar when centers are within minGap.
+ * All labels start above; overlapping pairs move the right label to the other side.
+ * @returns markers with visible, placement ('above'|'below'), px
  */
 export function layoutTimeLabels(markers, barWidthPx, minGap = MIN_TIME_LABEL_GAP_PX) {
   if (!barWidthPx || barWidthPx <= 0) {
-    return markers.map((m) => ({ ...m, visible: true, staggerRow: 0, px: 0 }));
+    return markers.map((m) => ({ ...m, visible: true, placement: "above", px: 0 }));
   }
 
   const withPx = markers.map((m) => ({
     ...m,
     px: ((m.pct ?? 0) / 100) * barWidthPx,
+    visible: true,
   }));
 
-  const sorted = [...withPx].sort(
-    (a, b) => b.priority - a.priority || a.px - b.px
-  );
-  const placed = [];
+  const sorted = [...withPx].sort((a, b) => a.px - b.px);
+  const placementByKey = new Map(sorted.map((m) => [m.key, "above"]));
 
-  const result = new Map();
-  for (const m of sorted) {
-    let visible = false;
-    let staggerRow = 0;
+  let changed = true;
+  let guard = 0;
+  while (changed && guard < sorted.length * 8) {
+    changed = false;
+    guard += 1;
+    for (let i = 0; i < sorted.length - 1; i += 1) {
+      const left = sorted[i];
+      const right = sorted[i + 1];
+      if (right.px - left.px >= minGap) continue;
 
-    for (const row of [0, 1]) {
-      const conflict = placed.some(
-        (p) => p.visible && p.staggerRow === row && Math.abs(p.px - m.px) < minGap
-      );
-      if (!conflict) {
-        visible = true;
-        staggerRow = row;
-        placed.push({ px: m.px, staggerRow, visible: true, priority: m.priority });
-        break;
+      const pLeft = placementByKey.get(left.key);
+      const pRight = placementByKey.get(right.key);
+      if (pLeft === pRight) {
+        placementByKey.set(
+          right.key,
+          pLeft === "above" ? "below" : "above"
+        );
+        changed = true;
       }
     }
-
-    result.set(m.key, { ...m, visible, staggerRow, px: m.px });
   }
 
-  return markers.map((m) => result.get(m.key) || { ...m, visible: false, staggerRow: 0, px: 0 });
+  return withPx.map((m) => ({
+    ...m,
+    placement: placementByKey.get(m.key) || "above",
+    visible: true,
+  }));
+}
+
+/** @returns {{ mode: 'horizontal'|'vertical'|'tooltip-only', label?: string }} */
+export function ceremonySegmentDisplay(widthPx) {
+  if (widthPx < CEREMONY_TOOLTIP_ONLY_BELOW_PX) {
+    return { mode: "tooltip-only" };
+  }
+  if (widthPx < HIDE_SEGMENT_LABEL_BELOW_PX) {
+    return { mode: "vertical", label: "Ceremony" };
+  }
+  return { mode: "horizontal", label: "Ceremony" };
 }
 
 export function segmentLabelForWidth(label, widthPx) {
