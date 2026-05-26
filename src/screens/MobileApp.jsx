@@ -12,6 +12,7 @@ import { formatTime, parseTimeInput, computeTimelineCoverage, TimelineCoverageCo
 import { computeOverlaps } from "../lib/overlaps";
 import { generateTimeline as generateTimelineLib } from "../lib/generateTimeline";
 import { buildWizardAnswers } from "../lib/buildWizardAnswers";
+import { geocodeCeremonyLocation } from "../lib/goldenHour";
 import { exportTimeline as exportTimelineLib, copyTimeline as copyTimelineLib } from "../lib/exportTxt";
 import { exportPDF as exportPDFLib, TimelinePreview } from "../lib/exportPdf";
 import { useProjectStorage } from "../hooks/useProjectStorage";
@@ -134,6 +135,12 @@ export default function MobileApp() {
   const [wiz_dinnerFlexMinutes, setWiz_dinnerFlexMinutes] = useState(30);
   const [wiz_ceremonyVenue, setWiz_ceremonyVenue] = useState("");
   const [wiz_ceremonyAddress, setWiz_ceremonyAddress] = useState("");
+  const [wiz_venueLat, setWiz_venueLat] = useState(null);
+  const [wiz_venueLng, setWiz_venueLng] = useState(null);
+  const [wiz_venueUtcOffset, setWiz_venueUtcOffset] = useState(null);
+  const [wiz_geocodeSuccess, setWiz_geocodeSuccess] = useState(null);
+  const [wiz_fallbackLat, setWiz_fallbackLat] = useState("");
+  const [wiz_fallbackLng, setWiz_fallbackLng] = useState("");
   const [wiz_guestCount, setWiz_guestCount] = useState("");
   const [wiz_portraitLocations, setWiz_portraitLocations] = useState([]);
   const [wiz_brideReadyAddress, setWiz_brideReadyAddress] = useState("");
@@ -1145,6 +1152,45 @@ export default function MobileApp() {
     if (mainScrollRef.current) mainScrollRef.current.scrollTop = 0;
   };
 
+  const clearVenueGeocode = () => {
+    setWiz_geocodeSuccess(null);
+    setWiz_venueLat(null);
+    setWiz_venueLng(null);
+    setWiz_venueUtcOffset(null);
+  };
+
+  const geocodeCeremonyVenue = async () => {
+    const venue = String(wiz_ceremonyVenue || "").trim();
+    const address = String(wiz_ceremonyAddress || "").trim();
+    if (!venue && !address) {
+      clearVenueGeocode();
+      return false;
+    }
+    const result = await geocodeCeremonyLocation(venue, address);
+    if (result) {
+      setWiz_venueLat(result.lat);
+      setWiz_venueLng(result.lon);
+      setWiz_venueUtcOffset(result.utcOffsetHours);
+      setWiz_geocodeSuccess(true);
+      return true;
+    }
+    setWiz_venueLat(null);
+    setWiz_venueLng(null);
+    setWiz_venueUtcOffset(null);
+    setWiz_geocodeSuccess(false);
+    return false;
+  };
+
+  const handleCeremonyVenueChange = (value) => {
+    setWiz_ceremonyVenue(value);
+    clearVenueGeocode();
+  };
+
+  const handleCeremonyAddressChange = (value) => {
+    setWiz_ceremonyAddress(value);
+    clearVenueGeocode();
+  };
+
   const wizardProps = {
     wizardStep, setWizardStep, setScreen, generateTimeline, withThe, inModal: false,
     date, setDate, bride, setBride, groom, setGroom, brideLabel, setBrideLabel, groomLabel, setGroomLabel,
@@ -1156,7 +1202,10 @@ export default function MobileApp() {
     wiz_ceremonyFlexHard, setWiz_ceremonyFlexHard, wiz_ceremonyFlexMinutes, setWiz_ceremonyFlexMinutes,
     wiz_receptionFlexHard, setWiz_receptionFlexHard, wiz_receptionFlexMinutes, setWiz_receptionFlexMinutes,
     wiz_dinnerFlexHard, setWiz_dinnerFlexHard, wiz_dinnerFlexMinutes, setWiz_dinnerFlexMinutes,
-    wiz_ceremonyVenue, setWiz_ceremonyVenue, wiz_ceremonyAddress, setWiz_ceremonyAddress,
+    wiz_ceremonyVenue, setWiz_ceremonyVenue: handleCeremonyVenueChange, wiz_ceremonyAddress, setWiz_ceremonyAddress: handleCeremonyAddressChange,
+    wiz_venueLat, wiz_venueLng, wiz_venueUtcOffset, wiz_geocodeSuccess,
+    wiz_fallbackLat, setWiz_fallbackLat, wiz_fallbackLng, setWiz_fallbackLng,
+    geocodeCeremonyVenue,
     wiz_guestCount, setWiz_guestCount, wiz_portraitLocations, setWiz_portraitLocations,
     wiz_brideReadyAddress, setWiz_brideReadyAddress, wiz_brideReadyStreet, setWiz_brideReadyStreet,
     wiz_groomReadyAddress, setWiz_groomReadyAddress, wiz_groomReadyStreet, setWiz_groomReadyStreet,

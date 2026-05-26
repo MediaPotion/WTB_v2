@@ -20,21 +20,29 @@ function WizardStep2(props) {
     wiz_groomReadyStreet, setWiz_groomReadyStreet,
     wiz_locations, addWizLocation, updateWizLocation, removeWizLocation,
     setWizardStep,
+    geocodeCeremonyVenue,
   } = props;
 
   const [showAddressReminder, setShowAddressReminder] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
   const inputStyle = { width: "100%", padding: 9, border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" };
   const labelStyle = { display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 4, fontFamily: "'Jost', sans-serif" };
   const boxStyle = { border: "1px solid var(--wtb-border-subtle)", borderRadius: 8, padding: "14px 14px 12px", marginBottom: 16, background: "var(--wtb-surface-raised)" };
 
   const travelFields = getTravelTimeFields(props, brideLabel, groomLabel);
 
-  const tryNext = () => {
+  const tryNext = async () => {
     if (!String(wiz_ceremonyVenue || "").trim() || !String(wiz_ceremonyAddress || "").trim()) {
       setShowAddressReminder(true);
       return;
     }
     setShowAddressReminder(false);
+    setGeocoding(true);
+    try {
+      if (geocodeCeremonyVenue) await geocodeCeremonyVenue();
+    } finally {
+      setGeocoding(false);
+    }
     setWizardStep(3);
   };
 
@@ -58,6 +66,11 @@ function WizardStep2(props) {
         {showAddressReminder && (
           <p style={{ fontSize: 13, color: "var(--wtb-accent)", margin: "10px 0 0", fontFamily: "'Jost', sans-serif" }}>
             Please enter both ceremony venue name and address before continuing.
+          </p>
+        )}
+        {geocoding && (
+          <p style={{ fontSize: 13, color: "var(--wtb-text-muted)", margin: "10px 0 0", fontFamily: "'Jost', sans-serif" }}>
+            Looking up venue location for golden hour timing…
           </p>
         )}
       </div>

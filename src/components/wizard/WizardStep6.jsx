@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { YesNoToggle, LocationDropdown } from "./wizardShared";
 import {
-  geocodeAddress,
   getGoldenHourFromCoords,
-  getGoldenHourWindowSync,
-  formatGoldenHourRange,
+  formatMinutes,
+  formatCoordPair,
   goldenHourOverlapsReception,
+  parseCoordInput,
+  isValidLatitude,
+  isValidLongitude,
 } from "../../lib/goldenHour";
 
 function WizardStep6(props) {
@@ -14,6 +16,9 @@ function WizardStep6(props) {
     enteredLocationNames,
     date, brideLabel, groomLabel,
     wiz_ceremonyVenue, wiz_ceremonyAddress,
+    wiz_venueLat, wiz_venueLng, wiz_venueUtcOffset, wiz_geocodeSuccess,
+    wiz_fallbackLat, setWiz_fallbackLat, wiz_fallbackLng, setWiz_fallbackLng,
+    geocodeCeremonyVenue,
     wiz_receptionHour, wiz_receptionMinute, wiz_receptionPeriod,
     wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames,
     wiz_standardPerson1Solo, setWiz_standardPerson1Solo,
@@ -30,30 +35,52 @@ function WizardStep6(props) {
     setWizardStep,
   } = props;
 
-  const [ghLoading, setGhLoading] = useState(true);
   const [gh, setGh] = useState(null);
+  const [geocodePending, setGeocodePending] = useState(false);
+
+  const manualLat = parseCoordInput(wiz_fallbackLat);
+  const manualLng = parseCoordInput(wiz_fallbackLng);
+  const hasManualCoords = isValidLatitude(manualLat) && isValidLongitude(manualLng);
+
+  const autoCoords = useMemo(() => {
+    if (wiz_geocodeSuccess !== true || wiz_venueLat == null || wiz_venueLng == null) return null;
+    return { lat: wiz_venueLat, lon: wiz_venueLng, utcOffset: wiz_venueUtcOffset };
+  }, [wiz_geocodeSuccess, wiz_venueLat, wiz_venueLng, wiz_venueUtcOffset]);
+
+  const activeCoords = useMemo(() => {
+    if (autoCoords) return autoCoords;
+    if (hasManualCoords) return { lat: manualLat, lon: manualLng, utcOffset: null };
+    return null;
+  }, [autoCoords, hasManualCoords, manualLat, manualLng]);
 
   useEffect(() => {
+    if (!date || !activeCoords) {
+      setGh(null);
+      return;
+    }
+    setGh(
+      getGoldenHourFromCoords(
+        date,
+        activeCoords.lat,
+        activeCoords.lon,
+        activeCoords.utcOffset
+      )
+    );
+  }, [date, activeCoords]);
+
+  useEffect(() => {
+    if (wiz_geocodeSuccess !== null || !geocodeCeremonyVenue) return;
+    const hasLocation =
+      String(wiz_ceremonyVenue || "").trim() || String(wiz_ceremonyAddress || "").trim();
+    if (!hasLocation) return;
+
     let cancelled = false;
-    setGhLoading(true);
-    const run = async () => {
-      const estimate = getGoldenHourWindowSync(date, wiz_ceremonyAddress);
-      if (!date || !String(wiz_ceremonyAddress || "").trim()) {
-        if (!cancelled) { setGh(null); setGhLoading(false); }
-        return;
-      }
-      const coords = await geocodeAddress(wiz_ceremonyAddress);
-      const result = coords
-        ? getGoldenHourFromCoords(date, coords.lat, coords.lon)
-        : estimate;
-      if (!cancelled) {
-        setGh(result);
-        setGhLoading(false);
-      }
-    };
-    run();
+    setGeocodePending(true);
+    geocodeCeremonyVenue().finally(() => {
+      if (!cancelled) setGeocodePending(false);
+    });
     return () => { cancelled = true; };
-  }, [date, wiz_ceremonyAddress]);
+  }, [wiz_geocodeSuccess, geocodeCeremonyVenue, wiz_ceremonyVenue, wiz_ceremonyAddress]);
 
   const setBrideParty = (v) => {
     setWiz_standardBridePartyPortraits(v);
@@ -67,9 +94,12 @@ function WizardStep6(props) {
   const dateLabel = date
     ? new Date(date + "T12:00:00").toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })
     : "";
-  const locationLabel = wiz_ceremonyVenue || wiz_ceremonyAddress || "";
-  const ghRange = gh ? formatGoldenHourRange(gh.start, gh.sunset) : null;
-  const overlapsReception = gh && goldenHourOverlapsReception(gh, wiz_receptionHour, wiz_receptionMinute, wiz_receptionPeriod);
+  const coordLabel = activeCoords ? formatCoordPair(activeCoords.lat, activeCoords.lon) : null;
+  const showGoldenHourResult = !!(gh && dateLabel && coordLabel);
+  const showCoordFallback =
+    !!date && !showGoldenHourResult && wiz_geocodeSuccess === false && !geocodePending;
+  const overlapsReception =
+    gh && goldenHourOverlapsReception(gh, wiz_receptionHour, wiz_receptionMinute, wiz_receptionPeriod);
 
   const checkRow = (label, checked, onChange) => (
     <label style={{ ...wizCheckRowStyle }}>
@@ -80,6 +110,8 @@ function WizardStep6(props) {
 
   const groupCount = wiz_familyGroups === "none" ? 0 : parseInt(wiz_familyGroups, 10);
   const inputStyle = { width: "100%", padding: 9, border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" };
+  const helperStyle = { fontSize: 12, color: "var(--wtb-text-faint)", margin: "4px 0 0", fontFamily: "'Jost', sans-serif" };
+  const coordInputStyle = { ...inputStyle, width: "100%", maxWidth: 160 };
 
   return stepCard(
     "Portrait Sessions",
@@ -98,17 +130,62 @@ function WizardStep6(props) {
         <p style={{ fontSize: 13, color: "var(--wtb-text-muted)", lineHeight: 1.55, margin: "0 0 14px", fontFamily: "'Jost', sans-serif" }}>
           Golden hour is the window of time just before sunset when natural light is at its most beautiful — warm, soft, and cinematic. It is often the best time of the entire wedding day for portraits. However it is a brief window that cannot be moved or rescheduled.
         </p>
-        {ghLoading ? (
-          <p style={{ fontSize: 13, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif" }}>Calculating golden hour window…</p>
-        ) : gh && dateLabel && locationLabel ? (
-          <p style={{ fontSize: 14, color: "var(--wtb-accent)", margin: "0 0 12px", lineHeight: 1.5, fontFamily: "'Jost', sans-serif" }}>
-            Based on your {dateLabel} wedding in {locationLabel}, golden hour will be from approximately {ghRange} — a {gh.windowMinutes} minute window.
-          </p>
-        ) : (
+
+        {!date && (
           <p style={{ fontSize: 13, color: "var(--wtb-text-muted)", margin: "0 0 12px", fontFamily: "'Jost', sans-serif" }}>
-            Enter your ceremony address in Step 2 to see your exact golden hour window.
+            Enter your wedding date in Step 1 to calculate golden hour timing.
           </p>
         )}
+
+        {geocodePending && (
+          <p style={{ fontSize: 13, color: "var(--wtb-text-muted)", margin: "0 0 12px", fontFamily: "'Jost', sans-serif" }}>
+            Looking up venue location for golden hour timing…
+          </p>
+        )}
+
+        {showGoldenHourResult && (
+          <p style={{ fontSize: 14, color: "var(--wtb-accent)", margin: "0 0 12px", lineHeight: 1.5, fontFamily: "'Jost', sans-serif" }}>
+            Based on your {dateLabel} wedding near {coordLabel}, golden hour will be from approximately {formatMinutes(gh.start)} to {formatMinutes(gh.sunset)} — a {gh.windowMinutes} minute window.
+          </p>
+        )}
+
+        {showCoordFallback && (
+          <div style={{ marginBottom: 14 }}>
+            <p style={{ fontSize: 13, color: "var(--wtb-text-muted)", lineHeight: 1.55, margin: "0 0 12px", fontFamily: "'Jost', sans-serif" }}>
+              We were unable to automatically find coordinates for your venue address. Please enter your approximate location below so we can calculate golden hour timing.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 8 }}>
+              <div style={{ flex: "1 1 140px" }}>
+                <label style={{ display: "block", fontSize: 13, color: "var(--wtb-text-muted)", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Latitude</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={wiz_fallbackLat}
+                  onChange={(e) => setWiz_fallbackLat(e.target.value)}
+                  placeholder="e.g. 44.76"
+                  style={coordInputStyle}
+                />
+                <p style={helperStyle}>Decimal degrees, positive = north</p>
+              </div>
+              <div style={{ flex: "1 1 140px" }}>
+                <label style={{ display: "block", fontSize: 13, color: "var(--wtb-text-muted)", marginBottom: 4, fontFamily: "'Jost', sans-serif" }}>Longitude</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={wiz_fallbackLng}
+                  onChange={(e) => setWiz_fallbackLng(e.target.value)}
+                  placeholder="e.g. -85.62"
+                  style={coordInputStyle}
+                />
+                <p style={helperStyle}>Decimal degrees, negative = west (most of USA)</p>
+              </div>
+            </div>
+            <p style={{ fontSize: 12, color: "var(--wtb-text-faint)", margin: 0, lineHeight: 1.5, fontFamily: "'Jost', sans-serif" }}>
+              You can find your coordinates by searching your venue address on Google Maps, right-clicking the location, and copying the coordinates shown.
+            </p>
+          </div>
+        )}
+
         {overlapsReception && (
           <p style={{ fontSize: 13, color: "var(--wtb-accent)", margin: "0 0 12px", fontFamily: "'Jost', sans-serif" }}>
             Note: Golden hour falls during your reception. Couples typically step away for 15–20 minutes to capture these shots.
