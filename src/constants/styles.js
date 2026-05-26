@@ -660,15 +660,6 @@ const MOBILE_TWEAKS = `
     font-family: 'Jost', sans-serif;
     opacity: 0.85;
   }
-  .wtb-logistics-segment-label-above {
-    font-size: 10px;
-    font-weight: 600;
-    font-family: 'Jost', sans-serif;
-    line-height: 1.2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
   .wtb-logistics-track {
     background: rgba(184, 144, 106, 0.12);
     border: 1px solid rgba(184, 144, 106, 0.28);
@@ -722,23 +713,12 @@ const MOBILE_TWEAKS = `
     line-height: 1;
   }
   .wtb-logistics-ceremony {
-    border: 2px solid var(--wtb-accent);
-    border-radius: 6px;
-    background: rgba(184, 144, 106, 0.15);
+    border: 2px solid var(--wtb-accent) !important;
+    background: rgba(184, 144, 106, 0.18) !important;
     box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
-  .wtb-logistics-ceremony-label {
-    font-size: 11px;
-    font-weight: 600;
+  .wtb-logistics-ceremony-text {
     color: var(--wtb-accent);
-    font-family: 'Jost', sans-serif;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    padding: 0 6px;
   }
   .wtb-logistics-ruler-line {
     position: absolute;
