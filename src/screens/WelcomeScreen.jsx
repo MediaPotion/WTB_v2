@@ -1,7 +1,7 @@
 import React from "react";
 import mediaPotionLogo from "../assets/mediapotion_logo.png";
 
-function WelcomeScreen({ showAutosaveBanner, restoreAutosave, clearAutosave, setWizardStep, setScreen, loadProject }) {
+function WelcomeScreen({ showAutosaveBanner, restoreAutosave, clearAutosave, onCreateNewTimeline, loadProject }) {
   return (
     <div className="wtb-welcome-screen">
       <div style={{ textAlign: "center", maxWidth: 500, width: "100%" }}>
@@ -31,7 +31,7 @@ function WelcomeScreen({ showAutosaveBanner, restoreAutosave, clearAutosave, set
         </h1>
         <div className="welcome-fade-up" style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 48 }}>
           <button
-            onClick={() => { setWizardStep(1); setScreen("wizard"); }}
+            onClick={onCreateNewTimeline}
             style={{ padding: "18px 32px", backgroundColor: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 8, fontSize: 18, fontWeight: 300, cursor: "pointer", width: "100%", fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
           >
             Create New Timeline

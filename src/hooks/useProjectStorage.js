@@ -129,6 +129,24 @@ export function useProjectStorage(state) {
     fixedEvents,
   });
 
+  const writeAutosave = () => {
+    try {
+      localStorage.setItem(
+        AUTOSAVE_KEY,
+        JSON.stringify({ ...buildProjectData(), screen, nextId })
+      );
+    } catch (_) {
+      /* ignore storage errors */
+    }
+  };
+
+  const flushAutosave = () => {
+    if (!dirtyTrackingEnabledRef.current || isApplyingProjectRef.current || isTimelineEmpty()) {
+      return;
+    }
+    writeAutosave();
+  };
+
   const applyProjectData = (projectData) => {
     suppressDirtyRef.current = true;
     setDate(projectData.date || "");
@@ -195,6 +213,7 @@ export function useProjectStorage(state) {
     setFixedEvents(projectData.fixedEvents || []);
     setHistory([]);
     setRedoStack([]);
+    suppressDirtyRef.current = false;
   };
 
   const clearAutosave = () => {
@@ -272,16 +291,7 @@ export function useProjectStorage(state) {
       return;
     }
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-    autosaveTimerRef.current = setTimeout(() => {
-      try {
-        localStorage.setItem(
-          AUTOSAVE_KEY,
-          JSON.stringify({ ...buildProjectData(), screen, nextId })
-        );
-      } catch (_) {
-        /* ignore storage errors */
-      }
-    }, 500);
+    autosaveTimerRef.current = setTimeout(writeAutosave, 500);
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
@@ -311,5 +321,14 @@ export function useProjectStorage(state) {
     nextId,
   ]);
 
-  return { buildDefaultFilename, buildProjectData, applyProjectData, clearAutosave, saveProject, loadProject, restoreAutosave };
+  return {
+    buildDefaultFilename,
+    buildProjectData,
+    applyProjectData,
+    clearAutosave,
+    saveProject,
+    loadProject,
+    restoreAutosave,
+    flushAutosave,
+  };
 }

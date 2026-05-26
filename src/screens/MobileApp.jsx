@@ -271,19 +271,12 @@ export default function MobileApp() {
     return !hasRowContent && !hasMeta;
   };
 
-  const markDirty = () => {
-    if (!isTimelineEmpty()) {
-      setIsDirty(true);
-      isDirtyRef.current = true;
-    }
-  };
-
   const clearDirty = () => {
     setIsDirty(false);
     isDirtyRef.current = false;
   };
 
-  const { buildDefaultFilename, clearAutosave, saveProject, loadProject, restoreAutosave } = useProjectStorage({
+  const { buildDefaultFilename, clearAutosave, saveProject, loadProject, restoreAutosave, flushAutosave } = useProjectStorage({
     date, bride, groom, brideLabel, groomLabel,
     photoStartHour, photoStartMinute, photoStartPeriod,
     photoEndHour, photoEndMinute, photoEndPeriod,
@@ -339,20 +332,53 @@ export default function MobileApp() {
   }, [isDesktop]);
 
   useEffect(() => {
-    if (screen !== "welcome") {
-      dirtyTrackingEnabledRef.current = true;
+    dirtyTrackingEnabledRef.current = screen !== "welcome";
+  }, [screen]);
+
+  useEffect(() => {
+    if (screen !== "welcome") return;
+    try {
+      setShowAutosaveBanner(!!localStorage.getItem(AUTOSAVE_KEY));
+    } catch (_) {
+      setShowAutosaveBanner(false);
     }
   }, [screen]);
 
   useEffect(() => {
-    try {
-      if (localStorage.getItem(AUTOSAVE_KEY)) {
-        setShowAutosaveBanner(true);
-      }
-    } catch (_) {
-      /* ignore storage errors */
+    if (!dirtyTrackingEnabledRef.current || isApplyingProjectRef.current || suppressDirtyRef.current) {
+      return;
     }
-  }, []);
+    if (isTimelineEmpty()) {
+      clearDirty();
+      return;
+    }
+    setIsDirty(true);
+    isDirtyRef.current = true;
+  }, [
+    userRows,
+    fixedEvents,
+    date,
+    bride,
+    groom,
+    brideLabel,
+    groomLabel,
+    photoStartHour,
+    photoStartMinute,
+    photoStartPeriod,
+    photoEndHour,
+    photoEndMinute,
+    photoEndPeriod,
+    videoStartHour,
+    videoStartMinute,
+    videoStartPeriod,
+    videoEndHour,
+    videoEndMinute,
+    videoEndPeriod,
+    photoEnabled,
+    videoEnabled,
+    screen,
+    nextId,
+  ]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -862,9 +888,33 @@ export default function MobileApp() {
     }
   };
 
+  const resetTimelineState = () => {
+    setUserRows([
+      {
+        id: 1,
+        location: "",
+        time: 12 * 60,
+        event: "",
+        duration: 30,
+        isOutdoor: false,
+        photo: true,
+        video: true,
+        notes: "",
+        isTimeLocked: false,
+        color: "",
+        ...DEFAULT_ROW_TIER_FIELDS,
+      },
+    ]);
+    setNextId(2);
+    setHistory([]);
+    setRedoStack([]);
+    setFixedEvents([]);
+  };
+
   const startNewTimeline = () => {
     clearAutosave();
     clearDirty();
+    resetTimelineState();
     setShowUnsavedConfirm(false);
     setVersionNotice(null);
     setWizardStep(1);
@@ -873,56 +923,13 @@ export default function MobileApp() {
   };
 
   const requestNewTimeline = () => {
-    if (isDirty && !isTimelineEmpty()) {
+    flushAutosave();
+    if (!isTimelineEmpty()) {
       setShowUnsavedConfirm(true);
       return;
     }
     startNewTimeline();
   };
-
-  useEffect(() => {
-    if (!dirtyTrackingEnabledRef.current || isApplyingProjectRef.current || isTimelineEmpty()) {
-      return;
-    }
-    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-    autosaveTimerRef.current = setTimeout(() => {
-      try {
-        localStorage.setItem(
-          AUTOSAVE_KEY,
-          JSON.stringify({ ...buildProjectData(), screen, nextId })
-        );
-      } catch (_) {
-        /* ignore storage errors */
-      }
-    }, 500);
-    return () => {
-      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-    };
-  }, [
-    userRows,
-    fixedEvents,
-    date,
-    bride,
-    groom,
-    brideLabel,
-    groomLabel,
-    photoStartHour,
-    photoStartMinute,
-    photoStartPeriod,
-    photoEndHour,
-    photoEndMinute,
-    photoEndPeriod,
-    videoStartHour,
-    videoStartMinute,
-    videoStartPeriod,
-    videoEndHour,
-    videoEndMinute,
-    videoEndPeriod,
-    photoEnabled,
-    videoEnabled,
-    screen,
-    nextId,
-  ]);
 
   // Wizard location helpers
   const addWizLocation = () => {
@@ -1442,8 +1449,17 @@ export default function MobileApp() {
           showAutosaveBanner={showAutosaveBanner}
           restoreAutosave={restoreAutosave}
           clearAutosave={clearAutosave}
-          setWizardStep={setWizardStep}
-          setScreen={setScreen}
+          onCreateNewTimeline={() => {
+            if (showAutosaveBanner) {
+              const discard = window.confirm(
+                "You have a saved session from your last visit. Start a new timeline anyway? Your saved session will be discarded."
+              );
+              if (!discard) return;
+              clearAutosave();
+            }
+            setWizardStep(1);
+            setScreen("wizard");
+          }}
           loadProject={loadProject}
         />
       ) : screen === "wizard" ? (
