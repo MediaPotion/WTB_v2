@@ -1,6 +1,10 @@
 import { parseTimeInput, formatClockLabel } from "./time";
 import { TIER } from "../constants/tiers";
 import {
+  GOLDEN_HOUR_PORTRAIT_DURATION,
+  resolveGoldenHourForAnswers,
+} from "./goldenHour";
+import {
   rowDuration,
   isActiveRow,
   isSchedulableEvent,
@@ -9,12 +13,6 @@ import {
   hasFirstLookScheduled,
   eventScheduledBefore,
 } from "./logisticsRowUtils";
-
-const GOLDEN_HOUR_DURATION = 20;
-const SUNSET_OFFSET_MINUTES = 45;
-const GOLDEN_HOUR_START_BY_MONTH = [
-  990, 1035, 1125, 1170, 1200, 1230, 1215, 1170, 1125, 1080, 990, 960,
-];
 
 const GOLDEN_HOUR_EVENT = "Bride & Groom: Golden Hour Portraits";
 const DETAIL_EVENTS = [
@@ -155,26 +153,29 @@ function windowStatus(remainingMinutes) {
   return "ok";
 }
 
-function getGoldenHourSchedule(date) {
-  if (!date) return { selected: false, start: null, sunset: null, end: null };
-  const parts = String(date).split("-");
-  if (parts.length < 2) return { selected: false, start: null, sunset: null, end: null };
-  const monthIndex = parseInt(parts[1], 10) - 1;
-  if (monthIndex < 0 || monthIndex > 11) {
-    return { selected: false, start: null, sunset: null, end: null };
-  }
-  const start = GOLDEN_HOUR_START_BY_MONTH[monthIndex];
-  const sunset = start + SUNSET_OFFSET_MINUTES;
-  return {
-    selected: true,
-    start,
-    sunset,
-    end: start + GOLDEN_HOUR_DURATION,
-  };
-}
-
 function hasGoldenHourScheduled(rows) {
   return rows.some((r) => isSchedulableEvent(r) && r.event === GOLDEN_HOUR_EVENT);
+}
+
+/**
+ * Assign each reception-phase schedulable row to exactly one logistics window (C, D, or E).
+ */
+function partitionReceptionEvents(rows, receptionStart, goldenHourStart, goldenHourEnd) {
+  const reception = { C: [], D: [], E: [] };
+  for (const row of rows) {
+    if (!isSchedulableEvent(row) || !isReceptionPhaseRow(row, receptionStart)) continue;
+    if (row.event === GOLDEN_HOUR_EVENT) {
+      reception.D.push(row);
+      continue;
+    }
+    const t = row.time;
+    if (t < goldenHourStart) {
+      reception.C.push(row);
+    } else {
+      reception.E.push(row);
+    }
+  }
+  return reception;
 }
 
 function buildWindowReport({ id, label, startTime, endTime, events, travelSubtract = 0 }) {
@@ -464,12 +465,13 @@ export function calculateLogistics(wizardAnswers, generatedRows) {
   const goldenHourSelected =
     hasGoldenHourScheduled(rows) ||
     !!pick(answers, "goldenHour", "wiz_goldenHour", "includeGoldenHour");
-  const ghSchedule = goldenHourSelected
-    ? getGoldenHourSchedule(pick(answers, "date", "wiz_date"))
-    : null;
-  const goldenHourStart = ghSchedule?.start ?? null;
-  const goldenHourEnd = goldenHourStart != null ? goldenHourStart + GOLDEN_HOUR_DURATION : null;
-  const sunsetTime = goldenHourStart != null ? goldenHourStart + SUNSET_OFFSET_MINUTES : null;
+  const ghSchedule = goldenHourSelected ? resolveGoldenHourForAnswers(answers) : null;
+  const ghRowScheduled = rows.find(
+    (r) => isSchedulableEvent(r) && r.event === GOLDEN_HOUR_EVENT
+  );
+  const goldenHourStart = ghRowScheduled?.time ?? ghSchedule?.start ?? null;
+  const goldenHourEnd =
+    goldenHourStart != null ? goldenHourStart + GOLDEN_HOUR_PORTRAIT_DURATION : null;
 
   const windows = [];
 
@@ -508,13 +510,12 @@ export function calculateLogistics(wizardAnswers, generatedRows) {
     })
   );
 
-  if (goldenHourSelected && goldenHourStart != null && coverageEnd != null) {
-    const eventsC = rows.filter(
-      (r) =>
-        isSchedulableEvent(r) &&
-        isReceptionPhaseRow(r, receptionStart) &&
-        r.event !== GOLDEN_HOUR_EVENT &&
-        r.time < goldenHourStart
+  if (goldenHourSelected && goldenHourStart != null && goldenHourEnd != null && coverageEnd != null) {
+    const { C: eventsC, D: ghEvents, E: eventsE } = partitionReceptionEvents(
+      rows,
+      receptionStart,
+      goldenHourStart,
+      goldenHourEnd
     );
 
     windows.push(
@@ -527,36 +528,22 @@ export function calculateLogistics(wizardAnswers, generatedRows) {
       })
     );
 
-    const ghEvents = rows.filter(
-      (r) =>
-        isSchedulableEvent(r) &&
-        (r.event === GOLDEN_HOUR_EVENT || r.time === goldenHourStart)
-    );
     windows.push(
       buildWindowReport({
         id: "D",
         label: "Golden Hour",
         startTime: goldenHourStart,
-        endTime: sunsetTime ?? goldenHourEnd,
+        endTime: goldenHourEnd,
         events: ghEvents.length
           ? ghEvents
           : [
               {
                 event: GOLDEN_HOUR_EVENT,
-                duration: GOLDEN_HOUR_DURATION,
+                duration: GOLDEN_HOUR_PORTRAIT_DURATION,
                 time: goldenHourStart,
               },
             ],
       })
-    );
-
-    const eventsE = rows.filter(
-      (r) =>
-        isSchedulableEvent(r) &&
-        isReceptionPhaseRow(r, receptionStart) &&
-        r.event !== GOLDEN_HOUR_EVENT &&
-        goldenHourEnd != null &&
-        r.time >= goldenHourEnd
     );
 
     if (eventsE.length > 0) {

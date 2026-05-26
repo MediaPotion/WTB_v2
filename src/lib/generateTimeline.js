@@ -1,6 +1,9 @@
 import { formatTime, parseTimeInput } from "./time";
+import { resolveGoldenHourForAnswers } from "./goldenHour";
 import { resolveWeddingLocations } from "./weddingLocations";
 import { resolveRowTierFields } from "./rowTier";
+
+const GOLDEN_HOUR_EVENT = "Bride & Groom: Golden Hour Portraits";
 
 /**
  * Build timeline rows from wizard answers. Pure function — no React state or side effects.
@@ -159,7 +162,15 @@ export function generateTimeline(wizardAnswers) {
     photoStartHour: wiz_photoStartHour,
     photoStartMinute: wiz_photoStartMinute,
     photoStartPeriod: wiz_photoStartPeriod,
+    goldenHour: wiz_goldenHourFlag,
+    includeGoldenHour: wiz_includeGoldenHourFlag,
+    venueLat: wiz_venueLat,
+    venueLng: wiz_venueLng,
   } = wizardAnswers;
+
+  const includeGoldenHourPortraits =
+    wiz_goldenHourFlag === true ||
+    wiz_includeGoldenHourFlag === true;
 
   const skipPreCeremonyDrone = wiz_appliedLogisticsSuggestions.some(
     (s) => s.type === "move_drone"
@@ -455,7 +466,12 @@ export function generateTimeline(wizardAnswers) {
     // === Phase 5: Reception venue ===
     const receptionBlocks = [];
     let recT = receptionStartTime;
-    const addRec = (block) => { block.time = recT; recT += block.duration; receptionBlocks.push(block); };
+    const addRec = (block, atTime) => {
+      const t = atTime != null ? atTime : recT;
+      block.time = t;
+      recT = Math.max(recT, t + block.duration);
+      receptionBlocks.push(block);
+    };
 
     // Location marker at reception start — skip if ceremony=same venue or post-ceremony travel already placed us there
     const receptionVenueAlreadyMarked = postBlocks.some(
@@ -484,6 +500,12 @@ export function generateTimeline(wizardAnswers) {
         duration: perSpeaker * wiz_speechCount,
         notes: `${wiz_speechCount} speaker${wiz_speechCount !== 1 ? "s" : ""} × ${perSpeaker} min`,
       });
+    }
+    if (includeGoldenHourPortraits) {
+      const gh = resolveGoldenHourForAnswers(wizardAnswers);
+      if (gh?.start != null) {
+        addRec({ event: GOLDEN_HOUR_EVENT, duration: 20 }, gh.start);
+      }
     }
     if (wiz_openDanceFloor) addRec({ event: "Reception: Open Dance Floor", duration: 20 });
     if (wiz_garterToss)     addRec({ event: "Reception: Garder Belt Toss", duration: 15 });
@@ -516,6 +538,7 @@ export function generateTimeline(wizardAnswers) {
       if (minTime > coverageStartTarget) {
         const shift = minTime - coverageStartTarget;
         allBlocks.forEach((b) => {
+          if (b.event === GOLDEN_HOUR_EVENT) return;
           b.time -= shift;
         });
       }

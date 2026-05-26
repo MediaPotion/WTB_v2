@@ -178,6 +178,39 @@ export function getGoldenHourWindowSync(dateStr, _address) {
   return result ? { ...result, source: "estimate" } : null;
 }
 
+function pickAnswer(answers, ...keys) {
+  for (const key of keys) {
+    if (answers?.[key] !== undefined && answers[key] !== null) return answers[key];
+  }
+  return undefined;
+}
+
+/** Portrait session length scheduled on the timeline (minutes). */
+export const GOLDEN_HOUR_PORTRAIT_DURATION = 20;
+
+/**
+ * Resolve golden hour start/sunset from wizard answers (geocoded coords or regional default).
+ * @returns {{ start: number, sunset: number, windowMinutes: number, source: string } | null}
+ */
+export function resolveGoldenHourForAnswers(answers) {
+  const date = pickAnswer(answers, "date", "wiz_date");
+  const selected = pickAnswer(
+    answers,
+    "goldenHour",
+    "wiz_goldenHour",
+    "wiz_includeGoldenHour",
+    "includeGoldenHour"
+  );
+  if (!date || !selected) return null;
+
+  const lat = pickAnswer(answers, "venueLat", "wiz_venueLat");
+  const lon = pickAnswer(answers, "venueLng", "wiz_venueLng");
+  if (lat != null && lon != null) {
+    return getGoldenHourFromCoords(date, lat, lon);
+  }
+  return getGoldenHourWindowSync(date);
+}
+
 export function goldenHourOverlapsReception(gh, receptionHour, receptionMinute, receptionPeriod) {
   if (!gh?.start || !gh?.sunset) return false;
   const recStart = parseTimeInput(receptionHour, receptionMinute, receptionPeriod);

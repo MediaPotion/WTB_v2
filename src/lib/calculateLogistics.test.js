@@ -1,6 +1,10 @@
 import { generateTimeline } from "./generateTimeline";
 import { calculateLogistics } from "./calculateLogistics";
 import { findFirstLookWithGroom } from "./logisticsRowUtils";
+import { buildTimelineText } from "./exportTxt";
+import { getGoldenHourFromCoords, GOLDEN_HOUR_PORTRAIT_DURATION } from "./goldenHour";
+
+const GOLDEN_HOUR_EVENT = "Bride & Groom: Golden Hour Portraits";
 
 /** Cara & Alex — August 28, 2026 scenario (representative wizard inputs). */
 function caraAlexAnswers() {
@@ -108,5 +112,65 @@ describe("calculateLogistics reads generated rows", () => {
 
     const dupes = countReceptionLocationsAt(rows, windowB.endTime, "Reception Hall");
     expect(dupes).toBeLessThanOrEqual(1);
+  });
+
+  test("golden hour portraits, window partition, and export — Aug 28 2026 Grayling MI", () => {
+    const answers = {
+      ...caraAlexAnswers(),
+      goldenHour: true,
+      includeGoldenHour: true,
+      wiz_includeGoldenHour: true,
+      venueLat: 44.66,
+      venueLng: -84.71,
+      openDanceFloor: true,
+      speeches: true,
+      speechCount: 2,
+      speechMinutesPerSpeaker: 10,
+    };
+    const gh = getGoldenHourFromCoords("2026-08-28", 44.66, -84.71);
+    const rows = generateTimeline(answers);
+    const ghRow = rows.find((r) => r.event === GOLDEN_HOUR_EVENT);
+    expect(ghRow).toBeDefined();
+    expect(ghRow.time).toBe(gh.start);
+    expect(ghRow.duration).toBe(GOLDEN_HOUR_PORTRAIT_DURATION);
+
+    const exportText = buildTimelineText({
+      userRows: rows,
+      bride: "Cara",
+      groom: "Alex",
+      date: "2026-08-28",
+      photoStartHour: "11",
+      photoStartMinute: "00",
+      photoStartPeriod: "AM",
+      photoEndHour: "7",
+      photoEndMinute: "00",
+      photoEndPeriod: "PM",
+      videoStartHour: "11",
+      videoStartMinute: "00",
+      videoStartPeriod: "AM",
+      videoEndHour: "7",
+      videoEndMinute: "00",
+      videoEndPeriod: "PM",
+    });
+    expect(exportText).toContain(GOLDEN_HOUR_EVENT);
+
+    const report = calculateLogistics(answers, rows);
+    const windowC = report.windows.find((w) => w.id === "C");
+    const windowD = report.windows.find((w) => w.id === "D");
+    const windowE = report.windows.find((w) => w.id === "E");
+    expect(windowC).toBeDefined();
+    expect(windowD).toBeDefined();
+    expect(windowD.startTime).toBe(ghRow.time);
+    expect(windowD.endTime - windowD.startTime).toBe(GOLDEN_HOUR_PORTRAIT_DURATION);
+    expect(windowC.status).not.toBe("overflow");
+
+    const assignedIds = new Set();
+    for (const w of [windowC, windowD, windowE].filter(Boolean)) {
+      for (const ev of w.events) {
+        const key = `${ev.event}@${ev.time}`;
+        expect(assignedIds.has(key)).toBe(false);
+        assignedIds.add(key);
+      }
+    }
   });
 });
