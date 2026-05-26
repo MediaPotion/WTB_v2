@@ -457,8 +457,11 @@ export function generateTimeline(wizardAnswers) {
     let recT = receptionStartTime;
     const addRec = (block) => { block.time = recT; recT += block.duration; receptionBlocks.push(block); };
 
-    // Location marker at reception start — skip if same venue as ceremony (no travel needed)
-    if (!wiz_receptionSameAsCeremony) {
+    // Location marker at reception start — skip if ceremony=same venue or post-ceremony travel already placed us there
+    const receptionVenueAlreadyMarked = postBlocks.some(
+      (b) => b.type === "location" && b.event === effectiveReceptionVenue
+    );
+    if (!wiz_receptionSameAsCeremony && !receptionVenueAlreadyMarked) {
       addRec({ type: "location", event: effectiveReceptionVenue, address: effectiveReceptionAddress, duration: 0, notes: "" });
     }
     // A/V setup always first at reception, Grand Entrance always immediately after

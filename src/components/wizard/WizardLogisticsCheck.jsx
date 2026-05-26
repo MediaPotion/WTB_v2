@@ -30,16 +30,18 @@ function WizardLogisticsCheck(props) {
     return generateTimelineLib(answers);
   }, [timelineRows, answers]);
   const report = useMemo(() => calculateLogistics(answers, rows), [answers, rows]);
-  const ctx = useMemo(() => buildLogisticsContext(props), [props]);
+  const ctx = useMemo(() => buildLogisticsContext(props, rows), [props, rows]);
   const inlineHints = useMemo(
     () => buildInlineHints(report.suggestions, ctx),
     [report.suggestions, ctx]
   );
 
-  const { dayStart, dayEnd } = useMemo(
-    () => resolveDayBounds(report.windows, ctx, rows),
-    [report.windows, ctx, rows]
-  );
+  const { dayStart, dayEnd } = useMemo(() => {
+    if (report.dayStart != null && report.dayEnd != null) {
+      return { dayStart: report.dayStart, dayEnd: report.dayEnd };
+    }
+    return resolveDayBounds(report.windows, ctx, rows);
+  }, [report.dayStart, report.dayEnd, report.windows, ctx, rows]);
 
   const [expandedWindowId, setExpandedWindowId] = useState(null);
   const [fixHighlightId, setFixHighlightId] = useState(null);
