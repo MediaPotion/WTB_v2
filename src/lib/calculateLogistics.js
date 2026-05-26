@@ -77,7 +77,7 @@ function getGoldenHourSchedule(date) {
 }
 
 function hasGoldenHourSelected(answers, rows) {
-  if (pick(answers, "goldenHour", "wiz_goldenHour", "includeGoldenHour")) return true;
+  if (pick(answers, "goldenHour", "wiz_goldenHour")) return true;
   const sessions = pick(answers, "portraitSessions", "wiz_portraitSessions") || [];
   if (sessions.some((s) => s.type === "Golden Hour")) return true;
   return rows.some((r) => r.event === GOLDEN_HOUR_EVENT);

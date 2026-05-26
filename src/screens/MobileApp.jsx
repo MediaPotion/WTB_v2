@@ -124,9 +124,6 @@ export default function MobileApp() {
   const [wiz_ceremonyMinute, setWiz_ceremonyMinute] = useState("00");
   const [wiz_ceremonyPeriod, setWiz_ceremonyPeriod] = useState("PM");
   const [wiz_ceremonyDuration, setWiz_ceremonyDuration] = useState(30);
-  const [wiz_ceremonyType, setWiz_ceremonyType] = useState("average");
-  const [wiz_ceremonyOtherDuration, setWiz_ceremonyOtherDuration] = useState(30);
-  const [wiz_ceremonyFlexibility, setWiz_ceremonyFlexibility] = useState(0);
   const [wiz_ceremonyVenue, setWiz_ceremonyVenue] = useState("");
   const [wiz_ceremonyAddress, setWiz_ceremonyAddress] = useState("");
   const [wiz_guestCount, setWiz_guestCount] = useState("");
@@ -210,20 +207,6 @@ export default function MobileApp() {
   const [wiz_preCeremonyBrideParty, setWiz_preCeremonyBrideParty] = useState(true);
   const [wiz_preCeremonyGroomParty, setWiz_preCeremonyGroomParty] = useState(true);
   const [wiz_preCeremonyPreDress, setWiz_preCeremonyPreDress] = useState(false);
-  const [wiz_preCeremonyDetailRings, setWiz_preCeremonyDetailRings] = useState(true);
-  const [wiz_preCeremonyDetailDress, setWiz_preCeremonyDetailDress] = useState(true);
-  const [wiz_preCeremonyDetailDrone, setWiz_preCeremonyDetailDrone] = useState(true);
-  const [wiz_narrationBride, setWiz_narrationBride] = useState(true);
-  const [wiz_narrationGroom, setWiz_narrationGroom] = useState(true);
-  const [wiz_hasPreCeremonyHardStarts, setWiz_hasPreCeremonyHardStarts] = useState(false);
-  const [wiz_preCeremonyHardStarts, setWiz_preCeremonyHardStarts] = useState([]);
-  const [wiz_preCeremonyHardStartNextId, setWiz_preCeremonyHardStartNextId] = useState(1);
-  const [wiz_standardBridePartyPortraits, setWiz_standardBridePartyPortraits] = useState(true);
-  const [wiz_standardGroomPartyPortraits, setWiz_standardGroomPartyPortraits] = useState(true);
-  const [wiz_standardWeddingPartyShots, setWiz_standardWeddingPartyShots] = useState(true);
-  const [wiz_standardCouplePortraits, setWiz_standardCouplePortraits] = useState(true);
-  const [wiz_includeGoldenHour, setWiz_includeGoldenHour] = useState(true);
-  const [wiz_portraitLocationNextId, setWiz_portraitLocationNextId] = useState(1);
 
   // Step 5 — Ceremony special events notes
   const [wiz_ceremonyNotes, setWiz_ceremonyNotes] = useState("");
@@ -1011,8 +994,6 @@ export default function MobileApp() {
         photoStartHour,
         photoStartMinute,
         photoStartPeriod,
-        wiz_ceremonyType,
-        wiz_ceremonyOtherDuration,
         wiz_ceremonyDuration,
         wiz_ceremonyHour,
         wiz_ceremonyMinute,
@@ -1056,7 +1037,6 @@ export default function MobileApp() {
         wiz_narration,
         wiz_portraitLocations,
         wiz_portraitSessions,
-        wiz_includeGoldenHour,
         wiz_distanceBetweenReady,
         wiz_distanceGroomToCeremony,
         wiz_distanceBrideToCeremony,
@@ -1127,10 +1107,7 @@ export default function MobileApp() {
     wiz_locations, setWiz_locations, wiz_locationNextId, setWiz_locationNextId, addWizLocation, updateWizLocation, removeWizLocation,
     wiz_receptionVenue, setWiz_receptionVenue, wiz_receptionAddress, setWiz_receptionAddress, wiz_receptionSameAsCeremony, setWiz_receptionSameAsCeremony,
     wiz_ceremonyHour, setWiz_ceremonyHour, wiz_ceremonyMinute, setWiz_ceremonyMinute, wiz_ceremonyPeriod, setWiz_ceremonyPeriod,
-    wiz_ceremonyDuration, setWiz_ceremonyDuration,
-    wiz_ceremonyType, setWiz_ceremonyType, wiz_ceremonyOtherDuration, setWiz_ceremonyOtherDuration,
-    wiz_ceremonyFlexibility, setWiz_ceremonyFlexibility,
-    wiz_ceremonyVenue, setWiz_ceremonyVenue, wiz_ceremonyAddress, setWiz_ceremonyAddress,
+    wiz_ceremonyDuration, setWiz_ceremonyDuration, wiz_ceremonyVenue, setWiz_ceremonyVenue, wiz_ceremonyAddress, setWiz_ceremonyAddress,
     wiz_guestCount, setWiz_guestCount, wiz_portraitLocations, setWiz_portraitLocations,
     wiz_brideReadyAddress, setWiz_brideReadyAddress, wiz_brideReadyStreet, setWiz_brideReadyStreet,
     wiz_groomReadyAddress, setWiz_groomReadyAddress, wiz_groomReadyStreet, setWiz_groomReadyStreet,
@@ -1160,12 +1137,6 @@ export default function MobileApp() {
     wiz_preCeremonyBrideReady, setWiz_preCeremonyBrideReady, wiz_preCeremonyGroomReady, setWiz_preCeremonyGroomReady,
     wiz_preCeremonyDetails, setWiz_preCeremonyDetails, wiz_preCeremonyBrideParty, setWiz_preCeremonyBrideParty,
     wiz_preCeremonyGroomParty, setWiz_preCeremonyGroomParty, wiz_preCeremonyPreDress, setWiz_preCeremonyPreDress,
-    wiz_preCeremonyDetailRings, setWiz_preCeremonyDetailRings, wiz_preCeremonyDetailDress, setWiz_preCeremonyDetailDress, wiz_preCeremonyDetailDrone, setWiz_preCeremonyDetailDrone,
-    wiz_narrationBride, setWiz_narrationBride, wiz_narrationGroom, setWiz_narrationGroom,
-    wiz_hasPreCeremonyHardStarts, setWiz_hasPreCeremonyHardStarts, wiz_preCeremonyHardStarts, setWiz_preCeremonyHardStarts, wiz_preCeremonyHardStartNextId, setWiz_preCeremonyHardStartNextId,
-    wiz_standardBridePartyPortraits, setWiz_standardBridePartyPortraits, wiz_standardGroomPartyPortraits, setWiz_standardGroomPartyPortraits,
-    wiz_standardWeddingPartyShots, setWiz_standardWeddingPartyShots, wiz_standardCouplePortraits, setWiz_standardCouplePortraits,
-    wiz_includeGoldenHour, setWiz_includeGoldenHour, wiz_portraitLocationNextId, setWiz_portraitLocationNextId,
     wiz_ceremonyNotes, setWiz_ceremonyNotes, wiz_customFirstLooks, setWiz_customFirstLooks, wiz_customFirstLookNextId, setWiz_customFirstLookNextId,
     wiz_portraitSessions, setWiz_portraitSessions, wiz_portraitSessionNextId, setWiz_portraitSessionNextId,
     wiz_grandEntranceSub, setWiz_grandEntranceSub, wiz_customReceptionEvents, setWiz_customReceptionEvents, wiz_customReceptionEventNextId, setWiz_customReceptionEventNextId,

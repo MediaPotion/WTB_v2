@@ -1,136 +1,116 @@
 import React from "react";
-import { FlexibilitySelector, TimePickerRow } from "./wizardShared";
+import { SETTINGS_SELECT_STYLE } from "../../constants/styles";
 
 function WizardStep6(props) {
   const {
-    stepCard, wizSectionHeading, wizCheckRowStyle, wizToggleStyle,
-    brideLabel, groomLabel,
+    stepCard, wizSectionHeading, wizToggleStyle, wizCheckRowStyle, inModal, effectiveStep, displayStep, totalWizardSteps, allWizLocations,
+    date, setDate, bride, setBride, groom, setGroom, brideLabel, setBrideLabel, groomLabel, setGroomLabel,
+    wiz_locations, setWiz_locations, wiz_locationNextId, setWiz_locationNextId, addWizLocation, updateWizLocation, removeWizLocation,
+    wiz_receptionVenue, setWiz_receptionVenue, wiz_receptionAddress, setWiz_receptionAddress, wiz_receptionSameAsCeremony, setWiz_receptionSameAsCeremony,
+    wiz_ceremonyHour, setWiz_ceremonyHour, wiz_ceremonyMinute, setWiz_ceremonyMinute, wiz_ceremonyPeriod, setWiz_ceremonyPeriod,
+    wiz_ceremonyDuration, setWiz_ceremonyDuration, wiz_ceremonyVenue, setWiz_ceremonyVenue, wiz_ceremonyAddress, setWiz_ceremonyAddress,
+    wiz_guestCount, setWiz_guestCount, wiz_portraitLocations, setWiz_portraitLocations,
+    wiz_brideReadyAddress, setWiz_brideReadyAddress, wiz_brideReadyStreet, setWiz_brideReadyStreet,
+    wiz_groomReadyAddress, setWiz_groomReadyAddress, wiz_groomReadyStreet, setWiz_groomReadyStreet,
+    wiz_distanceBetweenReady, setWiz_distanceBetweenReady, wiz_distanceBrideToCeremony, setWiz_distanceBrideToCeremony,
+    wiz_distanceGroomToCeremony, setWiz_distanceGroomToCeremony, wiz_distanceReceptionToCeremony, setWiz_distanceReceptionToCeremony,
+    wiz_sameLocation, setWiz_sameLocation, wiz_portraitsAtReadyLocations, setWiz_portraitsAtReadyLocations,
+    wiz_bridePortraitsAtReadyLocation, setWiz_bridePortraitsAtReadyLocation, wiz_groomPortraitsAtReadyLocation, setWiz_groomPortraitsAtReadyLocation,
+    wiz_hairMakeupDoneHour, setWiz_hairMakeupDoneHour, wiz_hairMakeupDoneMinute, setWiz_hairMakeupDoneMinute, wiz_hairMakeupDonePeriod, setWiz_hairMakeupDonePeriod,
+    wiz_photoCoverageHours, setWiz_photoCoverageHours, wiz_videoCoverageHours, setWiz_videoCoverageHours, wiz_ceremonyOutdoor, setWiz_ceremonyOutdoor,
+    wiz_photographerCount, setWiz_photographerCount, wiz_videographerCount, setWiz_videographerCount, wiz_drone, setWiz_drone, wiz_narration, setWiz_narration,
+    wiz_hasFirstLooks, setWiz_hasFirstLooks, wiz_firstLookGroom, setWiz_firstLookGroom, wiz_firstLookParent, setWiz_firstLookParent,
+    wiz_firstLookBridesmaids, setWiz_firstLookBridesmaids, wiz_firstLookOther, setWiz_firstLookOther,
+    wiz_firstLookGroomLocation, setWiz_firstLookGroomLocation, wiz_firstLookParentLocation, setWiz_firstLookParentLocation,
+    wiz_firstLookBridesmaidsLocation, setWiz_firstLookBridesmaidsLocation, wiz_firstLookOtherLocation, setWiz_firstLookOtherLocation,
+    wiz_brideOkayBefore, setWiz_brideOkayBefore,
     wiz_receptionHour, setWiz_receptionHour, wiz_receptionMinute, setWiz_receptionMinute, wiz_receptionPeriod, setWiz_receptionPeriod,
-    wiz_receptionStartFlexibility, setWiz_receptionStartFlexibility,
-    wiz_grandEntrance, setWiz_grandEntrance, wiz_grandEntranceSub, setWiz_grandEntranceSub,
-    wiz_dinner, setWiz_dinner,
+    wiz_grandEntrance, setWiz_grandEntrance, wiz_cakeCutting, setWiz_cakeCutting, wiz_firstDance, setWiz_firstDance,
+    wiz_brideParentDance, setWiz_brideParentDance, wiz_groomParentDance, setWiz_groomParentDance, wiz_specialDance, setWiz_specialDance,
+    wiz_speeches, setWiz_speeches, wiz_speechCount, setWiz_speechCount, wiz_dinner, setWiz_dinner,
     wiz_dinnerStartHour, setWiz_dinnerStartHour, wiz_dinnerStartMinute, setWiz_dinnerStartMinute, wiz_dinnerStartPeriod, setWiz_dinnerStartPeriod,
-    wiz_dinnerFlexibility, setWiz_dinnerFlexibility,
-    wiz_dinnerStyle, setWiz_dinnerStyle,
-    wiz_cakeCutting, setWiz_cakeCutting, wiz_firstDance, setWiz_firstDance,
-    wiz_brideParentDance, setWiz_brideParentDance, wiz_groomParentDance, setWiz_groomParentDance,
-    wiz_openDanceFloor, setWiz_openDanceFloor, wiz_garterToss, setWiz_garterToss, wiz_bouquetToss, setWiz_bouquetToss,
-    wiz_speeches, setWiz_speeches, wiz_speechCount, setWiz_speechCount,
-    wiz_customReceptionEvents, setWiz_customReceptionEvents, wiz_customReceptionEventNextId, setWiz_customReceptionEventNextId,
-    setWizardStep,
+    wiz_dinnerStyle, setWiz_dinnerStyle, wiz_openDanceFloor, setWiz_openDanceFloor, wiz_garterToss, setWiz_garterToss, wiz_bouquetToss, setWiz_bouquetToss,
+    wiz_familyGroups, setWiz_familyGroups, wiz_familyGroupNames, setWiz_familyGroupNames,
+    wiz_brideReadyAtCeremony, setWiz_brideReadyAtCeremony, wiz_brideReadyAtReception, setWiz_brideReadyAtReception,
+    wiz_groomReadyAtCeremony, setWiz_groomReadyAtCeremony, wiz_groomReadyAtReception, setWiz_groomReadyAtReception, wiz_groomReadyAtBride, setWiz_groomReadyAtBride,
+    wiz_preCeremonyBrideReady, setWiz_preCeremonyBrideReady, wiz_preCeremonyGroomReady, setWiz_preCeremonyGroomReady,
+    wiz_preCeremonyDetails, setWiz_preCeremonyDetails, wiz_preCeremonyBrideParty, setWiz_preCeremonyBrideParty,
+    wiz_preCeremonyGroomParty, setWiz_preCeremonyGroomParty, wiz_preCeremonyPreDress, setWiz_preCeremonyPreDress,
+    wiz_ceremonyNotes, setWiz_ceremonyNotes, wiz_customFirstLooks, setWiz_customFirstLooks, wiz_customFirstLookNextId, setWiz_customFirstLookNextId,
+    wiz_portraitSessions, setWiz_portraitSessions, wiz_portraitSessionNextId, setWiz_portraitSessionNextId,
+    wiz_grandEntranceSub, setWiz_grandEntranceSub, wiz_customReceptionEvents, setWiz_customReceptionEvents, wiz_customReceptionEventNextId, setWiz_customReceptionEventNextId,
+    setWizardStep, setScreen, generateTimeline, withThe,
   } = props;
-
-  const eventRow = (label, sub, val, set) => (
-    <label style={{ ...wizCheckRowStyle }}>
-      <input type="checkbox" checked={!!val} onChange={(e) => set(e.target.checked)} style={{ width: 22, height: 22, marginTop: 2, cursor: "pointer", flexShrink: 0 }} />
-      <div>
-        <div style={{ fontSize: 15, fontWeight: 400, color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}>{label}</div>
-        {sub && <div style={{ fontSize: 13, color: "var(--wtb-text-muted)", marginTop: 2 }}>{sub}</div>}
-      </div>
-    </label>
-  );
-
-  return stepCard(
-    "The Reception",
-    "When the reception begins and what happens once you arrive.",
-    <div>
-      <div style={{ marginBottom: 20 }}>
-        <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>
-          Reception start time
-        </label>
-        <TimePickerRow
-          hour={wiz_receptionHour}
-          minute={wiz_receptionMinute}
-          period={wiz_receptionPeriod}
-          onHour={setWiz_receptionHour}
-          onMinute={setWiz_receptionMinute}
-          onPeriod={setWiz_receptionPeriod}
-        />
-        <FlexibilitySelector value={wiz_receptionStartFlexibility} onChange={setWiz_receptionStartFlexibility} />
-      </div>
-
-      {wizSectionHeading("Reception Events")}
-
-      <label style={{ ...wizCheckRowStyle }}>
-        <input type="checkbox" checked={wiz_grandEntrance} onChange={(e) => setWiz_grandEntrance(e.target.checked)} style={{ width: 22, height: 22, marginTop: 2, flexShrink: 0 }} />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 15, color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}>Grand Entrance</div>
-          {wiz_grandEntrance && (
-            <div style={{ display: "flex", gap: 8, marginTop: 10 }} onClick={(e) => e.stopPropagation()}>
-              <button type="button" style={wizToggleStyle(wiz_grandEntranceSub === "full")} onClick={() => setWiz_grandEntranceSub("full")}>Full wedding party</button>
-              <button type="button" style={wizToggleStyle(wiz_grandEntranceSub === "couple")} onClick={() => setWiz_grandEntranceSub("couple")}>Just {brideLabel} &amp; {groomLabel}</button>
+      const settingsSelectStyle = SETTINGS_SELECT_STYLE;
+      const hourOptions = ["1","2","3","4","5","6","7","8","9","10","11","12"];
+      const minuteOptions = ["00","05","10","15","20","25","30","35","40","45","50","55"];
+      return stepCard(
+        "Ceremony",
+        "",
+        <div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Ceremony Start Time</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <select value={wiz_ceremonyHour} onChange={(e) => setWiz_ceremonyHour(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                {hourOptions.map((h) => <option key={h} value={h}>{h}</option>)}
+              </select>
+              <span style={{ fontSize: 18, fontWeight: "bold" }}>:</span>
+              <select value={wiz_ceremonyMinute} onChange={(e) => setWiz_ceremonyMinute(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                {minuteOptions.map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+              <select value={wiz_ceremonyPeriod} onChange={(e) => setWiz_ceremonyPeriod(e.target.value)} style={{ ...settingsSelectStyle, fontSize: 15, padding: "8px 10px" }}>
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
             </div>
-          )}
-        </div>
-      </label>
-
-      <label style={{ ...wizCheckRowStyle }}>
-        <input type="checkbox" checked={wiz_dinner} onChange={(e) => setWiz_dinner(e.target.checked)} style={{ width: 22, height: 22, marginTop: 2, flexShrink: 0 }} />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 15, color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}>Dinner</div>
-          {wiz_dinner && (
-            <div style={{ marginTop: 12 }} onClick={(e) => e.stopPropagation()}>
-              <label style={{ display: "block", fontSize: 13, color: "var(--wtb-text-muted)", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Dinner start time</label>
-              <TimePickerRow hour={wiz_dinnerStartHour} minute={wiz_dinnerStartMinute} period={wiz_dinnerStartPeriod} onHour={setWiz_dinnerStartHour} onMinute={setWiz_dinnerStartMinute} onPeriod={setWiz_dinnerStartPeriod} />
-              <FlexibilitySelector value={wiz_dinnerFlexibility} onChange={setWiz_dinnerFlexibility} />
-              <p style={{ fontSize: 12, color: "var(--wtb-text-faint)", margin: "8px 0 12px", fontFamily: "'Jost', sans-serif" }}>
-                Dinner start time flexibility helps the app resolve scheduling conflicts when needed.
-              </p>
-              <div style={{ display: "flex", gap: 10 }}>
-                {["Plated", "Buffet"].map((s) => (
-                  <button key={s} type="button" style={wizToggleStyle(wiz_dinnerStyle === s)} onClick={() => setWiz_dinnerStyle(s)}>{s}</button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </label>
-
-      {eventRow("Cake Cutting", "", wiz_cakeCutting, setWiz_cakeCutting)}
-      {eventRow("First Dance", "", wiz_firstDance, setWiz_firstDance)}
-      {eventRow(`${brideLabel} & Parent Dance`, "", wiz_brideParentDance, setWiz_brideParentDance)}
-      {eventRow(`${groomLabel} & Parent Dance`, "", wiz_groomParentDance, setWiz_groomParentDance)}
-      {eventRow("Open Dance Floor", "", wiz_openDanceFloor, setWiz_openDanceFloor)}
-      {eventRow("Garter Toss", "", wiz_garterToss, setWiz_garterToss)}
-      {eventRow("Bouquet Toss", "", wiz_bouquetToss, setWiz_bouquetToss)}
-
-      <label style={{ ...wizCheckRowStyle }}>
-        <input type="checkbox" checked={wiz_speeches} onChange={(e) => setWiz_speeches(e.target.checked)} style={{ width: 22, height: 22, marginTop: 2, flexShrink: 0 }} />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 15, color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}>Speeches</div>
-          {wiz_speeches && (
-            <div style={{ marginTop: 8 }} onClick={(e) => e.stopPropagation()}>
-              <label style={{ fontSize: 13, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif" }}>Number of speakers</label>
-              <input type="number" min={1} value={wiz_speechCount} onChange={(e) => setWiz_speechCount(parseInt(e.target.value, 10) || 1)} style={{ padding: 6, border: "1px solid var(--wtb-border)", borderRadius: 6, width: 60, marginTop: 6, background: "var(--wtb-surface)", color: "var(--wtb-text)" }} />
-              <p style={{ fontSize: 12, color: "var(--wtb-text-muted)", margin: "8px 0 0", fontFamily: "'Jost', sans-serif" }}>
-                Include anyone doing a blessing or prayer. Typically 10 minutes per speaker.
-              </p>
-            </div>
-          )}
-        </div>
-      </label>
-
-      {wizSectionHeading("Custom Events")}
-      {wiz_customReceptionEvents.map((ev, i) => (
-        <div key={ev.id} style={{ border: "1px solid var(--wtb-border-subtle)", borderRadius: 8, padding: 14, marginBottom: 10, background: "var(--wtb-surface)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-            <span style={{ fontSize: 13, color: "var(--wtb-text-muted)" }}>Custom event {i + 1}</span>
-            <button type="button" onClick={() => setWiz_customReceptionEvents((prev) => prev.filter((_, idx) => idx !== i))} style={{ fontSize: 12, background: "none", border: "1px solid var(--wtb-border)", borderRadius: 4, padding: "2px 8px", cursor: "pointer" }}>Remove</button>
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <input type="text" value={ev.label} placeholder="Event name" onChange={(e) => setWiz_customReceptionEvents((prev) => { const n = [...prev]; n[i] = { ...n[i], label: e.target.value }; return n; })} style={{ flex: 1, padding: "8px 10px", border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 14, background: "var(--wtb-surface)", color: "var(--wtb-text)" }} />
-            <input type="number" min={5} step={5} value={ev.duration} onChange={(e) => setWiz_customReceptionEvents((prev) => { const n = [...prev]; n[i] = { ...n[i], duration: parseInt(e.target.value, 10) || 15 }; return n; })} style={{ width: 72, padding: "8px 10px", border: "1px solid var(--wtb-border)", borderRadius: 6, textAlign: "center", background: "var(--wtb-surface)", color: "var(--wtb-text)" }} />
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Ceremony Duration (minutes)</label>
+            <input
+              type="number"
+              value={wiz_ceremonyDuration}
+              min={5}
+              step={5}
+              onChange={(e) => setWiz_ceremonyDuration(parseInt(e.target.value, 10) || 30)}
+              style={{ padding: 10, border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 15, width: 100, background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}
+            />
           </div>
-        </div>
-      ))}
-      <button type="button" onClick={() => { setWiz_customReceptionEvents((prev) => [...prev, { id: wiz_customReceptionEventNextId, label: "", duration: 15 }]); setWiz_customReceptionEventNextId((n) => n + 1); }} style={{ padding: "9px 18px", background: "var(--wtb-surface-raised)", color: "var(--wtb-accent)", border: "1px solid var(--wtb-accent)", borderRadius: 8, fontSize: 13, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}>
-        + Add Custom Event
-      </button>
-    </div>,
-    () => setWizardStep(5),
-    () => setWizardStep(7),
-    "Next"
-  );
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Anticipated Guest Count</label>
+            <input
+              type="number"
+              value={wiz_guestCount}
+              min={1}
+              onChange={(e) => setWiz_guestCount(e.target.value)}
+              placeholder="e.g. 150"
+              style={{ padding: 10, border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 15, width: 120, background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif" }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 8, fontFamily: "'Jost', sans-serif" }}>Ceremony Setting</label>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button style={wizToggleStyle(!wiz_ceremonyOutdoor)} onClick={() => setWiz_ceremonyOutdoor(false)}>Indoors</button>
+              <button style={wizToggleStyle(wiz_ceremonyOutdoor)} onClick={() => setWiz_ceremonyOutdoor(true)}>Outdoor</button>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 300, color: "var(--wtb-text-muted)", marginBottom: 6, fontFamily: "'Jost', sans-serif" }}>Any special events during the ceremony that the photographer/videographer should know about?</label>
+            <textarea
+              value={wiz_ceremonyNotes}
+              onChange={(e) => setWiz_ceremonyNotes(e.target.value)}
+              placeholder="e.g. Unity candle, ring warming, surprise song performance…"
+              rows={3}
+              style={{ width: "100%", padding: 10, border: "1px solid var(--wtb-border)", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "var(--wtb-surface)", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif", resize: "vertical" }}
+            />
+          </div>
+        </div>,
+        () => setWizardStep(5),
+        () => setWizardStep(8)
+      );
 }
 
 export { WizardStep6 };

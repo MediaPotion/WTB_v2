@@ -213,7 +213,7 @@ function WizardConfirm(props) {
               </div>
 
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 8 }}>
-                <button onClick={() => setWizardStep(7)} style={{ padding: "12px 28px", border: "1px solid var(--wtb-accent)", borderRadius: 8, background: "transparent", color: "var(--wtb-text)", fontSize: 15, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>
+                <button onClick={() => setWizardStep(10)} style={{ padding: "12px 28px", border: "1px solid var(--wtb-accent)", borderRadius: 8, background: "transparent", color: "var(--wtb-text)", fontSize: 15, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>
                   Go Back
                 </button>
                 <button onClick={generateTimeline} className="generate-btn" style={{ padding: "18px 48px", color: "var(--wtb-on-accent)", border: "none", borderRadius: 10, fontSize: 22, fontWeight: 400, cursor: "pointer", fontFamily: "'Cormorant Garamond', serif" }}>
