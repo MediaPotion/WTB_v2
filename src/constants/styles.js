@@ -318,6 +318,43 @@ const MOBILE_TWEAKS = `
     min-height: 44px;
     max-width: 200px;
   }
+  .wtb-mobile-gear-menu-item--logistics {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .wtb-mobile-gear-logistics-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .wtb-mobile-gear-logistics-icon[data-status="overflow"] {
+    background: rgba(139, 69, 69, 0.15);
+    color: #8b4545;
+  }
+  .wtb-mobile-gear-logistics-icon[data-status="overflow"]::before {
+    content: "✕";
+  }
+  .wtb-mobile-gear-logistics-icon[data-status="tight"] {
+    background: rgba(184, 144, 106, 0.2);
+    color: var(--wtb-accent);
+  }
+  .wtb-mobile-gear-logistics-icon[data-status="tight"]::before {
+    content: "!";
+  }
+  .wtb-mobile-gear-logistics-icon[data-status="ok"] {
+    background: rgba(107, 143, 113, 0.15);
+    color: #6b8f71;
+  }
+  .wtb-mobile-gear-logistics-icon[data-status="ok"]::before {
+    content: "✓";
+  }
   .wtb-mobile-gear-btn {
     width: 40px;
     height: 36px;
@@ -612,6 +649,121 @@ const MOBILE_TWEAKS = `
   }
   .wtb-tab-btn.active { color: var(--wtb-accent); border-bottom-color: var(--wtb-accent); }
   .wtb-tab-btn:hover:not(.active) { color: var(--wtb-text); }
+
+  .wtb-logistics-timeline-wrap {
+    width: 100%;
+    margin-bottom: 28px;
+  }
+  .wtb-logistics-boundary-label {
+    font-size: 10px;
+    color: var(--wtb-text-muted);
+    font-family: 'Jost', sans-serif;
+    opacity: 0.85;
+  }
+  .wtb-logistics-segment-label-above {
+    font-size: 10px;
+    font-weight: 600;
+    font-family: 'Jost', sans-serif;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .wtb-logistics-track {
+    background: rgba(184, 144, 106, 0.12);
+    border: 1px solid rgba(184, 144, 106, 0.28);
+    border-radius: 8px;
+  }
+  .wtb-logistics-segment {
+    border: 1px solid transparent;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 0 4px;
+    box-sizing: border-box;
+    overflow: hidden;
+    transition: background 0.55s ease, border-color 0.55s ease, opacity 0.55s ease;
+  }
+  .wtb-logistics-segment--overflow {
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(26, 5, 5, 0.55) 0px,
+      rgba(26, 5, 5, 0.55) 8px,
+      rgba(35, 8, 8, 0.55) 8px,
+      rgba(35, 8, 8, 0.55) 16px
+    ) !important;
+    animation: wtb-logistics-pulse 2s ease-in-out infinite;
+  }
+  .wtb-logistics-segment--resolved {
+    animation: none;
+  }
+  @keyframes wtb-logistics-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(139, 69, 69, 0.35); }
+    50% { box-shadow: 0 0 0 3px rgba(139, 69, 69, 0.25); }
+  }
+  .wtb-logistics-segment-inner-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--wtb-text);
+    font-family: 'Jost', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+  }
+  .wtb-logistics-segment-icon {
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .wtb-logistics-ceremony {
+    border: 2px solid var(--wtb-accent);
+    border-radius: 6px;
+    background: rgba(184, 144, 106, 0.15);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .wtb-logistics-ceremony-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--wtb-accent);
+    font-family: 'Jost', sans-serif;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding: 0 6px;
+  }
+  .wtb-logistics-ruler-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background: var(--wtb-border-subtle);
+  }
+  .wtb-logistics-ruler-tick {
+    font-size: 10px;
+    color: var(--wtb-text-muted);
+    font-family: 'Jost', sans-serif;
+    top: 6px;
+    white-space: nowrap;
+  }
+  .wtb-logistics-window-card--expanded {
+    background: var(--wtb-surface-raised) !important;
+  }
+  .wtb-logistics-control--highlight {
+    box-shadow: 0 0 12px rgba(184, 144, 106, 0.12);
+  }
+  .wtb-logistics-wizard .wtb-logistics-timeline-wrap {
+    width: 100%;
+  }
 `;
 
 const SETTINGS_SELECT_STYLE = {

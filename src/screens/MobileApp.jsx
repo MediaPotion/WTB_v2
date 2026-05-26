@@ -23,6 +23,10 @@ import { EventBlockSelector } from "../components/timeline/EventBlockSelector";
 import { EventSidebar } from "../components/sidebar/EventSidebar";
 import { WelcomeScreen } from "./WelcomeScreen";
 import { renderWizard } from "./WizardScreen";
+import { WizardLogisticsCheck } from "../components/wizard/WizardLogisticsCheck";
+import { LogisticsCheckButton } from "../components/timeline/LogisticsCheckButton";
+import { getLogisticsStatus } from "../lib/logisticsStatus";
+import { wizSectionHeading, wizToggleStyle, wizCheckRowStyle } from "../components/wizard/wizardUi";
 
 export default function MobileApp() {
   const { theme, toggleTheme } = useTheme();
@@ -98,6 +102,7 @@ export default function MobileApp() {
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
+  const [showLogisticsModal, setShowLogisticsModal] = useState(false);
   const [showAutosaveBanner, setShowAutosaveBanner] = useState(false);
   const [versionNotice, setVersionNotice] = useState(null);
   const isDirtyRef = useRef(false);
@@ -1122,6 +1127,11 @@ export default function MobileApp() {
     wiz_appliedLogisticsSuggestions,
   });
 
+  const logisticsStatus = useMemo(
+    () => getLogisticsStatus(buildWizardAnswers(wizardStateForAnswers()), rows),
+    [rows, userRows, date, bride, groom, wiz_ceremonyHour, wiz_ceremonyMinute, wiz_ceremonyPeriod, wiz_ceremonyDuration, wiz_ceremonyType, wiz_ceremonyOtherDuration, wiz_receptionHour, wiz_receptionMinute, wiz_receptionPeriod, wiz_dinner, wiz_dinnerStartHour, wiz_dinnerStartMinute, wiz_dinnerStartPeriod, wiz_firstLookGroom, wiz_brideOkayBefore, wiz_familyGroups, wiz_includeGoldenHour, wiz_standardWeddingPartyShots, wiz_standardCouplePortraits, wiz_preCeremonyDetails, photoStartHour, photoStartMinute, photoStartPeriod, wiz_photoCoverageHours, wiz_appliedLogisticsSuggestions]
+  );
+
   const generateTimeline = () => {
     const rows = generateTimelineLib(buildWizardAnswers(wizardStateForAnswers()));
     setUserRows(rows);
@@ -1255,6 +1265,9 @@ export default function MobileApp() {
     wiz_grandEntranceSub, setWiz_grandEntranceSub, wiz_customReceptionEvents, setWiz_customReceptionEvents, wiz_customReceptionEventNextId, setWiz_customReceptionEventNextId,
     wiz_appliedLogisticsSuggestions, setWiz_appliedLogisticsSuggestions,
     photoStartHour, photoStartMinute, photoStartPeriod, setPhotoStartHour, setPhotoStartMinute, setPhotoStartPeriod,
+    wizSectionHeading,
+    wizToggleStyle,
+    wizCheckRowStyle,
   };
 
   const renderSettingsForm = (isModal) => (
@@ -1593,6 +1606,15 @@ export default function MobileApp() {
                       <button
                         type="button"
                         role="menuitem"
+                        className="wtb-mobile-gear-menu-item wtb-mobile-gear-menu-item--logistics"
+                        onClick={() => { setShowLogisticsModal(true); closeMobileGearMenu(); }}
+                      >
+                        <span className="wtb-mobile-gear-logistics-icon" data-status={logisticsStatus} aria-hidden />
+                        Logistics Check
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
                         className="wtb-mobile-gear-menu-item"
                         onClick={() => { printTimeline(); closeMobileGearMenu(); }}
                       >
@@ -1643,7 +1665,22 @@ export default function MobileApp() {
             )}
 
             {/* Controls — desktop */}
-            <div className="wtb-controls-desktop" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", background: "var(--wtb-surface)", borderBottom: "1px solid var(--wtb-surface-raised)", borderTop: "1px solid var(--wtb-surface-raised)", padding: "8px 10px", margin: "0 -10px 0" }}>
+            <div
+              className="wtb-controls-desktop"
+              style={{
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 8,
+                flexWrap: "wrap",
+                background: "var(--wtb-surface)",
+                borderBottom: "1px solid var(--wtb-surface-raised)",
+                borderTop: "1px solid var(--wtb-surface-raised)",
+                padding: "8px 10px",
+                margin: "0 -10px 0",
+              }}
+            >
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
                   onClick={requestNewTimeline}
@@ -1670,23 +1707,64 @@ export default function MobileApp() {
                   Project Settings
                 </button>
               </div>
-              <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", display: "flex", gap: 8 }}>
-                <button
-                  onClick={undo}
-                  disabled={history.length === 0}
-                  style={{ padding: "6px 14px", background: history.length > 0 ? "var(--wtb-undo-bg-active)" : "var(--wtb-undo-bg)", color: history.length > 0 ? "var(--wtb-text)" : "var(--wtb-undo-text-disabled)", border: "none", borderRadius: 4, cursor: history.length > 0 ? "pointer" : "not-allowed", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", display: "flex", alignItems: "center", gap: 5 }}
+              <div
+                className="wtb-controls-desktop-mid"
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  right: "max(280px, 22vw)",
+                  top: 0,
+                  bottom: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  pointerEvents: "none",
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    transform: "translateX(-50%)",
+                    display: "flex",
+                    gap: 8,
+                    pointerEvents: "auto",
+                    zIndex: 2,
+                  }}
                 >
-                  <span style={{ fontSize: 15, lineHeight: 1 }}>↺</span> Undo
-                </button>
-                <button
-                  onClick={redo}
-                  disabled={redoStack.length === 0}
-                  style={{ padding: "6px 14px", background: redoStack.length > 0 ? "var(--wtb-undo-bg-active)" : "var(--wtb-undo-bg)", color: redoStack.length > 0 ? "var(--wtb-text)" : "var(--wtb-undo-text-disabled)", border: "none", borderRadius: 4, cursor: redoStack.length > 0 ? "pointer" : "not-allowed", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", display: "flex", alignItems: "center", gap: 5 }}
+                  <button
+                    onClick={undo}
+                    disabled={history.length === 0}
+                    style={{ padding: "6px 14px", background: history.length > 0 ? "var(--wtb-undo-bg-active)" : "var(--wtb-undo-bg)", color: history.length > 0 ? "var(--wtb-text)" : "var(--wtb-undo-text-disabled)", border: "none", borderRadius: 4, cursor: history.length > 0 ? "pointer" : "not-allowed", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", display: "flex", alignItems: "center", gap: 5 }}
+                  >
+                    <span style={{ fontSize: 15, lineHeight: 1 }}>↺</span> Undo
+                  </button>
+                  <button
+                    onClick={redo}
+                    disabled={redoStack.length === 0}
+                    style={{ padding: "6px 14px", background: redoStack.length > 0 ? "var(--wtb-undo-bg-active)" : "var(--wtb-undo-bg)", color: redoStack.length > 0 ? "var(--wtb-text)" : "var(--wtb-undo-text-disabled)", border: "none", borderRadius: 4, cursor: redoStack.length > 0 ? "pointer" : "not-allowed", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", display: "flex", alignItems: "center", gap: 5 }}
+                  >
+                    <span style={{ fontSize: 15, lineHeight: 1 }}>↻</span> Redo
+                  </button>
+                </div>
+                <div
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    minWidth: 0,
+                    padding: "0 12px",
+                    pointerEvents: "auto",
+                  }}
                 >
-                  <span style={{ fontSize: 15, lineHeight: 1 }}>↻</span> Redo
-                </button>
+                  <LogisticsCheckButton
+                    status={logisticsStatus}
+                    onClick={() => setShowLogisticsModal(true)}
+                  />
+                </div>
               </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", position: "relative", zIndex: 2, marginLeft: "auto" }}>
                 <button
                   onClick={copyTimeline}
                   style={{ padding: "6px 14px", backgroundColor: copyConfirm ? "var(--wtb-accent)" : "transparent", color: copyConfirm ? "var(--wtb-on-accent)" : "var(--wtb-text)", border: copyConfirm ? "1px solid var(--wtb-accent)" : "1px solid var(--wtb-border)", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
@@ -2034,6 +2112,64 @@ export default function MobileApp() {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {showLogisticsModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "var(--wtb-overlay)",
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "center",
+            zIndex: 10000,
+            overflowY: "auto",
+            padding: "20px 10px 40px",
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowLogisticsModal(false);
+          }}
+        >
+          <div
+            style={{
+              background: "var(--wtb-surface)",
+              border: "1px solid var(--wtb-border)",
+              borderRadius: 10,
+              maxWidth: "min(960px, 100%)",
+              width: "100%",
+              padding: "20px clamp(12px, 3vw, 20px) 24px",
+              position: "relative",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowLogisticsModal(false)}
+              style={{
+                position: "absolute",
+                top: 16,
+                right: 16,
+                background: "none",
+                border: "none",
+                fontSize: 20,
+                cursor: "pointer",
+                color: "var(--wtb-text-muted)",
+                lineHeight: 1,
+                zIndex: 2,
+              }}
+              aria-label="Close logistics check"
+            >
+              ✕
+            </button>
+            <WizardLogisticsCheck
+              {...wizardProps}
+              inModal
+              timelineRows={rows}
+              onClose={() => setShowLogisticsModal(false)}
+            />
+          </div>
         </div>
       )}
 

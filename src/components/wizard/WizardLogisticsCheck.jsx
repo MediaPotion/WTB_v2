@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect, useState } from "react";
+import React, { useMemo, useRef, useEffect, useState, useCallback } from "react";
 import { generateTimeline as generateTimelineLib } from "../../lib/generateTimeline";
 import { calculateLogistics } from "../../lib/calculateLogistics";
 import { buildWizardAnswers } from "../../lib/buildWizardAnswers";
@@ -6,192 +6,43 @@ import {
   buildLogisticsContext,
   buildInlineHints,
   countOverflowConflicts,
-  describeBottleneckDetailed,
 } from "../../lib/logisticsConflictCopy";
-import { formatClockLabel } from "../../lib/time";
-import { LogisticsAdjustPanel } from "./LogisticsAdjustPanel";
-
-const STATUS = {
-  ok: { color: "#6b8f71", icon: "✓", label: "Comfortable" },
-  tight: { color: "var(--wtb-accent)", icon: "!", label: "Tight" },
-  overflow: { color: "#8b4545", icon: "✕", label: "Over capacity" },
-};
-
-function LogisticsTimelineBar({ windows, dayStart, dayEnd, justResolvedIds }) {
-  const span = Math.max(dayEnd - dayStart, 1);
-  return (
-    <div style={{ marginBottom: 28 }}>
-      <div
-        style={{
-          position: "relative",
-          height: 52,
-          borderRadius: 8,
-          background: "rgba(184, 144, 106, 0.22)",
-          border: "1px solid rgba(184, 144, 106, 0.35)",
-          overflow: "hidden",
-        }}
-      >
-        {windows.map((w) => {
-          const left = ((w.startTime - dayStart) / span) * 100;
-          const width = Math.max(((w.endTime - w.startTime) / span) * 100, 2);
-          const st = STATUS[w.status] || STATUS.ok;
-          const resolved = justResolvedIds.has(w.id);
-          return (
-            <div
-              key={w.id}
-              title={`${w.label}: ${w.availableMinutes} min available, ${w.usedMinutes} min scheduled`}
-              style={{
-                position: "absolute",
-                left: `${left}%`,
-                width: `${width}%`,
-                top: 4,
-                bottom: 4,
-                background: resolved ? STATUS.ok.color : st.color,
-                opacity: w.status === "ok" || resolved ? 0.85 : 0.9,
-                borderRadius: 4,
-                minWidth: 4,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "0 4px",
-                boxSizing: "border-box",
-                overflow: "hidden",
-                transition: "background 0.6s ease, opacity 0.6s ease",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 9,
-                  fontWeight: 400,
-                  color: "var(--wtb-on-accent)",
-                  fontFamily: "'Jost', sans-serif",
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                  whiteSpace: "nowrap",
-                  textOverflow: "ellipsis",
-                  overflow: "hidden",
-                  maxWidth: "100%",
-                }}
-              >
-                {w.id}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginTop: 8,
-          fontSize: 11,
-          color: "var(--wtb-text-muted)",
-          fontFamily: "'Jost', sans-serif",
-        }}
-      >
-        <span>{formatClockLabel(dayStart)}</span>
-        <span>{formatClockLabel(dayEnd)}</span>
-      </div>
-    </div>
-  );
-}
-
-function WindowSummaryCard({ window: w, justResolved }) {
-  const st = justResolved ? STATUS.ok : STATUS[w.status] || STATUS.ok;
-  let detail = `${w.availableMinutes} minutes available, ${w.usedMinutes} minutes of events scheduled`;
-  if (w.status === "overflow" && !justResolved) {
-    detail = `${detail}, ${w.overflowMinutes} minutes over — needs attention`;
-  } else if (w.status === "tight" && !justResolved) {
-    detail = `${detail}, only ${w.remainingMinutes} minutes of buffer — cutting it close`;
-  } else {
-    detail = `${detail}, ${w.remainingMinutes} minutes remaining`;
-  }
-
-  return (
-    <div
-      style={{
-        background: "var(--wtb-surface)",
-        border: `1px solid ${
-          w.status === "overflow" && !justResolved
-            ? "rgba(139, 69, 69, 0.45)"
-            : justResolved
-              ? "rgba(107, 143, 113, 0.45)"
-              : "var(--wtb-border-subtle)"
-        }`,
-        borderRadius: 10,
-        padding: "16px 18px",
-        marginBottom: 12,
-        transition: "border-color 0.5s ease",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-        <span
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: "50%",
-            background: `${st.color}22`,
-            color: st.color,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 14,
-            flexShrink: 0,
-            fontFamily: "'Jost', sans-serif",
-            transition: "color 0.5s ease, background 0.5s ease",
-          }}
-        >
-          {st.icon}
-        </span>
-        <div style={{ flex: 1 }}>
-          <div
-            style={{
-              fontSize: 15,
-              fontWeight: 400,
-              color: "var(--wtb-text)",
-              fontFamily: "'Cormorant Garamond', serif",
-              marginBottom: 4,
-            }}
-          >
-            {w.label}
-          </div>
-          <div
-            style={{
-              fontSize: 12,
-              color: "var(--wtb-text-muted)",
-              fontFamily: "'Jost', sans-serif",
-              marginBottom: 6,
-            }}
-          >
-            {formatClockLabel(w.startTime)} – {formatClockLabel(w.endTime)}
-          </div>
-          <div
-            style={{
-              fontSize: 13,
-              color: "var(--wtb-text-muted)",
-              fontFamily: "'Jost', sans-serif",
-              lineHeight: 1.5,
-            }}
-          >
-            {detail}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { LogisticsDayTimeline } from "./LogisticsDayTimeline";
+import { LogisticsWhatWeFound } from "./LogisticsWhatWeFound";
+import { LogisticsWindowCard } from "./LogisticsWindowCard";
+import { resolveDayBounds } from "./logisticsPresentation";
 
 function WizardLogisticsCheck(props) {
-  const { inModal, displayStep, totalWizardSteps, setWizardStep, wizSectionHeading } = props;
+  const {
+    inModal,
+    displayStep,
+    totalWizardSteps,
+    setWizardStep,
+    timelineRows,
+    onClose,
+  } = props;
 
   const answers = useMemo(() => buildWizardAnswers(props), [props]);
-  const rows = useMemo(() => generateTimelineLib(answers), [answers]);
+  const rows = useMemo(() => {
+    if (timelineRows != null) {
+      return [...timelineRows].sort((a, b) => a.time - b.time);
+    }
+    return generateTimelineLib(answers);
+  }, [timelineRows, answers]);
   const report = useMemo(() => calculateLogistics(answers, rows), [answers, rows]);
   const ctx = useMemo(() => buildLogisticsContext(props), [props]);
   const inlineHints = useMemo(
     () => buildInlineHints(report.suggestions, ctx),
     [report.suggestions, ctx]
   );
+
+  const { dayStart, dayEnd } = useMemo(
+    () => resolveDayBounds(report.windows, ctx, rows),
+    [report.windows, ctx, rows]
+  );
+
+  const [expandedWindowId, setExpandedWindowId] = useState(null);
+  const [fixHighlightId, setFixHighlightId] = useState(null);
 
   const prevStatusesRef = useRef({});
   const [flashResolvedIds, setFlashResolvedIds] = useState(() => new Set());
@@ -226,271 +77,171 @@ function WizardLogisticsCheck(props) {
   }, [report.windows]);
 
   const justResolvedIds = flashResolvedIds;
-
   const overflowCount = countOverflowConflicts(report.windows);
   const hasOverflow = overflowCount > 0;
-  const hasTight = report.windows.some((w) => w.status === "tight");
-  const hasBottlenecks = report.bottlenecks.length > 0;
+  const hasTight = report.windows.some(
+    (w) => w.status === "tight" && !justResolvedIds.has(w.id)
+  );
 
-  const dayStart = report.windows.length
-    ? Math.min(...report.windows.map((w) => w.startTime))
-    : 0;
-  const dayEnd = report.windows.length
-    ? Math.max(...report.windows.map((w) => w.endTime))
-    : report.totalDayMinutes;
+  const handleFixWindow = useCallback((windowId) => {
+    setExpandedWindowId(windowId);
+    setFixHighlightId(windowId);
+    setTimeout(() => setFixHighlightId(null), 2400);
+  }, []);
 
-  const headerStatus = hasOverflow
-    ? {
-        color: "#8b4545",
-        icon: "✕",
-        title: "Scheduling conflicts need attention",
-        body: "Adjust the settings below — your timeline updates as you go.",
-      }
-    : hasTight
-      ? {
-          color: "var(--wtb-accent)",
-          icon: "!",
-          title: "A few tight spots",
-          body: "Your schedule is tight in a few places but workable. Review and adjust if you like.",
-        }
-      : {
-          color: "#6b8f71",
-          icon: "✓",
-          title: "Your schedule looks great",
-          body: "Everything fits comfortably within your time windows.",
-        };
+  const toggleWindow = (id) => {
+    setExpandedWindowId((prev) => (prev === id ? null : id));
+    setFixHighlightId(null);
+  };
 
-  const conflictTally = (
+  const sectionHeading = (text) => (
     <div
       style={{
-        textAlign: "center",
-        marginBottom: 20,
         fontFamily: "'Jost', sans-serif",
-        fontSize: 14,
+        fontSize: 11,
+        fontWeight: 300,
+        letterSpacing: "0.18em",
+        textTransform: "uppercase",
+        color: "var(--wtb-accent)",
+        margin: "28px 0 14px",
       }}
     >
-      {overflowCount === 0 ? (
-        <span style={{ color: STATUS.ok.color, display: "inline-flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 22 }}>✓</span>
-          All conflicts resolved
-        </span>
-      ) : (
-        <span style={{ color: STATUS.overflow.color }}>
-          {overflowCount} conflict{overflowCount !== 1 ? "s" : ""} remaining
-        </span>
-      )}
+      {text}
     </div>
   );
 
   const content = (
-    <div>
-      <div
-        style={{
-          textAlign: "center",
-          padding: "12px 12px 20px",
-          borderBottom: "1px solid var(--wtb-border-subtle)",
-          marginBottom: 20,
-        }}
-      >
-        <div style={{ fontSize: 36, color: headerStatus.color, marginBottom: 10, lineHeight: 1 }}>
-          {headerStatus.icon}
-        </div>
+    <div className="wtb-logistics-screen">
+      <header style={{ marginBottom: 24 }}>
+        <h2
+          style={{
+            margin: "0 0 8px",
+            fontSize: inModal ? 22 : "clamp(22px,4vw,32px)",
+            color: "var(--wtb-text)",
+            fontWeight: 400,
+            fontFamily: "'Cormorant Garamond', serif",
+          }}
+        >
+          Logistics Check
+        </h2>
         <p
           style={{
             margin: 0,
-            fontSize: 15,
-            color: "var(--wtb-text)",
+            fontSize: 14,
+            color: "var(--wtb-text-muted)",
+            lineHeight: 1.55,
             fontFamily: "'Jost', sans-serif",
-            lineHeight: 1.6,
-            maxWidth: 480,
-            marginLeft: "auto",
-            marginRight: "auto",
+            fontWeight: 300,
+            maxWidth: 560,
           }}
         >
-          {headerStatus.body}
+          Your wedding day at a glance. Tap a time window to adjust settings — everything updates
+          instantly.
         </p>
-      </div>
-
-      {conflictTally}
+      </header>
 
       {report.windows.length > 0 && (
-        <>
-          <div
-            style={{
-              fontFamily: "'Jost', sans-serif",
-              fontSize: 11,
-              fontWeight: 300,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--wtb-accent)",
-              marginBottom: 12,
-            }}
-          >
-            Day overview
-          </div>
-          <LogisticsTimelineBar
+        <LogisticsDayTimeline
+          windows={report.windows}
+          dayStart={dayStart}
+          dayEnd={dayEnd}
+          ceremonyStart={ctx.ceremonyStart}
+          ceremonyEnd={ctx.ceremonyEnd}
+          justResolvedIds={justResolvedIds}
+        />
+      )}
+
+      {sectionHeading("What we found")}
+      <LogisticsWhatWeFound
+        windows={report.windows}
+        bottlenecks={report.bottlenecks}
+        ctx={ctx}
+        justResolvedIds={justResolvedIds}
+        onFixWindow={handleFixWindow}
+      />
+
+      {sectionHeading("Time windows")}
+      {report.windows.map((w) => {
+        const expanded = expandedWindowId === w.id;
+        const needsControls =
+          w.status === "overflow" ||
+          w.status === "tight" ||
+          fixHighlightId === w.id;
+        return (
+          <LogisticsWindowCard
+            key={w.id}
+            window={w}
+            expanded={expanded}
+            highlight={fixHighlightId === w.id}
+            fixHighlight={fixHighlightId === w.id}
+            justResolved={justResolvedIds.has(w.id)}
+            onToggle={() => toggleWindow(w.id)}
+            showControls={needsControls && expanded}
             windows={report.windows}
-            dayStart={dayStart}
-            dayEnd={dayEnd}
-            justResolvedIds={justResolvedIds}
+            inlineHints={inlineHints}
+            {...props}
           />
-          <div
-            style={{
-              display: "flex",
-              gap: 16,
-              marginBottom: 20,
-              flexWrap: "wrap",
-              fontSize: 11,
-              fontFamily: "'Jost', sans-serif",
-              color: "var(--wtb-text-muted)",
-            }}
-          >
-            <span>
-              <span style={{ color: STATUS.ok.color }}>■</span> Comfortable
-            </span>
-            <span>
-              <span style={{ color: STATUS.tight.color }}>■</span> Tight
-            </span>
-            <span>
-              <span style={{ color: STATUS.overflow.color }}>■</span> Over capacity
-            </span>
-          </div>
-        </>
-      )}
-
-      <LogisticsAdjustPanel {...props} inlineHints={inlineHints} />
-
-      <div
-        style={{
-          fontFamily: "'Jost', sans-serif",
-          fontSize: 11,
-          fontWeight: 300,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--wtb-accent)",
-          margin: "8px 0 12px",
-        }}
-      >
-        Time windows
-      </div>
-      {report.windows.map((w) => (
-        <WindowSummaryCard key={w.id} window={w} justResolved={justResolvedIds.has(w.id)} />
-      ))}
-
-      {hasBottlenecks && (
-        <>
-          <div
-            style={{
-              fontFamily: "'Jost', sans-serif",
-              fontSize: 11,
-              fontWeight: 300,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--wtb-accent)",
-              margin: "28px 0 14px",
-            }}
-          >
-            What we found
-          </div>
-          {report.bottlenecks.map((bn) => {
-            const window = report.windows.find((w) => w.id === bn.windowId);
-            if (!window) return null;
-            return (
-              <div
-                key={bn.windowId}
-                style={{
-                  background: "var(--wtb-surface)",
-                  border: "1px solid var(--wtb-border-subtle)",
-                  borderRadius: 10,
-                  padding: "16px 18px",
-                  marginBottom: 12,
-                }}
-              >
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 14,
-                    color: "var(--wtb-text)",
-                    fontFamily: "'Jost', sans-serif",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {describeBottleneckDetailed(window, ctx)}
-                </p>
-              </div>
-            );
-          })}
-        </>
-      )}
+        );
+      })}
     </div>
   );
 
   const footer = () => {
+    if (inModal && onClose) {
+      return (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 24, gap: 12 }}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              padding: "12px 32px",
+              background: "var(--wtb-accent)",
+              color: "var(--wtb-on-accent)",
+              border: "none",
+              borderRadius: 8,
+              fontSize: 15,
+              fontWeight: 400,
+              cursor: "pointer",
+              fontFamily: "'Jost', sans-serif",
+            }}
+          >
+            Done
+          </button>
+        </div>
+      );
+    }
+
     if (hasOverflow) {
       return (
-        <div style={{ width: "100%" }}>
+        <div style={{ width: "100%", marginTop: 24 }}>
           <div
             style={{
-              background: "rgba(139, 69, 69, 0.12)",
+              background: "rgba(139, 69, 69, 0.1)",
               border: "1px solid rgba(139, 69, 69, 0.35)",
               borderRadius: 10,
               padding: "16px 18px",
               marginBottom: 16,
             }}
           >
-            {report.bottlenecks.map((bn) => {
-              const window = report.windows.find((w) => w.id === bn.windowId);
-              if (!window || window.status !== "overflow") return null;
-              return (
-                <p
-                  key={bn.windowId}
-                  style={{
-                    margin: "0 0 10px",
-                    fontSize: 13,
-                    color: "var(--wtb-text)",
-                    fontFamily: "'Jost', sans-serif",
-                    lineHeight: 1.55,
-                  }}
-                >
-                  {describeBottleneckDetailed(window, ctx)}
-                </p>
-              );
-            })}
             <p
               style={{
                 margin: 0,
-                fontSize: 12,
-                color: "var(--wtb-text-muted)",
+                fontSize: 14,
+                color: "#8b4545",
                 fontFamily: "'Jost', sans-serif",
-                lineHeight: 1.5,
+                lineHeight: 1.55,
               }}
             >
-              You can continue and fine-tune manually in the timeline editor.
+              {overflowCount} conflict{overflowCount !== 1 ? "s" : ""} still need attention. You can
+              keep adjusting above or continue and fine-tune in the timeline editor.
             </p>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={() => setWizardStep(7)}
-              style={{
-                padding: "12px 28px",
-                border: "1px solid var(--wtb-accent)",
-                borderRadius: 8,
-                background: "transparent",
-                color: "var(--wtb-text)",
-                fontSize: 15,
-                cursor: "pointer",
-                fontFamily: "'Jost', sans-serif",
-                fontWeight: 300,
-              }}
-            >
-              Back
-            </button>
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
             <button
               type="button"
               onClick={() => setWizardStep(99)}
               style={{
-                padding: "12px 28px",
+                padding: "12px 32px",
                 background: "var(--wtb-accent)",
                 color: "var(--wtb-on-accent)",
                 border: "none",
@@ -500,44 +251,32 @@ function WizardLogisticsCheck(props) {
                 fontFamily: "'Jost', sans-serif",
               }}
             >
-              Continue Anyway
+              Continue Anyway — I will adjust manually
             </button>
           </div>
         </div>
       );
     }
 
-    const allClear = !hasTight;
+    const summary = hasTight
+      ? "Looking good — a few tight spots"
+      : "Everything looks great!";
+    const nextLabel = hasTight ? "Continue" : "Next";
+
     return (
-      <div style={{ width: "100%" }}>
-        <div
+      <div style={{ width: "100%", marginTop: 24 }}>
+        <p
           style={{
+            margin: "0 0 16px",
+            fontSize: 16,
             textAlign: "center",
-            marginBottom: 16,
-            padding: "12px 0",
+            color: "var(--wtb-text)",
+            fontFamily: "'Cormorant Garamond', serif",
           }}
         >
-          <div
-            style={{
-              fontSize: 40,
-              color: allClear ? STATUS.ok.color : STATUS.tight.color,
-              marginBottom: 8,
-            }}
-          >
-            ✓
-          </div>
-          <p
-            style={{
-              margin: 0,
-              fontSize: 16,
-              color: "var(--wtb-text)",
-              fontFamily: "'Cormorant Garamond', serif",
-            }}
-          >
-            {allClear ? "Your schedule looks great!" : "Your schedule is tight but workable"}
-          </p>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+          {summary}
+        </p>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <button
             type="button"
             onClick={() => setWizardStep(7)}
@@ -570,7 +309,7 @@ function WizardLogisticsCheck(props) {
               fontFamily: "'Jost', sans-serif",
             }}
           >
-            {allClear ? "Next" : "Looks Good — Continue"}
+            {nextLabel}
           </button>
         </div>
       </div>
@@ -578,12 +317,17 @@ function WizardLogisticsCheck(props) {
   };
 
   if (inModal) {
-    return <div style={{ paddingBottom: 8 }}>{content}</div>;
+    return (
+      <div style={{ paddingBottom: 8 }}>
+        {content}
+        {footer()}
+      </div>
+    );
   }
 
   return (
     <div
-      className="wiz-layout"
+      className="wiz-layout wtb-logistics-wizard"
       style={{
         padding: "16px 0",
         background: "var(--wtb-bg)",
@@ -592,8 +336,8 @@ function WizardLogisticsCheck(props) {
         color: "var(--wtb-text)",
       }}
     >
-      <div className="wiz-step-col">
-        <div style={{ maxWidth: 600, margin: "0 auto", padding: "24px 16px 40px" }}>
+      <div className="wiz-step-col" style={{ maxWidth: "min(960px, 100%)", margin: "0 auto" }}>
+        <div style={{ padding: "24px clamp(12px, 3vw, 24px) 40px" }}>
           <div style={{ marginBottom: 24 }}>
             <div
               style={{
@@ -634,34 +378,9 @@ function WizardLogisticsCheck(props) {
               background: "var(--wtb-surface)",
               border: "1px solid var(--wtb-border-subtle)",
               borderRadius: 12,
-              padding: "24px 20px",
-              marginBottom: 20,
+              padding: "24px clamp(12px, 3vw, 20px)",
             }}
           >
-            <h2
-              style={{
-                margin: "0 0 8px 0",
-                fontSize: "clamp(22px,4vw,32px)",
-                color: "var(--wtb-text)",
-                fontWeight: 400,
-                fontFamily: "'Cormorant Garamond', serif",
-              }}
-            >
-              Logistics Check
-            </h2>
-            <p
-              style={{
-                margin: "0 0 24px 0",
-                fontSize: 14,
-                color: "var(--wtb-text-muted)",
-                lineHeight: 1.5,
-                fontFamily: "'Jost', sans-serif",
-                fontWeight: 300,
-              }}
-            >
-              We&apos;ve reviewed your wedding day schedule. Adjust anything below and watch the
-              timeline update in real time.
-            </p>
             {content}
           </div>
           {footer()}
