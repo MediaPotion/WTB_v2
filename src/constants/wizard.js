@@ -1,14 +1,13 @@
 const DESKTOP_MIN_WIDTH = "(min-width: 901px)";
 
 const SETTINGS_WIZARD_TABS = [
-  { label: "Wedding Details", step: 1 },
-  { label: "Locations",       step: 2 },
-  { label: "Package",         step: 3 },
-  { label: "Pre-Ceremony",    step: 4 },
-  { label: "First Looks",     step: 5 },
-  { label: "Ceremony",        step: 6 },
-  { label: "Portraits",       step: 8 },
-  { label: "Reception",       step: 9 },
+  { label: "The Couple",           step: 1 },
+  { label: "Your Locations",       step: 2 },
+  { label: "Coverage & Package",   step: 3 },
+  { label: "Before the Ceremony",  step: 4 },
+  { label: "The Ceremony",         step: 5 },
+  { label: "Portrait Sessions",    step: 6 },
+  { label: "The Reception",        step: 7 },
 ];
 
 const PROJECT_VERSION = 2;

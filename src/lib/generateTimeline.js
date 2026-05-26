@@ -131,6 +131,18 @@ export function generateTimeline(wizardAnswers) {
     specialDance: wiz_specialDance,
     speeches: wiz_speeches,
     speechCount: wiz_speechCount,
+    speechMinutesPerSpeaker: wiz_speechMinutesPerSpeaker = 10,
+    guestCount: wiz_guestCount,
+    ceremonyNotes: wiz_ceremonyNotes,
+    narrationBride: wiz_narrationBride,
+    narrationGroom: wiz_narrationGroom,
+    preCeremonyDetailRings: wiz_preCeremonyDetailRings,
+    preCeremonyDetailDress: wiz_preCeremonyDetailDress,
+    preCeremonyDetailDrone: wiz_preCeremonyDetailDrone,
+    preCeremonyBrideSolo: wiz_preCeremonyBrideSolo,
+    preCeremonyGroomSolo: wiz_preCeremonyGroomSolo,
+    weddingPartyGroupShots: wiz_weddingPartyGroupShots,
+    couplePortraits: wiz_couplePortraits,
     openDanceFloor: wiz_openDanceFloor,
     garterToss: wiz_garterToss,
     bouquetToss: wiz_bouquetToss,
@@ -159,6 +171,10 @@ export function generateTimeline(wizardAnswers) {
   const includePreCeremonyBrideParty = wiz_preCeremonyBrideParty !== false;
   const includePreCeremonyGroomReady = wiz_preCeremonyGroomReady !== false;
   const includePreCeremonyGroomParty = wiz_preCeremonyGroomParty !== false;
+  const includePreCeremonyBrideSolo = wiz_preCeremonyBrideSolo !== false;
+  const includePreCeremonyGroomSolo = wiz_preCeremonyGroomSolo !== false;
+  const includeWeddingPartyGroup = wiz_weddingPartyGroupShots !== false;
+  const includeCouplePortraits = wiz_couplePortraits !== false;
 
   // ---- Setup ----
     const ceremonyDurationMin = wiz_ceremonyDuration || 30;
@@ -186,8 +202,8 @@ export function generateTimeline(wizardAnswers) {
     const neitherFitsPost = remainingAfterFamily < 15;
     const bothFitPost     = remainingAfterFamily >= 35;
     // Pre-ceremony flags: only when post-ceremony time is insufficient and couple can be seen before
-    let weddingPartyPre = neitherFitsPost && groupShotsBeforeCeremony;
-    let brideGroomPre = !bothFitPost && groupShotsBeforeCeremony;
+    let weddingPartyPre = neitherFitsPost && groupShotsBeforeCeremony && includeWeddingPartyGroup;
+    let brideGroomPre = !bothFitPost && groupShotsBeforeCeremony && includeCouplePortraits;
     for (const s of wiz_appliedLogisticsSuggestions) {
       if (s.type === "move_pre_ceremony" && groupShotsBeforeCeremony) {
         if (s.targetEvents?.includes("Wedding Party: Group Shots")) weddingPartyPre = true;
@@ -248,15 +264,19 @@ export function generateTimeline(wizardAnswers) {
     // First block of the day — duration 0, establishes starting location
     preBlocks.push({ type: "location", event: brideLoc, address: brideLocAddress, duration: 0, notes: "Start of day" });
     // Detail shots (earliest in the day)
+    const includeDetailRings = wiz_preCeremonyDetailRings !== false;
+    const includeDetailDress = wiz_preCeremonyDetailDress !== false;
+    const includeDetailDrone = wiz_preCeremonyDetailDrone !== false;
     if (includePreCeremonyDetails) {
-      if (wiz_drone && !skipPreCeremonyDrone) {
+      if (wiz_drone && !skipPreCeremonyDrone && includeDetailDrone) {
         preBlocks.push({ event: "Details: Drone & Venue Shots", duration: 30, isOutdoor: true });
       }
-      preBlocks.push({ event: "Details: Rings, Invitations, & Accessories", duration: 20 });
-      preBlocks.push({ event: "Details: Dress Shots", duration: 10 });
+      if (includeDetailRings) preBlocks.push({ event: "Details: Rings, Invitations, & Accessories", duration: 20 });
+      if (includeDetailDress) preBlocks.push({ event: "Details: Dress Shots", duration: 10 });
     }
-    // Bride narration before portrait blocks
-    if (wiz_narration) preBlocks.push({ event: "Narration: Bride Record Narration", duration: 15 });
+    if (wiz_narration && wiz_narrationBride !== false) {
+      preBlocks.push({ event: "Narration: Bride Record Narration", duration: 15 });
+    }
     if (includePreCeremonyPreDress) {
       preBlocks.push({ event: "Bride (Pre-Dress): Bridesmaids Group Shots", duration: 10, isOutdoor: false });
       preBlocks.push({ event: "Bride (Pre-Dress): Bridesmaids Individual Shots", duration: 10, isOutdoor: false });
@@ -269,7 +289,9 @@ export function generateTimeline(wizardAnswers) {
     pushFLForPhaseExceptBridesmaids("bride", preBlocks);
     pushBridesmaidsFirstLook(preBlocks);
     preBlocks.push({ event: "Bride (Dress On): Accessory Shots", duration: 10 });
-    preBlocks.push({ event: "Bride (Dress On): Bride Portraits", duration: 15, isOutdoor: true });
+    if (includePreCeremonyBrideSolo) {
+      preBlocks.push({ event: "Bride (Dress On): Solo Portraits", duration: 15, isOutdoor: true });
+    }
     if (includePreCeremonyBrideParty) {
       preBlocks.push({ event: "Bride (Dress On): Bridesmaids Group Shots", duration: 10, isOutdoor: true });
       preBlocks.push({ event: "Bride (Dress On): Bridesmaids Individual Shots", duration: 10, isOutdoor: true });
@@ -288,10 +310,14 @@ export function generateTimeline(wizardAnswers) {
       });
     }
     if (includePreCeremonyGroomReady || includePreCeremonyGroomParty) {
-      if (wiz_narration) preBlocks.push({ event: "Narration: Groom Record Narration", duration: 15 });
+      if (wiz_narration && wiz_narrationGroom !== false) {
+        preBlocks.push({ event: "Narration: Groom Record Narration", duration: 15 });
+      }
       if (includePreCeremonyGroomReady) {
         preBlocks.push({ event: "Groom: Assisted with Tie & Jacket", duration: 10 });
-        preBlocks.push({ event: "Groom: Portraits", duration: 15, isOutdoor: true });
+      }
+      if (includePreCeremonyGroomSolo) {
+        preBlocks.push({ event: "Groom: Solo Portraits", duration: 15, isOutdoor: true });
       }
       if (includePreCeremonyGroomParty) {
         preBlocks.push({ event: "Groom: Groomsmen Group Shots", duration: 10, isOutdoor: true });
@@ -318,7 +344,7 @@ export function generateTimeline(wizardAnswers) {
     pushFLForPhaseExceptBridesmaids("ceremony", preBlocks);
     // Pre-ceremony portraits only when post-ceremony time is insufficient
     if (weddingPartyPre) preBlocks.push({ event: "Wedding Party: Group Shots", duration: 15, isOutdoor: true });
-    if (brideGroomPre)   preBlocks.push({ event: "Bride & Groom: Portraits",   duration: 20, isOutdoor: true });
+    if (brideGroomPre) preBlocks.push({ event: "Bride & Groom: Portraits", duration: 20, isOutdoor: true });
     // A/V setup always immediately before ceremony — nothing between them
     preBlocks.push({ event: "Ceremony: Audio/Video Setup", duration: 20 });
 
@@ -330,7 +356,17 @@ export function generateTimeline(wizardAnswers) {
 
     // ---- Ceremony ----
     const ceremonyEventName = wiz_ceremonyDuration <= 45 ? "Ceremony: Average" : "Ceremony: Catholic";
-    const ceremonyBlocks = [{ event: ceremonyEventName, duration: ceremonyDurationMin, time: ceremonyStartTime, isOutdoor: wiz_ceremonyOutdoor }];
+    const ceremonyNoteParts = [];
+    if (wiz_guestCount) ceremonyNoteParts.push(`Guest count: ${wiz_guestCount}`);
+    if (wiz_ceremonyNotes) ceremonyNoteParts.push(String(wiz_ceremonyNotes).trim());
+    const ceremonyBlockNotes = ceremonyNoteParts.filter(Boolean).join("\n");
+    const ceremonyBlocks = [{
+      event: ceremonyEventName,
+      duration: ceremonyDurationMin,
+      time: ceremonyStartTime,
+      isOutdoor: wiz_ceremonyOutdoor,
+      notes: ceremonyBlockNotes,
+    }];
 
     // ---- Post-ceremony (Phase 3 continues at ceremony venue) ----
     const postBlocks = [];
@@ -345,15 +381,15 @@ export function generateTimeline(wizardAnswers) {
       pushPost({ event: "Group Photos: Family (10 Groups)", duration: 45, notes: familyGroupNotes, isOutdoor: true });
     }
     // Wedding Party: post if time allows; TIME CONSTRAINT if neither fits and can't go pre-ceremony
-    if (!neitherFitsPost) {
+    if (!neitherFitsPost && includeWeddingPartyGroup) {
       pushPost({ event: "Wedding Party: Group Shots", duration: 15, isOutdoor: true });
-    } else if (!groupShotsBeforeCeremony) {
+    } else if (!groupShotsBeforeCeremony && includeWeddingPartyGroup) {
       pushPost({ type: "constraint", event: "TIME CONSTRAINT", duration: 0, notes: "Not enough post-ceremony time for Wedding Party Group Shots. Consider a later reception start or fewer family groups." });
     }
     // B&G Portraits: post if both fit; TIME CONSTRAINT if can't fit and can't go pre-ceremony
-    if (bothFitPost) {
+    if (bothFitPost && includeCouplePortraits) {
       pushPost({ event: "Bride & Groom: Portraits", duration: 20, isOutdoor: true });
-    } else if (!groupShotsBeforeCeremony) {
+    } else if (!groupShotsBeforeCeremony && includeCouplePortraits) {
       pushPost({ type: "constraint", event: "TIME CONSTRAINT", duration: 0, notes: "Not enough post-ceremony time for Bride & Groom Portraits. Consider a later reception start, fewer family groups, a first look, or the couple being visible to each other before the ceremony." });
     }
 
@@ -425,7 +461,14 @@ export function generateTimeline(wizardAnswers) {
       recT = Math.max(recT, dinnerTime);
       addRec({ event: "Reception: Dinner", duration: 60, notes: wiz_dinnerStyle ? `Style: ${wiz_dinnerStyle}` : "" });
     }
-    if (wiz_speeches)       addRec({ event: "Reception: Speeches (Per Speaker)", duration: 10 * wiz_speechCount, notes: `${wiz_speechCount} speaker${wiz_speechCount !== 1 ? "s" : ""} total` });
+    if (wiz_speeches) {
+      const perSpeaker = Math.max(1, parseInt(wiz_speechMinutesPerSpeaker, 10) || 10);
+      addRec({
+        event: "Reception: Speeches (Per Speaker)",
+        duration: perSpeaker * wiz_speechCount,
+        notes: `${wiz_speechCount} speaker${wiz_speechCount !== 1 ? "s" : ""} × ${perSpeaker} min`,
+      });
+    }
     if (wiz_openDanceFloor) addRec({ event: "Reception: Open Dance Floor", duration: 20 });
     if (wiz_garterToss)     addRec({ event: "Reception: Garder Belt Toss", duration: 15 });
     if (wiz_bouquetToss)    addRec({ event: "Reception: Bouquet Toss", duration: 15 });

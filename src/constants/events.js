@@ -8,6 +8,8 @@ const EVENT_BLOCKS = [
   "Bride (Pre-Dress): Putting Dress On::10",
   "Bride (Dress On): Accessory Shots::10",
   "Bride (Dress On): Bride Portraits::15",
+  "Bride (Dress On): Solo Portraits::15",
+  "Groom: Solo Portraits::15",
   "Bride (Dress On): Bridesmaids Group Shots::10",
   "Bride (Dress On): Bridesmaids Individual Shots::10",
   "First Look: with Parent::10",

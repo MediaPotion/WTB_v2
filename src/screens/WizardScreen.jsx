@@ -1,5 +1,5 @@
 import React from "react";
-import { resolveWeddingLocations } from "../lib/weddingLocations";
+import { getEnteredLocationNames } from "../lib/wizardLocations";
 import { WizardStep1 } from "../components/wizard/WizardStep1";
 import { WizardStep2 } from "../components/wizard/WizardStep2";
 import { WizardStep3 } from "../components/wizard/WizardStep3";
@@ -7,30 +7,26 @@ import { WizardStep4 } from "../components/wizard/WizardStep4";
 import { WizardStep5 } from "../components/wizard/WizardStep5";
 import { WizardStep6 } from "../components/wizard/WizardStep6";
 import { WizardStep7 } from "../components/wizard/WizardStep7";
-import { WizardStep8 } from "../components/wizard/WizardStep8";
 import { WizardConfirm } from "../components/wizard/WizardConfirm";
 import { WizardLogisticsCheck } from "../components/wizard/WizardLogisticsCheck";
 
-const WIZARD_PROGRESS_STEPS = [1, 2, 3, 4, 5, 6, 8, 9, 10];
+export const WIZARD_PROGRESS_STEPS = [1, 2, 3, 4, 5, 6, 7];
+export const WIZARD_LOGISTICS_STEP = 8;
+export const WIZARD_CONFIRM_STEP = 99;
 
 function renderWizard(props) {
   const { inModal = false, overrideStep = null, wizardStep } = props;
   const effectiveStep = overrideStep !== null ? overrideStep : wizardStep;
   const totalWizardSteps = WIZARD_PROGRESS_STEPS.length;
+  const progressIndex = WIZARD_PROGRESS_STEPS.indexOf(effectiveStep);
   const displayStep =
-    effectiveStep === 99
+    effectiveStep === WIZARD_CONFIRM_STEP || effectiveStep === WIZARD_LOGISTICS_STEP
       ? totalWizardSteps
-      : Math.max(1, WIZARD_PROGRESS_STEPS.indexOf(effectiveStep) + 1);
+      : progressIndex >= 0
+        ? progressIndex + 1
+        : totalWizardSteps;
 
-  const { ceremony, reception, brideReady, groomReady, differentReadyLocations } =
-    resolveWeddingLocations(props);
-  const allWizLocations = [
-    ceremony.name,
-    ...(props.wiz_receptionSameAsCeremony ? [] : [reception.name]),
-    brideReady.name,
-    ...(differentReadyLocations ? [groomReady.name] : []),
-    ...props.wiz_locations.filter((l) => l.name).map((l) => l.name),
-  ];
+  const enteredLocationNames = getEnteredLocationNames(props);
 
   const wizToggleStyle = (selected) => ({
     padding: "12px 24px",
@@ -88,12 +84,12 @@ function renderWizard(props) {
             </div>
             <div style={{ background: "var(--wtb-surface)", border: "1px solid var(--wtb-border-subtle)", borderRadius: 12, padding: "24px 20px", marginBottom: 20 }}>
               <h2 style={{ margin: "0 0 8px 0", fontSize: "clamp(22px,4vw,32px)", color: "var(--wtb-text)", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>{title}</h2>
-              <p style={{ margin: "0 0 24px 0", fontSize: 14, color: "var(--wtb-text-muted)", lineHeight: 1.5, fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>{subtitle}</p>
+              {subtitle && <p style={{ margin: "0 0 24px 0", fontSize: 14, color: "var(--wtb-text-muted)", lineHeight: 1.5, fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>{subtitle}</p>}
               {content}
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-              <button onClick={backFn} style={{ padding: "12px 28px", border: "1px solid var(--wtb-accent)", borderRadius: 8, background: "transparent", color: "var(--wtb-text)", fontSize: 15, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300, transition: "all 0.2s" }}>Back</button>
-              <button onClick={nextFn} style={{ padding: "12px 32px", background: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 8, fontSize: 15, fontWeight: 400, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}>{nextLabel}</button>
+              <button type="button" onClick={backFn} style={{ padding: "12px 28px", border: "1px solid var(--wtb-accent)", borderRadius: 8, background: "transparent", color: "var(--wtb-text)", fontSize: 15, cursor: "pointer", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>Back</button>
+              <button type="button" onClick={nextFn} style={{ padding: "12px 32px", background: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 8, fontSize: 15, fontWeight: 400, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}>{nextLabel}</button>
             </div>
           </div>
         </div>
@@ -107,23 +103,22 @@ function renderWizard(props) {
     effectiveStep,
     totalWizardSteps,
     displayStep,
-    allWizLocations,
+    enteredLocationNames,
     wizToggleStyle,
     wizCheckRowStyle,
     wizSectionHeading,
     stepCard,
   };
 
-  if (effectiveStep === 2) return <WizardStep2 {...stepProps} />;
   if (effectiveStep === 1) return <WizardStep1 {...stepProps} />;
+  if (effectiveStep === 2) return <WizardStep2 {...stepProps} />;
   if (effectiveStep === 3) return <WizardStep3 {...stepProps} />;
   if (effectiveStep === 4) return <WizardStep4 {...stepProps} />;
   if (effectiveStep === 5) return <WizardStep5 {...stepProps} />;
   if (effectiveStep === 6) return <WizardStep6 {...stepProps} />;
-  if (effectiveStep === 8) return <WizardStep7 {...stepProps} />;
-  if (effectiveStep === 9) return <WizardStep8 {...stepProps} />;
-  if (effectiveStep === 10) return <WizardLogisticsCheck {...stepProps} />;
-  if (effectiveStep === 99) return <WizardConfirm {...stepProps} />;
+  if (effectiveStep === 7) return <WizardStep7 {...stepProps} />;
+  if (effectiveStep === WIZARD_LOGISTICS_STEP) return <WizardLogisticsCheck {...stepProps} />;
+  if (effectiveStep === WIZARD_CONFIRM_STEP) return <WizardConfirm {...stepProps} />;
   return null;
 }
 
