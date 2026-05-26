@@ -351,6 +351,16 @@ export function generateTimeline(wizardAnswers) {
     // A/V setup always immediately before ceremony — nothing between them
     preBlocks.push({ event: "Ceremony: Audio/Video Setup", duration: 20 });
 
+    const hairMakeupDeadlineNote = "All hair and make-up must be finished by this time";
+    for (const block of preBlocks) {
+      if (block.event && /^Bride \((Pre-Dress|Dress On)\)/.test(block.event)) {
+        block.notes = block.notes
+          ? `${block.notes}\n${hairMakeupDeadlineNote}`
+          : hairMakeupDeadlineNote;
+        break;
+      }
+    }
+
     // === Schedule preBlocks backwards from ceremony start ===
     const totalPreDuration = preBlocks.reduce((sum, b) => sum + b.duration, 0);
     const preStart = ceremonyStartTime - totalPreDuration;
