@@ -5,6 +5,7 @@ import {
   minimumDurationForEvent,
   RECEPTION_DURATION_MINIMUMS,
 } from "../../lib/logisticsEventAdjustments";
+import { mergeDraftProps } from "../../lib/logisticsPendingChanges";
 
 const sectionTitle = {
   fontFamily: "'Jost', sans-serif",
@@ -50,81 +51,89 @@ function schedulableWindowEvents(window) {
   );
 }
 
-function LogisticsOverflowControls({ window: w, rows = [], ...props }) {
+function LogisticsOverflowControls({ window: w, rows = [], logisticsPending, onLogisticsPendingPatch, ...props }) {
+  const draft = mergeDraftProps(props, logisticsPending);
+  const patch = (updates) => onLogisticsPendingPatch?.(updates);
+
   const {
     photoEnabled,
     videoEnabled,
-    photoEndHour,
-    photoEndMinute,
-    photoEndPeriod,
-    setPhotoEndHour,
-    setPhotoEndMinute,
-    setPhotoEndPeriod,
-    videoEndHour,
-    videoEndMinute,
-    videoEndPeriod,
-    setVideoEndHour,
-    setVideoEndMinute,
-    setVideoEndPeriod,
-    photoStartHour,
-    photoStartMinute,
-    photoStartPeriod,
-    wiz_logisticsEventAdjustments = {},
-    setWiz_logisticsEventAdjustments,
     wiz_openDanceFloor,
-    setWiz_openDanceFloor,
     wiz_garterToss,
-    setWiz_garterToss,
     wiz_bouquetToss,
-    setWiz_bouquetToss,
     wiz_speeches,
-    setWiz_speeches,
     wiz_cakeCutting,
-    setWiz_cakeCutting,
     wiz_firstDance,
-    setWiz_firstDance,
     wiz_grandEntrance,
-    setWiz_grandEntrance,
   } = props;
+
+  const committedAdj = props.wiz_logisticsEventAdjustments || {};
+  const draftAdj = draft.wiz_logisticsEventAdjustments || {};
 
   const events = schedulableWindowEvents(w);
   const timelineRunEnd = rows.length
-    ? Math.max(...rows.filter((r) => r.type !== "constraint").map((r) => r.time + (parseInt(r.duration, 10) || 0)))
+    ? Math.max(
+        ...rows
+          .filter((r) => r.type !== "constraint")
+          .map((r) => r.time + (parseInt(r.duration, 10) || 0))
+      )
     : w.endTime;
   const coverageEnd = w.endTime;
   const extendMinutes = Math.max(0, timelineRunEnd - coverageEnd);
 
-  const setAdjustment = (eventName, patch) => {
-    setWiz_logisticsEventAdjustments((prev) => ({
-      ...prev,
-      [eventName]: { ...(prev[eventName] || {}), ...patch },
-    }));
+  const setAdjustment = (eventName, patchFields) => {
+    patch({
+      wiz_logisticsEventAdjustments: {
+        [eventName]: {
+          ...(committedAdj[eventName] || {}),
+          ...(draftAdj[eventName] || {}),
+          ...patchFields,
+        },
+      },
+    });
   };
 
-  const togglePropForEvent = (eventName) => {
-    if (eventName.includes("Open Dance")) return [wiz_openDanceFloor, setWiz_openDanceFloor];
-    if (eventName.includes("Garder") || eventName.includes("Garter")) {
-      return [wiz_garterToss, setWiz_garterToss];
+  const receptionFlagPatch = (eventName, removed) => {
+    if (eventName.includes("Open Dance")) patch({ wiz_openDanceFloor: !removed });
+    else if (eventName.includes("Garder") || eventName.includes("Garter")) {
+      patch({ wiz_garterToss: !removed });
+    } else if (eventName.includes("Bouquet")) patch({ wiz_bouquetToss: !removed });
+    else if (eventName.includes("Speeches")) patch({ wiz_speeches: !removed });
+    else if (eventName.includes("Cake")) patch({ wiz_cakeCutting: !removed });
+    else if (eventName.includes("Bride & Groom Dance")) patch({ wiz_firstDance: !removed });
+    else if (eventName.includes("Grand Entrance")) patch({ wiz_grandEntrance: !removed });
+  };
+
+  const handleRemoveToggle = (eventName, include) => {
+    if (include) {
+      setAdjustment(eventName, { removed: false });
+      receptionFlagPatch(eventName, false);
+    } else {
+      setAdjustment(eventName, { removed: true });
+      receptionFlagPatch(eventName, true);
     }
-    if (eventName.includes("Bouquet")) return [wiz_bouquetToss, setWiz_bouquetToss];
-    if (eventName.includes("Speeches")) return [wiz_speeches, setWiz_speeches];
-    if (eventName.includes("Cake")) return [wiz_cakeCutting, setWiz_cakeCutting];
-    if (eventName.includes("Bride & Groom Dance")) return [wiz_firstDance, setWiz_firstDance];
-    if (eventName.includes("Grand Entrance")) return [wiz_grandEntrance, setWiz_grandEntrance];
-    return [true, null];
   };
 
-  const handleRemoveToggle = (eventName, removed) => {
-    setAdjustment(eventName, { removed });
-    const [enabled, setter] = togglePropForEvent(eventName);
-    if (setter && !removed && !enabled) setter(true);
-    if (setter && removed) setter(false);
+  const isEventIncluded = (eventName) => {
+    const adj = { ...committedAdj[eventName], ...draftAdj[eventName] };
+    if (adj.removed) return false;
+    if (eventName.includes("Open Dance")) return draft.wiz_openDanceFloor !== false;
+    if (eventName.includes("Garder") || eventName.includes("Garter")) {
+      return draft.wiz_garterToss !== false;
+    }
+    if (eventName.includes("Bouquet")) return draft.wiz_bouquetToss !== false;
+    if (eventName.includes("Speeches")) return draft.wiz_speeches !== false;
+    if (eventName.includes("Cake")) return draft.wiz_cakeCutting !== false;
+    if (eventName.includes("Bride & Groom Dance")) return draft.wiz_firstDance !== false;
+    if (eventName.includes("Grand Entrance")) return draft.wiz_grandEntrance !== false;
+    return true;
   };
 
   return (
     <div className="wtb-logistics-overflow-controls" style={{ marginTop: 16 }}>
       <p style={{ ...bodyText, color: "#8b4545", marginBottom: 16 }}>
-        This window is over capacity. Use one or more options below — you can combine them.
+        This window is over capacity. Use one or more options below — you can combine them, then
+        click Apply Changes.
       </p>
 
       <div
@@ -151,12 +160,12 @@ function LogisticsOverflowControls({ window: w, rows = [], ...props }) {
               Photo coverage end
             </label>
             <TimePickerRow
-              hour={photoEndHour}
-              minute={photoEndMinute}
-              period={photoEndPeriod}
-              onHour={setPhotoEndHour}
-              onMinute={setPhotoEndMinute}
-              onPeriod={setPhotoEndPeriod}
+              hour={draft.photoEndHour}
+              minute={draft.photoEndMinute}
+              period={draft.photoEndPeriod}
+              onHour={(h) => patch({ photoEndHour: h })}
+              onMinute={(m) => patch({ photoEndMinute: m })}
+              onPeriod={(p) => patch({ photoEndPeriod: p })}
             />
           </div>
         )}
@@ -166,12 +175,12 @@ function LogisticsOverflowControls({ window: w, rows = [], ...props }) {
               Video coverage end
             </label>
             <TimePickerRow
-              hour={videoEndHour}
-              minute={videoEndMinute}
-              period={videoEndPeriod}
-              onHour={setVideoEndHour}
-              onMinute={setVideoEndMinute}
-              onPeriod={setVideoEndPeriod}
+              hour={draft.videoEndHour}
+              minute={draft.videoEndMinute}
+              period={draft.videoEndPeriod}
+              onHour={(h) => patch({ videoEndHour: h })}
+              onMinute={(m) => patch({ videoEndMinute: m })}
+              onPeriod={(p) => patch({ videoEndPeriod: p })}
             />
           </div>
         )}
@@ -189,15 +198,14 @@ function LogisticsOverflowControls({ window: w, rows = [], ...props }) {
         <p style={sectionTitle}>Option B</p>
         <h4 style={optionHeading}>Shorten event duration</h4>
         <p style={bodyText}>
-          Reduce how long events run in this window. Changes apply immediately to the timeline and
-          bar above.
+          Reduce how long events run in this window. Preview updates when you apply changes.
         </p>
         {events.map((row) => {
           const eventName = row.event;
           const current = parseInt(row.duration, 10) || 0;
           const min = minimumDurationForEvent(eventName);
-          const adj = wiz_logisticsEventAdjustments[eventName];
-          const value = adj?.duration != null ? adj.duration : current;
+          const adj = { ...committedAdj[eventName], ...draftAdj[eventName] };
+          const value = adj.duration != null ? adj.duration : current;
           return (
             <div
               key={`${eventName}-${row.time}`}
@@ -251,15 +259,12 @@ function LogisticsOverflowControls({ window: w, rows = [], ...props }) {
       >
         <p style={sectionTitle}>Option C</p>
         <h4 style={optionHeading}>Remove the event</h4>
-        <p style={{ ...bodyText }}>
-          Turn off an event to drop it from the timeline. The schedule and logistics bar update
-          right away.
+        <p style={bodyText}>
+          Turn off an event to drop it from the timeline after you apply changes.
         </p>
         {events.map((row) => {
           const eventName = row.event;
-          const removed = !!wiz_logisticsEventAdjustments[eventName]?.removed;
-          const [enabled] = togglePropForEvent(eventName);
-          const checked = !removed && enabled !== false;
+          const checked = isEventIncluded(eventName);
           return (
             <label
               key={`rm-${eventName}-${row.time}`}
@@ -277,7 +282,7 @@ function LogisticsOverflowControls({ window: w, rows = [], ...props }) {
               <input
                 type="checkbox"
                 checked={checked}
-                onChange={(e) => handleRemoveToggle(eventName, !e.target.checked)}
+                onChange={(e) => handleRemoveToggle(eventName, e.target.checked)}
                 style={{ width: 18, height: 18 }}
               />
               Include {eventName}

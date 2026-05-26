@@ -716,7 +716,14 @@ const MOBILE_TWEAKS = `
     padding: 0 4px;
     box-sizing: border-box;
     overflow: hidden;
-    transition: background 0.55s ease, border-color 0.55s ease, opacity 0.55s ease;
+    transition: background 0.55s ease, border-color 0.55s ease, opacity 0.55s ease, width 0.55s ease, left 0.55s ease;
+  }
+  .wtb-logistics-confirm-banner {
+    opacity: 1;
+    transition: opacity 0.4s ease;
+  }
+  .wtb-logistics-confirm-banner--fade {
+    opacity: 0;
   }
   .wtb-logistics-segment--overflow {
     background-image: repeating-linear-gradient(

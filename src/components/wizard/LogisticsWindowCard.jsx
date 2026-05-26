@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { formatClockLabel } from "../../lib/time";
 import { LOGISTICS_STATUS, formatWindowTimeSummary } from "./logisticsPresentation";
 import { LogisticsWindowControls } from "./LogisticsWindowControls";
+import { LogisticsApplyBar } from "./LogisticsApplyBar";
 
 function LogisticsWindowCard({
   window: w,
@@ -14,6 +15,11 @@ function LogisticsWindowCard({
   inlineHints,
   fixHighlight,
   rows,
+  hasPending,
+  pendingSummary,
+  onApplyPending,
+  onDiscardPending,
+  applyingPending,
   ...controlProps
 }) {
   const ref = useRef(null);
@@ -140,15 +146,24 @@ function LogisticsWindowCard({
           )}
 
           {showControls && (
-            <LogisticsWindowControls
-              windowId={w.id}
-              window={w}
-              windows={windows}
-              rows={rows}
-              inlineHints={inlineHints}
-              highlightAll={fixHighlight}
-              {...controlProps}
-            />
+            <>
+              <LogisticsWindowControls
+                windowId={w.id}
+                window={w}
+                windows={windows}
+                rows={rows}
+                inlineHints={inlineHints}
+                highlightAll={fixHighlight}
+                {...controlProps}
+              />
+              <LogisticsApplyBar
+                summary={pendingSummary}
+                hasPending={hasPending}
+                onApply={onApplyPending}
+                onDiscard={onDiscardPending}
+                applying={applyingPending}
+              />
+            </>
           )}
         </div>
       )}

@@ -7,10 +7,63 @@ import {
   buildInlineHints,
   countOverflowConflicts,
 } from "../../lib/logisticsConflictCopy";
+import {
+  applyPendingToWizard,
+  buildApplyConfirmationMessage,
+  describePendingSummary,
+  hasPendingChanges,
+  mergeDraftProps,
+  patchPendingState,
+  previewLogistics,
+} from "../../lib/logisticsPendingChanges";
 import { LogisticsDayTimeline } from "./LogisticsDayTimeline";
 import { LogisticsWhatWeFound } from "./LogisticsWhatWeFound";
 import { LogisticsWindowCard } from "./LogisticsWindowCard";
+import { LogisticsConfirmBanner } from "./LogisticsConfirmBanner";
 import { resolveDayBounds } from "./logisticsPresentation";
+
+const PENDING_SETTER_FIELDS = [
+  ["photoEndHour", "setPhotoEndHour"],
+  ["photoEndMinute", "setPhotoEndMinute"],
+  ["photoEndPeriod", "setPhotoEndPeriod"],
+  ["videoEndHour", "setVideoEndHour"],
+  ["videoEndMinute", "setVideoEndMinute"],
+  ["videoEndPeriod", "setVideoEndPeriod"],
+  ["photoStartHour", "setPhotoStartHour"],
+  ["photoStartMinute", "setPhotoStartMinute"],
+  ["photoStartPeriod", "setPhotoStartPeriod"],
+  ["wiz_receptionHour", "setWiz_receptionHour"],
+  ["wiz_receptionMinute", "setWiz_receptionMinute"],
+  ["wiz_receptionPeriod", "setWiz_receptionPeriod"],
+  ["wiz_dinnerStartHour", "setWiz_dinnerStartHour"],
+  ["wiz_dinnerStartMinute", "setWiz_dinnerStartMinute"],
+  ["wiz_dinnerStartPeriod", "setWiz_dinnerStartPeriod"],
+  ["wiz_openDanceFloor", "setWiz_openDanceFloor"],
+  ["wiz_garterToss", "setWiz_garterToss"],
+  ["wiz_bouquetToss", "setWiz_bouquetToss"],
+  ["wiz_speeches", "setWiz_speeches"],
+  ["wiz_cakeCutting", "setWiz_cakeCutting"],
+  ["wiz_firstDance", "setWiz_firstDance"],
+  ["wiz_brideParentDance", "setWiz_brideParentDance"],
+  ["wiz_groomParentDance", "setWiz_groomParentDance"],
+  ["wiz_grandEntrance", "setWiz_grandEntrance"],
+  ["wiz_drone", "setWiz_drone"],
+  ["wiz_preCeremonyDetails", "setWiz_preCeremonyDetails"],
+  ["wiz_preCeremonyDetailRings", "setWiz_preCeremonyDetailRings"],
+  ["wiz_preCeremonyDetailDress", "setWiz_preCeremonyDetailDress"],
+  ["wiz_preCeremonyDetailDrone", "setWiz_preCeremonyDetailDrone"],
+  ["wiz_standardPerson1Solo", "setWiz_standardPerson1Solo"],
+  ["wiz_standardPerson2Solo", "setWiz_standardPerson2Solo"],
+  ["wiz_standardBridePartyPortraits", "setWiz_standardBridePartyPortraits"],
+  ["wiz_standardGroomPartyPortraits", "setWiz_standardGroomPartyPortraits"],
+  ["wiz_standardWeddingPartyShots", "setWiz_standardWeddingPartyShots"],
+  ["wiz_standardCouplePortraits", "setWiz_standardCouplePortraits"],
+  ["wiz_includeGoldenHour", "setWiz_includeGoldenHour"],
+  ["wiz_firstLookGroom", "setWiz_firstLookGroom"],
+  ["wiz_familyGroups", "setWiz_familyGroups"],
+  ["wiz_preCeremonyBrideParty", "setWiz_preCeremonyBrideParty"],
+  ["wiz_preCeremonyGroomParty", "setWiz_preCeremonyGroomParty"],
+];
 
 function WizardLogisticsCheck(props) {
   const {
@@ -22,13 +75,23 @@ function WizardLogisticsCheck(props) {
     onClose,
   } = props;
 
+  const [logisticsPending, setLogisticsPending] = useState({});
+  const [timelineRefreshKey, setTimelineRefreshKey] = useState(0);
+  const [applyingPending, setApplyingPending] = useState(false);
+  const [confirmBanner, setConfirmBanner] = useState(null);
+  const screenRef = useRef(null);
+
+  const onLogisticsPendingPatch = useCallback((patch) => {
+    setLogisticsPending((prev) => patchPendingState(prev, patch));
+  }, []);
+
   const answers = useMemo(() => buildWizardAnswers(props), [props]);
   const rows = useMemo(() => {
     if (timelineRows != null) {
       return [...timelineRows].sort((a, b) => a.time - b.time);
     }
     return generateTimelineLib(answers);
-  }, [timelineRows, answers]);
+  }, [timelineRows, answers, timelineRefreshKey]);
   const report = useMemo(() => calculateLogistics(answers, rows), [answers, rows]);
   const ctx = useMemo(() => buildLogisticsContext(props, rows), [props, rows]);
   const inlineHints = useMemo(
@@ -48,6 +111,103 @@ function WizardLogisticsCheck(props) {
 
   const prevStatusesRef = useRef({});
   const [flashResolvedIds, setFlashResolvedIds] = useState(() => new Set());
+  const [resolvedWindowIds, setResolvedWindowIds] = useState(() => new Set());
+
+  const hasPending = hasPendingChanges(logisticsPending);
+  const pendingSummary = useMemo(() => {
+    if (!hasPending) return "";
+    const focused = report.windows.find((w) => w.id === expandedWindowId);
+    return describePendingSummary(props, logisticsPending, focused);
+  }, [hasPending, logisticsPending, props, expandedWindowId, report.windows]);
+
+  const controlProps = useMemo(() => {
+    const draft = mergeDraftProps(props, logisticsPending);
+    const next = {
+      ...props,
+      ...draft,
+      logisticsPending,
+      onLogisticsPendingPatch,
+    };
+    for (const [field, setterName] of PENDING_SETTER_FIELDS) {
+      if (typeof props[setterName] === "function") {
+        next[setterName] = (value) => {
+          setLogisticsPending((prev) => patchPendingState(prev, { [field]: value }));
+        };
+      }
+    }
+    return next;
+  }, [props, logisticsPending, onLogisticsPendingPatch]);
+
+  const handleApplyPending = useCallback(() => {
+    if (!hasPendingChanges(logisticsPending)) return;
+    const beforeReport = report;
+    const focusedId = expandedWindowId;
+    const pendingSnapshot = {
+      ...logisticsPending,
+      wiz_logisticsEventAdjustments: logisticsPending.wiz_logisticsEventAdjustments
+        ? { ...logisticsPending.wiz_logisticsEventAdjustments }
+        : undefined,
+    };
+
+    setApplyingPending(true);
+    const afterPreview = previewLogistics(props, pendingSnapshot);
+
+    applyPendingToWizard(props, pendingSnapshot);
+    setLogisticsPending({});
+    setTimelineRefreshKey((k) => k + 1);
+
+    const msg = buildApplyConfirmationMessage({
+      pending: pendingSnapshot,
+      committedProps: props,
+      beforeReport,
+      afterReport: afterPreview.report,
+      focusedWindowId: focusedId,
+    });
+    setConfirmBanner(msg);
+
+    const newlyResolved = [];
+    for (const w of afterPreview.report.windows) {
+      const before = beforeReport.windows.find((b) => b.id === w.id);
+      if (before?.status === "overflow" && w.status !== "overflow") {
+        newlyResolved.push(w.id);
+      }
+    }
+    if (newlyResolved.length > 0) {
+      setFlashResolvedIds((prev) => {
+        const n = new Set(prev);
+        newlyResolved.forEach((id) => n.add(id));
+        return n;
+      });
+      setResolvedWindowIds((prev) => {
+        const n = new Set(prev);
+        newlyResolved.forEach((id) => n.add(id));
+        return n;
+      });
+      setTimeout(() => {
+        setFlashResolvedIds((prev) => {
+          const n = new Set(prev);
+          newlyResolved.forEach((id) => n.delete(id));
+          return n;
+        });
+      }, 900);
+    }
+
+    if (focusedId) {
+      const afterWin = afterPreview.report.windows.find((w) => w.id === focusedId);
+      if (afterWin && afterWin.status !== "overflow") {
+        setExpandedWindowId(null);
+      }
+    }
+
+    requestAnimationFrame(() => {
+      screenRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setApplyingPending(false);
+    });
+  }, [logisticsPending, props, report, expandedWindowId]);
+
+  const handleDiscardPending = useCallback(() => {
+    setLogisticsPending({});
+  }, []);
 
   useEffect(() => {
     const newlyResolved = [];
@@ -113,7 +273,12 @@ function WizardLogisticsCheck(props) {
   );
 
   const content = (
-    <div className="wtb-logistics-screen">
+    <div className="wtb-logistics-screen" ref={screenRef}>
+      <LogisticsConfirmBanner
+        message={confirmBanner?.text}
+        tone={confirmBanner?.tone}
+        onDone={() => setConfirmBanner(null)}
+      />
       <header style={{ marginBottom: 24 }}>
         <h2
           style={{
@@ -137,19 +302,20 @@ function WizardLogisticsCheck(props) {
             maxWidth: 560,
           }}
         >
-          Your wedding day at a glance. Tap a time window to adjust settings — everything updates
-          instantly.
+          Your wedding day at a glance. Tap a time window to adjust settings, then click Apply
+          Changes to update the timeline and logistics check.
         </p>
       </header>
 
       {report.windows.length > 0 && (
         <LogisticsDayTimeline
+          key={timelineRefreshKey}
           windows={report.windows}
           dayStart={dayStart}
           dayEnd={dayEnd}
           ceremonyStart={ctx.ceremonyStart}
           ceremonyEnd={ctx.ceremonyEnd}
-          justResolvedIds={justResolvedIds}
+          justResolvedIds={flashResolvedIds}
         />
       )}
 
@@ -169,6 +335,10 @@ function WizardLogisticsCheck(props) {
           w.status === "overflow" ||
           w.status === "tight" ||
           fixHighlightId === w.id;
+        const cardResolved =
+          resolvedWindowIds.has(w.id) ||
+          (flashResolvedIds.has(w.id) && w.status !== "overflow");
+
         return (
           <LogisticsWindowCard
             key={w.id}
@@ -176,13 +346,18 @@ function WizardLogisticsCheck(props) {
             expanded={expanded}
             highlight={fixHighlightId === w.id}
             fixHighlight={fixHighlightId === w.id}
-            justResolved={justResolvedIds.has(w.id)}
+            justResolved={cardResolved}
             onToggle={() => toggleWindow(w.id)}
             showControls={(needsControls || w.status === "overflow") && expanded}
             windows={report.windows}
             rows={rows}
             inlineHints={inlineHints}
-            {...props}
+            hasPending={hasPending && expanded}
+            pendingSummary={pendingSummary}
+            onApplyPending={handleApplyPending}
+            onDiscardPending={handleDiscardPending}
+            applyingPending={applyingPending}
+            {...controlProps}
           />
         );
       })}

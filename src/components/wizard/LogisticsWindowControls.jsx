@@ -107,11 +107,27 @@ const RECEPTION_TOGGLES = [
   { match: (e) => e.includes("Open Dance"), key: "open", label: "Open dance floor", minutes: 0, prop: "wiz_openDanceFloor", setter: "setWiz_openDanceFloor" },
 ];
 
-function LogisticsWindowControls({ windowId, window: w, windows, inlineHints, highlightAll, rows, ...props }) {
+function LogisticsWindowControls({
+  windowId,
+  window: w,
+  windows,
+  inlineHints,
+  highlightAll,
+  rows,
+  logisticsPending,
+  onLogisticsPendingPatch,
+  ...props
+}) {
   if (w.status === "overflow") {
     return (
       <div className="wtb-logistics-window-controls">
-        <LogisticsOverflowControls window={w} rows={rows} {...props} />
+        <LogisticsOverflowControls
+          window={w}
+          rows={rows}
+          logisticsPending={logisticsPending}
+          onLogisticsPendingPatch={onLogisticsPendingPatch}
+          {...props}
+        />
       </div>
     );
   }
