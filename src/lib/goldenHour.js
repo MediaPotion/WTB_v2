@@ -38,6 +38,43 @@ export function longitudeToUtcOffsetHours(lon) {
   return Math.round(Number(lon) / 15);
 }
 
+/** Day-of-year (1–366) for a YYYY-MM-DD string. */
+function dayOfYearFromDateStr(dateStr) {
+  const d = new Date(dateStr + "T12:00:00");
+  return Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000);
+}
+
+/** US Eastern: second Sunday in March (inclusive) through first Sunday in November (exclusive). */
+function isUsEasternDaylightTime(dateStr) {
+  const d = new Date(dateStr + "T12:00:00");
+  if (Number.isNaN(d.getTime())) return false;
+  const year = d.getFullYear();
+  const secondSundayMarch = nthWeekdayOfMonth(year, 0, 2, 2);
+  const firstSundayNovember = nthWeekdayOfMonth(year, 0, 1, 10);
+  return d >= secondSundayMarch && d < firstSundayNovember;
+}
+
+/** @param month 0-based; weekday 0 = Sunday */
+function nthWeekdayOfMonth(year, weekday, n, month) {
+  const first = new Date(year, month, 1);
+  const firstWeekday = first.getDay();
+  let day = 1 + ((weekday - firstWeekday + 7) % 7) + (n - 1) * 7;
+  return new Date(year, month, day);
+}
+
+/**
+ * US Eastern civil offset from UTC (hours). EDT = -4, EST = -5.
+ * Michigan and Northern Michigan weddings use this zone.
+ */
+export function getEasternUtcOffsetHours(dateStr) {
+  return isUsEasternDaylightTime(dateStr) ? -4 : -5;
+}
+
+function equationOfTimeMinutes(day) {
+  const b = ((360 / 365) * (day - 81) * Math.PI) / 180;
+  return 9.87 * Math.sin(2 * b) - 7.53 * Math.cos(b) - 1.5 * Math.sin(b);
+}
+
 function estimateFromDate(dateStr) {
   if (!dateStr) return null;
   const d = new Date(dateStr + "T12:00:00");
@@ -67,7 +104,7 @@ async function nominatimSearch(query) {
   return {
     lat,
     lon,
-    utcOffsetHours: longitudeToUtcOffsetHours(lon),
+    utcOffsetHours: null,
     label: hit.display_name || q,
   };
 }
@@ -114,26 +151,29 @@ export async function geocodeCeremonyLocation(venueName, streetAddress) {
   return null;
 }
 
-/** Sunset estimate from latitude and day-of-year (simplified, UTC minutes). */
-function sunsetMinutesUtc(dateStr, lat) {
-  const d = new Date(dateStr + "T12:00:00");
-  const day = Math.floor(
-    (d - new Date(d.getFullYear(), 0, 0)) / 86400000
-  );
+/** Sunset in minutes from midnight UTC (solar + longitude + equation of time). */
+function sunsetMinutesUtc(dateStr, lat, lon) {
+  const day = dayOfYearFromDateStr(dateStr);
   const decl = 23.45 * Math.sin(((360 / 365) * (day - 81) * Math.PI) / 180);
   const latRad = (lat * Math.PI) / 180;
   const declRad = (decl * Math.PI) / 180;
   const cosHa = -Math.tan(latRad) * Math.tan(declRad);
-  const ha = Math.acos(Math.max(-1, Math.min(1, cosHa))) * (180 / Math.PI);
-  const sunsetUtcHours = 12 + ha / 15;
-  return Math.round(sunsetUtcHours * 60);
+  const haDeg = Math.acos(Math.max(-1, Math.min(1, cosHa))) * (180 / Math.PI);
+  const solarNoonUtc = 720 - 4 * lon - equationOfTimeMinutes(day);
+  return Math.round(solarNoonUtc + 4 * haDeg);
 }
 
-export function getGoldenHourFromCoords(dateStr, lat, lon, utcOffsetHours) {
+/**
+ * Golden hour from coordinates using US Eastern civil time (EDT/EST by wedding date).
+ *
+ * Test cases (lat 44.76, lng -85.62, Traverse City area):
+ * - 2026-05-29: sunset ~9:00 PM EDT, golden hour start ~8:15 PM EDT
+ * - 2026-12-15: sunset ~5:15 PM EST, golden hour start ~4:25 PM EST
+ */
+export function getGoldenHourFromCoords(dateStr, lat, lon, _utcOffsetHours) {
   if (!dateStr || lat == null || lon == null) return null;
-  const offset =
-    utcOffsetHours != null ? Number(utcOffsetHours) : longitudeToUtcOffsetHours(lon);
-  const sunsetUtc = sunsetMinutesUtc(dateStr, lat);
+  const offset = getEasternUtcOffsetHours(dateStr);
+  const sunsetUtc = sunsetMinutesUtc(dateStr, lat, lon);
   const offsetMins = Math.round(offset * 60);
   const sunsetLocal = ((sunsetUtc + offsetMins) % 1440 + 1440) % 1440;
   const start = Math.max(0, sunsetLocal - SUNSET_OFFSET);
