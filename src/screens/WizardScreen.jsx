@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import { getEnteredLocationNames } from "../lib/wizardLocations";
 import { WizardStep1 } from "../components/wizard/WizardStep1";
 import { WizardStep2 } from "../components/wizard/WizardStep2";
@@ -14,9 +14,28 @@ export const WIZARD_PROGRESS_STEPS = [1, 2, 3, 4, 5, 6, 7];
 export const WIZARD_LOGISTICS_STEP = 8;
 export const WIZARD_CONFIRM_STEP = 99;
 
-function renderWizard(props) {
+function scrollWizardToTop(rootEl, inModal) {
+  window.scrollTo(0, 0);
+  rootEl?.scrollIntoView({ block: "start", inline: "nearest" });
+  if (!inModal || !rootEl) return;
+  let parent = rootEl.parentElement;
+  while (parent) {
+    const { overflowY } = getComputedStyle(parent);
+    if (overflowY === "auto" || overflowY === "scroll") {
+      parent.scrollTop = 0;
+    }
+    parent = parent.parentElement;
+  }
+}
+
+function WizardScreen(props) {
+  const wizardRootRef = useRef(null);
   const { inModal = false, overrideStep = null, wizardStep } = props;
   const effectiveStep = overrideStep !== null ? overrideStep : wizardStep;
+
+  useLayoutEffect(() => {
+    scrollWizardToTop(wizardRootRef.current, inModal);
+  }, [effectiveStep, inModal]);
   const totalWizardSteps = WIZARD_PROGRESS_STEPS.length;
   const progressIndex = WIZARD_PROGRESS_STEPS.indexOf(effectiveStep);
   const displayStep =
@@ -110,16 +129,29 @@ function renderWizard(props) {
     stepCard,
   };
 
-  if (effectiveStep === 1) return <WizardStep1 {...stepProps} />;
-  if (effectiveStep === 2) return <WizardStep2 {...stepProps} />;
-  if (effectiveStep === 3) return <WizardStep3 {...stepProps} />;
-  if (effectiveStep === 4) return <WizardStep4 {...stepProps} />;
-  if (effectiveStep === 5) return <WizardStep5 {...stepProps} />;
-  if (effectiveStep === 6) return <WizardStep6 {...stepProps} />;
-  if (effectiveStep === 7) return <WizardStep7 {...stepProps} />;
-  if (effectiveStep === WIZARD_LOGISTICS_STEP) return <WizardLogisticsCheck {...stepProps} />;
-  if (effectiveStep === WIZARD_CONFIRM_STEP) return <WizardConfirm {...stepProps} />;
-  return null;
+  let stepContent = null;
+  if (effectiveStep === 1) stepContent = <WizardStep1 {...stepProps} />;
+  else if (effectiveStep === 2) stepContent = <WizardStep2 {...stepProps} />;
+  else if (effectiveStep === 3) stepContent = <WizardStep3 {...stepProps} />;
+  else if (effectiveStep === 4) stepContent = <WizardStep4 {...stepProps} />;
+  else if (effectiveStep === 5) stepContent = <WizardStep5 {...stepProps} />;
+  else if (effectiveStep === 6) stepContent = <WizardStep6 {...stepProps} />;
+  else if (effectiveStep === 7) stepContent = <WizardStep7 {...stepProps} />;
+  else if (effectiveStep === WIZARD_LOGISTICS_STEP) {
+    stepContent = <WizardLogisticsCheck {...stepProps} />;
+  } else if (effectiveStep === WIZARD_CONFIRM_STEP) {
+    stepContent = <WizardConfirm {...stepProps} />;
+  }
+
+  return (
+    <div ref={wizardRootRef} className="wtb-wizard-root" data-wizard-step={effectiveStep}>
+      {stepContent}
+    </div>
+  );
 }
 
-export { renderWizard };
+function renderWizard(props) {
+  return <WizardScreen {...props} />;
+}
+
+export { renderWizard, WizardScreen };
