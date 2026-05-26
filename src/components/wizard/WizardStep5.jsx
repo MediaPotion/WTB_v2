@@ -1,5 +1,5 @@
 import React from "react";
-import { TimePickerRow, FlexibilityControl } from "./wizardShared";
+import { TimePickerRow, FlexibilityControl, numberFieldProps } from "./wizardShared";
 
 function WizardStep5(props) {
   const {
@@ -47,19 +47,19 @@ function WizardStep5(props) {
         {wiz_ceremonyType === "average" && (
           <div>
             <label style={{ display: "block", fontSize: 13, color: "var(--wtb-text-muted)", marginBottom: 6 }}>Duration (minutes)</label>
-            <input type="number" min={5} max={45} step={5} value={wiz_ceremonyDuration} onChange={(e) => setWiz_ceremonyDuration(parseInt(e.target.value, 10) || 30)} style={{ ...inputStyle, width: 100 }} />
+            <input type="number" min={5} max={45} step={5} {...numberFieldProps(wiz_ceremonyDuration, setWiz_ceremonyDuration)} style={{ ...inputStyle, width: 100 }} />
           </div>
         )}
         {wiz_ceremonyType === "catholic" && (
           <div>
             <p style={{ fontSize: 13, color: "var(--wtb-text-muted)", margin: "0 0 8px", fontFamily: "'Jost', sans-serif" }}>Typically 60+ minutes</p>
-            <input type="number" min={46} step={5} value={wiz_ceremonyDuration} onChange={(e) => setWiz_ceremonyDuration(parseInt(e.target.value, 10) || 60)} style={{ ...inputStyle, width: 100 }} />
+            <input type="number" min={46} step={5} {...numberFieldProps(wiz_ceremonyDuration, setWiz_ceremonyDuration)} style={{ ...inputStyle, width: 100 }} />
           </div>
         )}
         {wiz_ceremonyType === "other" && (
           <div>
             <label style={{ display: "block", fontSize: 13, color: "var(--wtb-text-muted)", marginBottom: 6 }}>Duration (minutes)</label>
-            <input type="number" min={5} step={5} value={wiz_ceremonyOtherDuration} onChange={(e) => setWiz_ceremonyOtherDuration(parseInt(e.target.value, 10) || 30)} style={{ ...inputStyle, width: 100 }} />
+            <input type="number" min={5} step={5} {...numberFieldProps(wiz_ceremonyOtherDuration, setWiz_ceremonyOtherDuration)} style={{ ...inputStyle, width: 100 }} />
           </div>
         )}
       </div>

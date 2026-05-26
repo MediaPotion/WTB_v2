@@ -4,6 +4,21 @@ import { SETTINGS_SELECT_STYLE } from "../../constants/styles";
 export const HOUR_OPTIONS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 export const MINUTE_OPTIONS = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
 
+/** Controlled number input: allows clearing the field while typing (defaults apply at generation time). */
+export function numberFieldProps(value, onChange) {
+  return {
+    value: value === "" ? "" : value,
+    onChange: (e) => {
+      const raw = e.target.value;
+      if (raw === "") onChange("");
+      else {
+        const n = parseInt(raw, 10);
+        if (!Number.isNaN(n)) onChange(n);
+      }
+    },
+  };
+}
+
 const inputStyle = {
   width: "100%",
   padding: 9,
@@ -81,8 +96,7 @@ export function FlexibilityControl({ hard, onHardChange, flexMinutes, onFlexMinu
           <input
             type="number"
             min={1}
-            value={flexMinutes}
-            onChange={(e) => onFlexMinutesChange(parseInt(e.target.value, 10) || 30)}
+            {...numberFieldProps(flexMinutes, onFlexMinutesChange)}
             style={{ ...inputStyle, width: 100 }}
           />
         </div>
