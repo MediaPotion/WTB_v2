@@ -156,6 +156,9 @@ export function generateTimeline(wizardAnswers) {
     dinnerFlexibility: wiz_dinnerFlexibility = 0,
     receptionStartFlexibility: wiz_receptionStartFlexibility = 0,
     appliedLogisticsSuggestions: wiz_appliedLogisticsSuggestions = [],
+    photoStartHour: wiz_photoStartHour,
+    photoStartMinute: wiz_photoStartMinute,
+    photoStartPeriod: wiz_photoStartPeriod,
   } = wizardAnswers;
 
   const skipPreCeremonyDrone = wiz_appliedLogisticsSuggestions.some(
@@ -479,13 +482,26 @@ export function generateTimeline(wizardAnswers) {
       ...receptionBlocks,
     ];
 
+    const coverageStartTargets = [];
+    if (wiz_photoStartHour != null) {
+      coverageStartTargets.push(
+        parseTimeInput(
+          wiz_photoStartHour,
+          wiz_photoStartMinute || "00",
+          wiz_photoStartPeriod || "AM"
+        )
+      );
+    }
     const earlierStart = wiz_appliedLogisticsSuggestions.find(
       (s) => s.type === "earlier_start" && s.newTime != null
     );
-    if (earlierStart && allBlocks.length > 0) {
+    if (earlierStart?.newTime != null) coverageStartTargets.push(earlierStart.newTime);
+    const coverageStartTarget =
+      coverageStartTargets.length > 0 ? Math.min(...coverageStartTargets) : null;
+    if (coverageStartTarget != null && allBlocks.length > 0) {
       const minTime = Math.min(...allBlocks.map((b) => b.time));
-      if (minTime > earlierStart.newTime) {
-        const shift = minTime - earlierStart.newTime;
+      if (minTime > coverageStartTarget) {
+        const shift = minTime - coverageStartTarget;
         allBlocks.forEach((b) => {
           b.time -= shift;
         });

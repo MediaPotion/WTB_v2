@@ -1,9 +1,15 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useRef, useEffect, useState } from "react";
 import { generateTimeline as generateTimelineLib } from "../../lib/generateTimeline";
 import { calculateLogistics } from "../../lib/calculateLogistics";
 import { buildWizardAnswers } from "../../lib/buildWizardAnswers";
-import { applyLogisticsSuggestion, describeBottleneck } from "../../lib/applyLogisticsSuggestion";
+import {
+  buildLogisticsContext,
+  buildInlineHints,
+  countOverflowConflicts,
+  describeBottleneckDetailed,
+} from "../../lib/logisticsConflictCopy";
 import { formatClockLabel } from "../../lib/time";
+import { LogisticsAdjustPanel } from "./LogisticsAdjustPanel";
 
 const STATUS = {
   ok: { color: "#6b8f71", icon: "✓", label: "Comfortable" },
@@ -11,7 +17,7 @@ const STATUS = {
   overflow: { color: "#8b4545", icon: "✕", label: "Over capacity" },
 };
 
-function LogisticsTimelineBar({ windows, dayStart, dayEnd }) {
+function LogisticsTimelineBar({ windows, dayStart, dayEnd, justResolvedIds }) {
   const span = Math.max(dayEnd - dayStart, 1);
   return (
     <div style={{ marginBottom: 28 }}>
@@ -29,6 +35,7 @@ function LogisticsTimelineBar({ windows, dayStart, dayEnd }) {
           const left = ((w.startTime - dayStart) / span) * 100;
           const width = Math.max(((w.endTime - w.startTime) / span) * 100, 2);
           const st = STATUS[w.status] || STATUS.ok;
+          const resolved = justResolvedIds.has(w.id);
           return (
             <div
               key={w.id}
@@ -39,8 +46,8 @@ function LogisticsTimelineBar({ windows, dayStart, dayEnd }) {
                 width: `${width}%`,
                 top: 4,
                 bottom: 4,
-                background: st.color,
-                opacity: w.status === "ok" ? 0.75 : 0.9,
+                background: resolved ? STATUS.ok.color : st.color,
+                opacity: w.status === "ok" || resolved ? 0.85 : 0.9,
                 borderRadius: 4,
                 minWidth: 4,
                 display: "flex",
@@ -49,6 +56,7 @@ function LogisticsTimelineBar({ windows, dayStart, dayEnd }) {
                 padding: "0 4px",
                 boxSizing: "border-box",
                 overflow: "hidden",
+                transition: "background 0.6s ease, opacity 0.6s ease",
               }}
             >
               <span
@@ -88,12 +96,12 @@ function LogisticsTimelineBar({ windows, dayStart, dayEnd }) {
   );
 }
 
-function WindowSummaryCard({ window: w }) {
-  const st = STATUS[w.status] || STATUS.ok;
+function WindowSummaryCard({ window: w, justResolved }) {
+  const st = justResolved ? STATUS.ok : STATUS[w.status] || STATUS.ok;
   let detail = `${w.availableMinutes} minutes available, ${w.usedMinutes} minutes of events scheduled`;
-  if (w.status === "overflow") {
+  if (w.status === "overflow" && !justResolved) {
     detail = `${detail}, ${w.overflowMinutes} minutes over — needs attention`;
-  } else if (w.status === "tight") {
+  } else if (w.status === "tight" && !justResolved) {
     detail = `${detail}, only ${w.remainingMinutes} minutes of buffer — cutting it close`;
   } else {
     detail = `${detail}, ${w.remainingMinutes} minutes remaining`;
@@ -103,10 +111,17 @@ function WindowSummaryCard({ window: w }) {
     <div
       style={{
         background: "var(--wtb-surface)",
-        border: `1px solid ${w.status === "overflow" ? "rgba(139, 69, 69, 0.45)" : "var(--wtb-border-subtle)"}`,
+        border: `1px solid ${
+          w.status === "overflow" && !justResolved
+            ? "rgba(139, 69, 69, 0.45)"
+            : justResolved
+              ? "rgba(107, 143, 113, 0.45)"
+              : "var(--wtb-border-subtle)"
+        }`,
         borderRadius: 10,
         padding: "16px 18px",
         marginBottom: 12,
+        transition: "border-color 0.5s ease",
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
@@ -123,6 +138,7 @@ function WindowSummaryCard({ window: w }) {
             fontSize: 14,
             flexShrink: 0,
             fontFamily: "'Jost', sans-serif",
+            transition: "color 0.5s ease, background 0.5s ease",
           }}
         >
           {st.icon}
@@ -149,7 +165,14 @@ function WindowSummaryCard({ window: w }) {
           >
             {formatClockLabel(w.startTime)} – {formatClockLabel(w.endTime)}
           </div>
-          <div style={{ fontSize: 13, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif", lineHeight: 1.5 }}>
+          <div
+            style={{
+              fontSize: 13,
+              color: "var(--wtb-text-muted)",
+              fontFamily: "'Jost', sans-serif",
+              lineHeight: 1.5,
+            }}
+          >
             {detail}
           </div>
         </div>
@@ -159,35 +182,53 @@ function WindowSummaryCard({ window: w }) {
 }
 
 function WizardLogisticsCheck(props) {
-  const {
-    inModal,
-    displayStep,
-    totalWizardSteps,
-    setWizardStep,
-    wiz_appliedLogisticsSuggestions,
-    setWiz_appliedLogisticsSuggestions,
-    setWiz_brideOkayBefore,
-    setWiz_dinnerStartHour,
-    setWiz_dinnerStartMinute,
-    setWiz_dinnerStartPeriod,
-    setWiz_receptionHour,
-    setWiz_receptionMinute,
-    setWiz_receptionPeriod,
-    setPhotoStartHour,
-    setPhotoStartMinute,
-    setPhotoStartPeriod,
-    setWiz_preCeremonyDetails,
-    setWiz_familyGroups,
-    wiz_familyGroups,
-  } = props;
+  const { inModal, displayStep, totalWizardSteps, setWizardStep, wizSectionHeading } = props;
 
-  const [skippedIds, setSkippedIds] = useState([]);
-
-  const answers = useMemo(() => buildWizardAnswers(props), [props, wiz_appliedLogisticsSuggestions]);
+  const answers = useMemo(() => buildWizardAnswers(props), [props]);
   const rows = useMemo(() => generateTimelineLib(answers), [answers]);
   const report = useMemo(() => calculateLogistics(answers, rows), [answers, rows]);
+  const ctx = useMemo(() => buildLogisticsContext(props), [props]);
+  const inlineHints = useMemo(
+    () => buildInlineHints(report.suggestions, ctx),
+    [report.suggestions, ctx]
+  );
 
-  const hasOverflow = report.windows.some((w) => w.status === "overflow");
+  const prevStatusesRef = useRef({});
+  const [flashResolvedIds, setFlashResolvedIds] = useState(() => new Set());
+
+  useEffect(() => {
+    const newlyResolved = [];
+    for (const w of report.windows) {
+      if (prevStatusesRef.current[w.id] === "overflow" && w.status !== "overflow") {
+        newlyResolved.push(w.id);
+      }
+    }
+    const next = {};
+    report.windows.forEach((w) => {
+      next[w.id] = w.status;
+    });
+    prevStatusesRef.current = next;
+
+    if (newlyResolved.length === 0) return undefined;
+    setFlashResolvedIds((prev) => {
+      const n = new Set(prev);
+      newlyResolved.forEach((id) => n.add(id));
+      return n;
+    });
+    const timer = setTimeout(() => {
+      setFlashResolvedIds((prev) => {
+        const n = new Set(prev);
+        newlyResolved.forEach((id) => n.delete(id));
+        return n;
+      });
+    }, 900);
+    return () => clearTimeout(timer);
+  }, [report.windows]);
+
+  const justResolvedIds = flashResolvedIds;
+
+  const overflowCount = countOverflowConflicts(report.windows);
+  const hasOverflow = overflowCount > 0;
   const hasTight = report.windows.some((w) => w.status === "tight");
   const hasBottlenecks = report.bottlenecks.length > 0;
 
@@ -198,69 +239,60 @@ function WizardLogisticsCheck(props) {
     ? Math.max(...report.windows.map((w) => w.endTime))
     : report.totalDayMinutes;
 
-  const appliedIds = new Set(wiz_appliedLogisticsSuggestions.map((s) => s.id));
-
-  const visibleSuggestions = report.suggestions.filter(
-    (s) => !skippedIds.includes(s.id) && !appliedIds.has(s.id)
-  );
-
-  const isSuggestionResolved = useCallback(
-    (suggestionId) => {
-      const applied = wiz_appliedLogisticsSuggestions.find((s) => s.id === suggestionId);
-      if (!applied) return false;
-      const win = report.windows.find((w) => w.id === applied.windowId);
-      return win && win.status !== "overflow";
-    },
-    [wiz_appliedLogisticsSuggestions, report.windows]
-  );
-
-  const handleApply = (suggestion) => {
-    const applied = applyLogisticsSuggestion(suggestion, {
-      setBrideOkayBefore: setWiz_brideOkayBefore,
-      setDinnerStartHour: setWiz_dinnerStartHour,
-      setDinnerStartMinute: setWiz_dinnerStartMinute,
-      setDinnerStartPeriod: setWiz_dinnerStartPeriod,
-      setReceptionHour: setWiz_receptionHour,
-      setReceptionMinute: setWiz_receptionMinute,
-      setReceptionPeriod: setWiz_receptionPeriod,
-      setPhotoStartHour,
-      setPhotoStartMinute,
-      setPhotoStartPeriod,
-      setPreCeremonyDetails: setWiz_preCeremonyDetails,
-      setFamilyGroups: setWiz_familyGroups,
-      getFamilyGroups: () => wiz_familyGroups,
-    });
-    setWiz_appliedLogisticsSuggestions((prev) => [...prev, applied]);
-  };
-
-  const handleSkip = (suggestionId) => {
-    setSkippedIds((prev) => [...prev, suggestionId]);
-  };
-
   const headerStatus = hasOverflow
-    ? { color: "#8b4545", icon: "✕", title: "Scheduling conflicts need attention", body: "There are some scheduling conflicts that could not be automatically resolved. You can continue and adjust manually, or go back and modify your selections." }
+    ? {
+        color: "#8b4545",
+        icon: "✕",
+        title: "Scheduling conflicts need attention",
+        body: "Adjust the settings below — your timeline updates as you go.",
+      }
     : hasTight
-      ? { color: "var(--wtb-accent)", icon: "!", title: "A few tight spots", body: "Your schedule is tight in a few places but workable. Review the details below." }
-      : { color: "#6b8f71", icon: "✓", title: "Your schedule looks great", body: "Everything fits comfortably within your time windows." };
+      ? {
+          color: "var(--wtb-accent)",
+          icon: "!",
+          title: "A few tight spots",
+          body: "Your schedule is tight in a few places but workable. Review and adjust if you like.",
+        }
+      : {
+          color: "#6b8f71",
+          icon: "✓",
+          title: "Your schedule looks great",
+          body: "Everything fits comfortably within your time windows.",
+        };
+
+  const conflictTally = (
+    <div
+      style={{
+        textAlign: "center",
+        marginBottom: 20,
+        fontFamily: "'Jost', sans-serif",
+        fontSize: 14,
+      }}
+    >
+      {overflowCount === 0 ? (
+        <span style={{ color: STATUS.ok.color, display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 22 }}>✓</span>
+          All conflicts resolved
+        </span>
+      ) : (
+        <span style={{ color: STATUS.overflow.color }}>
+          {overflowCount} conflict{overflowCount !== 1 ? "s" : ""} remaining
+        </span>
+      )}
+    </div>
+  );
 
   const content = (
     <div>
       <div
         style={{
           textAlign: "center",
-          padding: "20px 12px 28px",
+          padding: "12px 12px 20px",
           borderBottom: "1px solid var(--wtb-border-subtle)",
-          marginBottom: 24,
+          marginBottom: 20,
         }}
       >
-        <div
-          style={{
-            fontSize: 36,
-            color: headerStatus.color,
-            marginBottom: 12,
-            lineHeight: 1,
-          }}
-        >
+        <div style={{ fontSize: 36, color: headerStatus.color, marginBottom: 10, lineHeight: 1 }}>
           {headerStatus.icon}
         </div>
         <p
@@ -279,6 +311,8 @@ function WizardLogisticsCheck(props) {
         </p>
       </div>
 
+      {conflictTally}
+
       {report.windows.length > 0 && (
         <>
           <div
@@ -294,14 +328,37 @@ function WizardLogisticsCheck(props) {
           >
             Day overview
           </div>
-          <LogisticsTimelineBar windows={report.windows} dayStart={dayStart} dayEnd={dayEnd} />
-          <div style={{ display: "flex", gap: 16, marginBottom: 20, flexWrap: "wrap", fontSize: 11, fontFamily: "'Jost', sans-serif", color: "var(--wtb-text-muted)" }}>
-            <span><span style={{ color: STATUS.ok.color }}>■</span> Comfortable</span>
-            <span><span style={{ color: STATUS.tight.color }}>■</span> Tight</span>
-            <span><span style={{ color: STATUS.overflow.color }}>■</span> Over capacity</span>
+          <LogisticsTimelineBar
+            windows={report.windows}
+            dayStart={dayStart}
+            dayEnd={dayEnd}
+            justResolvedIds={justResolvedIds}
+          />
+          <div
+            style={{
+              display: "flex",
+              gap: 16,
+              marginBottom: 20,
+              flexWrap: "wrap",
+              fontSize: 11,
+              fontFamily: "'Jost', sans-serif",
+              color: "var(--wtb-text-muted)",
+            }}
+          >
+            <span>
+              <span style={{ color: STATUS.ok.color }}>■</span> Comfortable
+            </span>
+            <span>
+              <span style={{ color: STATUS.tight.color }}>■</span> Tight
+            </span>
+            <span>
+              <span style={{ color: STATUS.overflow.color }}>■</span> Over capacity
+            </span>
           </div>
         </>
       )}
+
+      <LogisticsAdjustPanel {...props} inlineHints={inlineHints} />
 
       <div
         style={{
@@ -317,7 +374,7 @@ function WizardLogisticsCheck(props) {
         Time windows
       </div>
       {report.windows.map((w) => (
-        <WindowSummaryCard key={w.id} window={w} />
+        <WindowSummaryCard key={w.id} window={w} justResolved={justResolvedIds.has(w.id)} />
       ))}
 
       {hasBottlenecks && (
@@ -333,131 +390,33 @@ function WizardLogisticsCheck(props) {
               margin: "28px 0 14px",
             }}
           >
-            Schedule conflicts
+            What we found
           </div>
           {report.bottlenecks.map((bn) => {
             const window = report.windows.find((w) => w.id === bn.windowId);
             if (!window) return null;
-            const bnSuggestions = [
-              ...wiz_appliedLogisticsSuggestions.filter((s) => s.windowId === bn.windowId),
-              ...visibleSuggestions.filter((s) => s.windowId === bn.windowId),
-            ];
             return (
               <div
                 key={bn.windowId}
                 style={{
-                  background: "var(--wtb-surface-raised)",
+                  background: "var(--wtb-surface)",
                   border: "1px solid var(--wtb-border-subtle)",
                   borderRadius: 10,
-                  padding: "18px 18px 12px",
-                  marginBottom: 16,
+                  padding: "16px 18px",
+                  marginBottom: 12,
                 }}
               >
                 <p
                   style={{
-                    margin: "0 0 16px 0",
+                    margin: 0,
                     fontSize: 14,
                     color: "var(--wtb-text)",
                     fontFamily: "'Jost', sans-serif",
-                    lineHeight: 1.55,
+                    lineHeight: 1.6,
                   }}
                 >
-                  {describeBottleneck(window)}
+                  {describeBottleneckDetailed(window, ctx)}
                 </p>
-                {bnSuggestions.map((s) => {
-                  const resolved = isSuggestionResolved(s.id);
-                  const isApplied = appliedIds.has(s.id);
-                  return (
-                    <div
-                      key={s.id}
-                      style={{
-                        background: "var(--wtb-surface)",
-                        border: `1px solid ${resolved ? "rgba(107, 143, 113, 0.4)" : "var(--wtb-border-subtle)"}`,
-                        borderRadius: 8,
-                        padding: "14px 16px",
-                        marginBottom: 10,
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                        {resolved && (
-                          <span style={{ color: STATUS.ok.color, fontSize: 18, flexShrink: 0 }}>✓</span>
-                        )}
-                        <div style={{ flex: 1 }}>
-                          <p
-                            style={{
-                              margin: "0 0 6px 0",
-                              fontSize: 14,
-                              color: "var(--wtb-text)",
-                              fontFamily: "'Jost', sans-serif",
-                            }}
-                          >
-                            {s.description}
-                          </p>
-                          {s.minutesSaved > 0 && (
-                            <p
-                              style={{
-                                margin: 0,
-                                fontSize: 12,
-                                color: "var(--wtb-text-muted)",
-                                fontFamily: "'Jost', sans-serif",
-                              }}
-                            >
-                              Saves approximately {s.minutesSaved} minutes
-                            </p>
-                          )}
-                          {resolved && (
-                            <p
-                              style={{
-                                margin: "8px 0 0 0",
-                                fontSize: 12,
-                                color: STATUS.ok.color,
-                                fontFamily: "'Jost', sans-serif",
-                              }}
-                            >
-                              Resolved — this window now fits
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      {!isApplied && !resolved && (
-                        <div style={{ display: "flex", gap: 10, marginTop: 12, justifyContent: "flex-end" }}>
-                          <button
-                            type="button"
-                            onClick={() => handleSkip(s.id)}
-                            style={{
-                              padding: "8px 18px",
-                              border: "1px solid var(--wtb-border)",
-                              borderRadius: 6,
-                              background: "transparent",
-                              color: "var(--wtb-text-muted)",
-                              fontSize: 13,
-                              cursor: "pointer",
-                              fontFamily: "'Jost', sans-serif",
-                            }}
-                          >
-                            Skip
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleApply(s)}
-                            style={{
-                              padding: "8px 22px",
-                              border: "none",
-                              borderRadius: 6,
-                              background: "var(--wtb-accent)",
-                              color: "var(--wtb-on-accent)",
-                              fontSize: 13,
-                              cursor: "pointer",
-                              fontFamily: "'Jost', sans-serif",
-                            }}
-                          >
-                            Apply
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
               </div>
             );
           })}
@@ -465,6 +424,158 @@ function WizardLogisticsCheck(props) {
       )}
     </div>
   );
+
+  const footer = () => {
+    if (hasOverflow) {
+      return (
+        <div style={{ width: "100%" }}>
+          <div
+            style={{
+              background: "rgba(139, 69, 69, 0.12)",
+              border: "1px solid rgba(139, 69, 69, 0.35)",
+              borderRadius: 10,
+              padding: "16px 18px",
+              marginBottom: 16,
+            }}
+          >
+            {report.bottlenecks.map((bn) => {
+              const window = report.windows.find((w) => w.id === bn.windowId);
+              if (!window || window.status !== "overflow") return null;
+              return (
+                <p
+                  key={bn.windowId}
+                  style={{
+                    margin: "0 0 10px",
+                    fontSize: 13,
+                    color: "var(--wtb-text)",
+                    fontFamily: "'Jost', sans-serif",
+                    lineHeight: 1.55,
+                  }}
+                >
+                  {describeBottleneckDetailed(window, ctx)}
+                </p>
+              );
+            })}
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12,
+                color: "var(--wtb-text-muted)",
+                fontFamily: "'Jost', sans-serif",
+                lineHeight: 1.5,
+              }}
+            >
+              You can continue and fine-tune manually in the timeline editor.
+            </p>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => setWizardStep(7)}
+              style={{
+                padding: "12px 28px",
+                border: "1px solid var(--wtb-accent)",
+                borderRadius: 8,
+                background: "transparent",
+                color: "var(--wtb-text)",
+                fontSize: 15,
+                cursor: "pointer",
+                fontFamily: "'Jost', sans-serif",
+                fontWeight: 300,
+              }}
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={() => setWizardStep(99)}
+              style={{
+                padding: "12px 28px",
+                background: "var(--wtb-accent)",
+                color: "var(--wtb-on-accent)",
+                border: "none",
+                borderRadius: 8,
+                fontSize: 15,
+                cursor: "pointer",
+                fontFamily: "'Jost', sans-serif",
+              }}
+            >
+              Continue Anyway
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    const allClear = !hasTight;
+    return (
+      <div style={{ width: "100%" }}>
+        <div
+          style={{
+            textAlign: "center",
+            marginBottom: 16,
+            padding: "12px 0",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 40,
+              color: allClear ? STATUS.ok.color : STATUS.tight.color,
+              marginBottom: 8,
+            }}
+          >
+            ✓
+          </div>
+          <p
+            style={{
+              margin: 0,
+              fontSize: 16,
+              color: "var(--wtb-text)",
+              fontFamily: "'Cormorant Garamond', serif",
+            }}
+          >
+            {allClear ? "Your schedule looks great!" : "Your schedule is tight but workable"}
+          </p>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+          <button
+            type="button"
+            onClick={() => setWizardStep(7)}
+            style={{
+              padding: "12px 28px",
+              border: "1px solid var(--wtb-accent)",
+              borderRadius: 8,
+              background: "transparent",
+              color: "var(--wtb-text)",
+              fontSize: 15,
+              cursor: "pointer",
+              fontFamily: "'Jost', sans-serif",
+              fontWeight: 300,
+            }}
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={() => setWizardStep(99)}
+            style={{
+              padding: "12px 32px",
+              background: "var(--wtb-accent)",
+              color: "var(--wtb-on-accent)",
+              border: "none",
+              borderRadius: 8,
+              fontSize: 15,
+              fontWeight: 400,
+              cursor: "pointer",
+              fontFamily: "'Jost', sans-serif",
+            }}
+          >
+            {allClear ? "Next" : "Looks Good — Continue"}
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   if (inModal) {
     return <div style={{ paddingBottom: 8 }}>{content}</div>;
@@ -548,83 +659,12 @@ function WizardLogisticsCheck(props) {
                 fontWeight: 300,
               }}
             >
-              We&apos;ve reviewed your wedding day schedule. Here&apos;s what we found.
+              We&apos;ve reviewed your wedding day schedule. Adjust anything below and watch the
+              timeline update in real time.
             </p>
             {content}
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={() => setWizardStep(7)}
-              style={{
-                padding: "12px 28px",
-                border: "1px solid var(--wtb-accent)",
-                borderRadius: 8,
-                background: "transparent",
-                color: "var(--wtb-text)",
-                fontSize: 15,
-                cursor: "pointer",
-                fontFamily: "'Jost', sans-serif",
-                fontWeight: 300,
-              }}
-            >
-              Back
-            </button>
-            {hasOverflow ? (
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  onClick={() => setWizardStep(7)}
-                  style={{
-                    padding: "12px 24px",
-                    border: "1px solid var(--wtb-border)",
-                    borderRadius: 8,
-                    background: "transparent",
-                    color: "var(--wtb-text-muted)",
-                    fontSize: 15,
-                    cursor: "pointer",
-                    fontFamily: "'Jost', sans-serif",
-                  }}
-                >
-                  Go Back
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWizardStep(99)}
-                  style={{
-                    padding: "12px 28px",
-                    background: "var(--wtb-accent)",
-                    color: "var(--wtb-on-accent)",
-                    border: "none",
-                    borderRadius: 8,
-                    fontSize: 15,
-                    cursor: "pointer",
-                    fontFamily: "'Jost', sans-serif",
-                  }}
-                >
-                  Continue Anyway
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setWizardStep(99)}
-                style={{
-                  padding: "12px 32px",
-                  background: "var(--wtb-accent)",
-                  color: "var(--wtb-on-accent)",
-                  border: "none",
-                  borderRadius: 8,
-                  fontSize: 15,
-                  fontWeight: 400,
-                  cursor: "pointer",
-                  fontFamily: "'Jost', sans-serif",
-                }}
-              >
-                Next
-              </button>
-            )}
-          </div>
+          {footer()}
         </div>
       </div>
     </div>
