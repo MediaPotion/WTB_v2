@@ -1,4 +1,5 @@
 import { formatTime } from "./time";
+import { prepareTimelineExportRows } from "./exportPdf";
 
 export function buildTimelineText(params) {
   const {
@@ -19,7 +20,7 @@ export function buildTimelineText(params) {
     videoEndMinute,
     videoEndPeriod,
   } = params;
-  const sortedRows = [...userRows].sort((a, b) => a.time - b.time);
+  const sortedRows = prepareTimelineExportRows(userRows);
   const lines = [];
   lines.push(`Wedding Timeline for ${bride} & ${groom}`);
   lines.push(`Date: ${date}`, "");
