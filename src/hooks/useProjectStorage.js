@@ -27,6 +27,7 @@ export function useProjectStorage(state) {
     fixedEvents,
     screen,
     nextId,
+    enteredViaWizard,
     setDate,
     setBride,
     setGroom,
@@ -52,6 +53,7 @@ export function useProjectStorage(state) {
     setHistory,
     setRedoStack,
     setScreen,
+    setEnteredViaWizard,
     setVersionNotice,
     setShowAutosaveBanner,
     clearDirty,
@@ -127,13 +129,14 @@ export function useProjectStorage(state) {
     videoEnabled,
     userRows,
     fixedEvents,
+    enteredViaWizard,
   });
 
   const writeAutosave = () => {
     try {
       localStorage.setItem(
         AUTOSAVE_KEY,
-        JSON.stringify({ ...buildProjectData(), screen, nextId })
+        JSON.stringify({ ...buildProjectData(), screen, nextId, enteredViaWizard })
       );
     } catch (_) {
       /* ignore storage errors */
@@ -211,6 +214,9 @@ export function useProjectStorage(state) {
     }
 
     setFixedEvents(projectData.fixedEvents || []);
+    setEnteredViaWizard(
+      typeof projectData.enteredViaWizard === "boolean" ? projectData.enteredViaWizard : true
+    );
     setHistory([]);
     setRedoStack([]);
     suppressDirtyRef.current = false;

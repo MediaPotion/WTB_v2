@@ -1,7 +1,7 @@
 import React from "react";
 import mediaPotionLogo from "../assets/mediapotion_logo.png";
 
-function WelcomeScreen({ showAutosaveBanner, restoreAutosave, clearAutosave, onCreateNewTimeline, loadProject }) {
+function WelcomeScreen({ showAutosaveBanner, restoreAutosave, clearAutosave, onCreateNewTimeline, onStartManually, loadProject }) {
   return (
     <div className="wtb-welcome-screen">
       <div style={{ textAlign: "center", maxWidth: 500, width: "100%" }}>
@@ -43,6 +43,39 @@ function WelcomeScreen({ showAutosaveBanner, restoreAutosave, clearAutosave, onC
             Load Existing Timeline
             <input type="file" accept=".json" onChange={loadProject} style={{ display: "none" }} />
           </label>
+
+          <button
+            type="button"
+            onClick={onStartManually}
+            style={{
+              padding: "14px 28px",
+              background: "transparent",
+              color: "var(--wtb-text-muted)",
+              border: "1px solid var(--wtb-border)",
+              borderRadius: 8,
+              fontSize: 15,
+              fontWeight: 300,
+              cursor: "pointer",
+              width: "100%",
+              fontFamily: "'Jost', sans-serif",
+              letterSpacing: "0.03em",
+              textAlign: "center",
+            }}
+          >
+            <span style={{ display: "block", color: "var(--wtb-text)" }}>Start Manually</span>
+            <span
+              style={{
+                display: "block",
+                marginTop: 6,
+                fontSize: 13,
+                fontWeight: 300,
+                lineHeight: 1.45,
+                color: "var(--wtb-text-muted)",
+              }}
+            >
+              Build your timeline from scratch using the timeline editor.
+            </span>
+          </button>
         </div>
 
         <div style={{ marginTop: 48, textAlign: "center" }}>

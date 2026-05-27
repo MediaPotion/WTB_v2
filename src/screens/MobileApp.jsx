@@ -61,6 +61,7 @@ export default function MobileApp() {
 
   // Screen & modal state
   const [screen, setScreen] = useState("welcome"); // "welcome" | "wizard" | "settings" | "timeline"
+  const [enteredViaWizard, setEnteredViaWizard] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [settingsTab, setSettingsTab] = useState(0);
 
@@ -289,7 +290,7 @@ export default function MobileApp() {
     videoStartHour, videoStartMinute, videoStartPeriod,
     videoEndHour, videoEndMinute, videoEndPeriod,
     photoEnabled, videoEnabled,
-    userRows, fixedEvents, screen, nextId,
+    userRows, fixedEvents, screen, nextId, enteredViaWizard,
     setDate, setBride, setGroom, setBrideLabel, setGroomLabel,
     setPhotoStartHour, setPhotoStartMinute, setPhotoStartPeriod,
     setPhotoEndHour, setPhotoEndMinute, setPhotoEndPeriod,
@@ -297,7 +298,7 @@ export default function MobileApp() {
     setVideoEndHour, setVideoEndMinute, setVideoEndPeriod,
     setPhotoEnabled, setVideoEnabled,
     setUserRows, setNextId, setFixedEvents, setHistory, setRedoStack,
-    setScreen, setVersionNotice, setShowAutosaveBanner,
+    setScreen, setEnteredViaWizard, setVersionNotice, setShowAutosaveBanner,
     clearDirty, isTimelineEmpty, mainScrollRef,
     isApplyingProjectRef, suppressDirtyRef, dirtyTrackingEnabledRef,
     autosaveTimerRef,
@@ -894,38 +895,118 @@ export default function MobileApp() {
     }
   };
 
-  const resetTimelineState = () => {
-    setUserRows([
-      {
-        id: 1,
-        location: "",
-        time: 12 * 60,
-        event: "",
-        duration: 30,
-        isOutdoor: false,
-        photo: true,
-        video: true,
-        notes: "",
-        isTimeLocked: false,
-        color: "",
-        ...DEFAULT_ROW_TIER_FIELDS,
-      },
-    ]);
-    setNextId(2);
+  const resetTimelineState = ({ emptyRows = false } = {}) => {
+    setUserRows(
+      emptyRows
+        ? []
+        : [
+            {
+              id: 1,
+              location: "",
+              time: 12 * 60,
+              event: "",
+              duration: 30,
+              isOutdoor: false,
+              photo: true,
+              video: true,
+              notes: "",
+              isTimeLocked: false,
+              color: "",
+              ...DEFAULT_ROW_TIER_FIELDS,
+            },
+          ]
+    );
+    setNextId(emptyRows ? 1 : 2);
     setHistory([]);
     setRedoStack([]);
     setFixedEvents([]);
+  };
+
+  const resetProjectMetaForNewSession = () => {
+    setDate("");
+    setBride("");
+    setGroom("");
+    setBrideLabel("Bride");
+    setGroomLabel("Groom");
+    setPhotoStartHour("12");
+    setPhotoStartMinute("00");
+    setPhotoStartPeriod("PM");
+    setPhotoEndHour("5");
+    setPhotoEndMinute("00");
+    setPhotoEndPeriod("PM");
+    setVideoStartHour("12");
+    setVideoStartMinute("00");
+    setVideoStartPeriod("PM");
+    setVideoEndHour("5");
+    setVideoEndMinute("00");
+    setVideoEndPeriod("PM");
+    setPhotoEnabled(true);
+    setVideoEnabled(true);
+    setFixedEventNextId(2);
   };
 
   const startNewTimeline = () => {
     clearAutosave();
     clearDirty();
     resetTimelineState();
+    setEnteredViaWizard(false);
     setShowUnsavedConfirm(false);
     setVersionNotice(null);
     setWizardStep(1);
     setScreen("welcome");
     setShowMobileMenu(false);
+  };
+
+  const confirmDiscardAutosaveIfNeeded = () => {
+    if (!showAutosaveBanner) return true;
+    const discard = window.confirm(
+      "You have a saved session from your last visit. Start a new timeline anyway? Your saved session will be discarded."
+    );
+    if (!discard) return false;
+    clearAutosave();
+    return true;
+  };
+
+  const startManualTimeline = () => {
+    if (!confirmDiscardAutosaveIfNeeded()) return;
+    clearDirty();
+    setEnteredViaWizard(false);
+    resetProjectMetaForNewSession();
+    resetTimelineState({ emptyRows: true });
+    setShowUnsavedConfirm(false);
+    setVersionNotice(null);
+    setScreen("settings");
+  };
+
+  const continueFromProjectSettings = () => {
+    if (enteredViaWizard) {
+      if (fixedEvents.length > 0) {
+        const newRows = fixedEvents.map((fe, idx) => ({
+          id: idx + 1,
+          event: fe.event,
+          time: parseTimeInput(fe.timeHour, fe.timeMinute, fe.timePeriod),
+          duration: fe.duration || 30,
+          location: "",
+          isOutdoor: false,
+          photo: photoEnabled,
+          video: videoEnabled,
+          notes: "",
+          isTimeLocked: true,
+          color: "",
+          tier: getDefaultTierForEvent(fe.event),
+          flexibilityMinutes: 0,
+        }));
+        setUserRows(newRows);
+        setNextId(fixedEvents.length + 1);
+      }
+    } else {
+      setUserRows([]);
+      setNextId(1);
+      setHistory([]);
+      setRedoStack([]);
+    }
+    setScreen("timeline");
+    if (mainScrollRef.current) mainScrollRef.current.scrollTop = 0;
   };
 
   const requestNewTimeline = () => {
@@ -1142,6 +1223,7 @@ export default function MobileApp() {
   );
 
   const generateTimeline = () => {
+    setEnteredViaWizard(true);
     const rows = generateTimelineLib(buildWizardAnswers(wizardStateForAnswers()));
     setUserRows(rows);
     setNextId(rows.length + 1);
@@ -1404,7 +1486,8 @@ export default function MobileApp() {
         </div>
       </div>
 
-      {/* Section 3: Fixed-Time Events */}
+      {/* Section 3: Fixed-Time Events (wizard / legacy settings path only) */}
+      {enteredViaWizard && (
       <div style={{ background: "var(--wtb-surface)", border: "1px solid var(--wtb-surface-raised)", borderRadius: 8, padding: 20, marginBottom: 16 }}>
         <h3 style={{ margin: "0 0 4px 0", fontSize: 12, color: "var(--wtb-accent)", fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase" }}>Fixed-Time Events</h3>
         <p style={{ margin: "0 0 14px 0", fontSize: 13, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif" }}>Events that must start at a specific time — added to your timeline as time-locked anchors.</p>
@@ -1460,6 +1543,7 @@ export default function MobileApp() {
           + Add Custom
         </button>
       </div>
+      )}
     </div>
   );
 
@@ -1476,16 +1560,12 @@ export default function MobileApp() {
           restoreAutosave={restoreAutosave}
           clearAutosave={clearAutosave}
           onCreateNewTimeline={() => {
-            if (showAutosaveBanner) {
-              const discard = window.confirm(
-                "You have a saved session from your last visit. Start a new timeline anyway? Your saved session will be discarded."
-              );
-              if (!discard) return;
-              clearAutosave();
-            }
+            if (!confirmDiscardAutosaveIfNeeded()) return;
+            setEnteredViaWizard(true);
             setWizardStep(1);
             setScreen("wizard");
           }}
+          onStartManually={startManualTimeline}
           loadProject={loadProject}
         />
       ) : screen === "wizard" ? (
@@ -1507,29 +1587,7 @@ export default function MobileApp() {
           {/* Bottom actions */}
           <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center", marginTop: 8 }}>
             <button
-              onClick={() => {
-                if (fixedEvents.length > 0) {
-                  const newRows = fixedEvents.map((fe, idx) => ({
-                    id: idx + 1,
-                    event: fe.event,
-                    time: parseTimeInput(fe.timeHour, fe.timeMinute, fe.timePeriod),
-                    duration: fe.duration || 30,
-                    location: "",
-                    isOutdoor: false,
-                    photo: photoEnabled,
-                    video: videoEnabled,
-                    notes: "",
-                    isTimeLocked: true,
-                    color: "",
-                    tier: getDefaultTierForEvent(fe.event),
-                    flexibilityMinutes: 0,
-                  }));
-                  setUserRows(newRows);
-                  setNextId(fixedEvents.length + 1);
-                }
-                setScreen("timeline");
-                if (mainScrollRef.current) mainScrollRef.current.scrollTop = 0;
-              }}
+              onClick={continueFromProjectSettings}
               style={{ padding: "12px 32px", backgroundColor: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 6, fontSize: 16, fontWeight: 300, cursor: "pointer", width: "100%", maxWidth: 360, fontFamily: "'Jost', sans-serif" }}
             >
               Start Building Timeline
@@ -1616,6 +1674,7 @@ export default function MobileApp() {
                       >
                         {copyConfirm ? "Copied!" : "Copy Timeline"}
                       </button>
+                      {enteredViaWizard && (
                       <button
                         type="button"
                         role="menuitem"
@@ -1625,6 +1684,7 @@ export default function MobileApp() {
                         <span className="wtb-mobile-gear-logistics-icon" data-status={logisticsStatus} aria-hidden />
                         Logistics Check
                       </button>
+                      )}
                       <button
                         type="button"
                         role="menuitem"
@@ -1771,10 +1831,12 @@ export default function MobileApp() {
                     pointerEvents: "auto",
                   }}
                 >
+                  {enteredViaWizard && (
                   <LogisticsCheckButton
                     status={logisticsStatus}
                     onClick={() => setShowLogisticsModal(true)}
                   />
+                  )}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", position: "relative", zIndex: 2, marginLeft: "auto" }}>
@@ -2056,40 +2118,56 @@ export default function MobileApp() {
                   </button>
                 </div>
 
-                {/* Tab bar */}
-                <div style={{ display: "flex", flexWrap: "nowrap", gap: 4, marginBottom: 20, borderBottom: "1px solid var(--wtb-border)", paddingBottom: 12, overflowX: "auto" }}>
-                  {SETTINGS_WIZARD_TABS.map((tab, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSettingsTab(i)}
-                      style={{
-                        padding: "5px 12px",
-                        background: settingsTab === i ? "var(--wtb-accent)" : "transparent",
-                        color: settingsTab === i ? "var(--wtb-on-accent)" : "var(--wtb-text-muted)",
-                        border: settingsTab === i ? "1px solid var(--wtb-accent)" : "1px solid var(--wtb-border)",
-                        borderRadius: 4, fontSize: 12, cursor: "pointer",
-                        fontFamily: "'Jost', sans-serif", fontWeight: 300, letterSpacing: "0.05em",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
+                {enteredViaWizard ? (
+                  <>
+                    <div style={{ display: "flex", flexWrap: "nowrap", gap: 4, marginBottom: 20, borderBottom: "1px solid var(--wtb-border)", paddingBottom: 12, overflowX: "auto" }}>
+                      {SETTINGS_WIZARD_TABS.map((tab, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setSettingsTab(i)}
+                          style={{
+                            padding: "5px 12px",
+                            background: settingsTab === i ? "var(--wtb-accent)" : "transparent",
+                            color: settingsTab === i ? "var(--wtb-on-accent)" : "var(--wtb-text-muted)",
+                            border: settingsTab === i ? "1px solid var(--wtb-accent)" : "1px solid var(--wtb-border)",
+                            borderRadius: 4, fontSize: 12, cursor: "pointer",
+                            fontFamily: "'Jost', sans-serif", fontWeight: 300, letterSpacing: "0.05em",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
 
-                {/* Tab content */}
-                <div style={{ maxHeight: "62vh", overflowY: "auto", paddingRight: 4 }}>
-                  {renderWizard({ ...wizardProps, inModal: true, overrideStep: SETTINGS_WIZARD_TABS[settingsTab].step })}
-                </div>
+                    <div style={{ maxHeight: "62vh", overflowY: "auto", paddingRight: 4 }}>
+                      {renderWizard({ ...wizardProps, inModal: true, overrideStep: SETTINGS_WIZARD_TABS[settingsTab].step })}
+                    </div>
 
-                <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 16 }}>
-                  <button
-                    onClick={() => { generateTimeline(); }}
-                    style={{ padding: "8px 20px", backgroundColor: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 400, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
-                  >
-                    Done
-                  </button>
-                </div>
+                    <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 16 }}>
+                      <button
+                        onClick={() => { generateTimeline(); }}
+                        style={{ padding: "8px 20px", backgroundColor: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 400, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ maxHeight: "62vh", overflowY: "auto", paddingRight: 4 }}>
+                      {renderSettingsForm(true)}
+                    </div>
+                    <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 16 }}>
+                      <button
+                        onClick={() => setShowSettingsModal(false)}
+                        style={{ padding: "8px 20px", backgroundColor: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 400, cursor: "pointer", fontFamily: "'Jost', sans-serif" }}
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -2128,7 +2206,7 @@ export default function MobileApp() {
         </div>
       )}
 
-      {showLogisticsModal && (
+      {enteredViaWizard && showLogisticsModal && (
         <div
           style={{
             position: "fixed",
