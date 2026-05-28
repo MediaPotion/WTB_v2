@@ -52,7 +52,10 @@ const PDF_EVT_TIME_X = MX + 5;
 const PDF_EVT_BODY_X = MX + COL_TIME;
 const PDF_EVT_BODY_W = CW - COL_TIME - COL_DUR - COL_SET - 4;
 const EVT_NOTES_W = CW - COL_TIME - COL_DUR - COL_SET - 8;
-const PDF_PAGE_BOTTOM = PH - MY_BOT - FTR_H - 8;
+/** Reserved space at bottom of each PDF page (footer + margin). */
+const PDF_BOTTOM_RESERVE = MY_BOT + FTR_H + 8;
+/** Y coordinate where timeline content must stop (for runtime overflow checks). */
+const PDF_CONTENT_BOTTOM_Y = PH - PDF_BOTTOM_RESERVE;
 const LOC_PAD_TOP = 10;
 const LOC_PAD_BOTTOM = 10;
 const LOC_LINE_GAP = 3;
@@ -257,17 +260,32 @@ function layoutPreviewPages(rows) {
   return pages;
 }
 
-/** PDF pagination using jsPDF text metrics (preview layout unchanged). */
+/**
+ * Estimate row height for PDF pagination (matches drawPdf* row spacing).
+ * Uses jsPDF metrics when doc is provided.
+ */
+function calculatePdfRowHeight(row, doc) {
+  return measuredRowHeight(row, doc);
+}
+
+/** Usable vertical space for timeline rows (matches layoutPreviewPages). */
+function pdfUsableContentHeight(isFirstPage) {
+  if (isFirstPage) {
+    return PH - MY_TOP - HDR_H - RH_COL - PDF_BOTTOM_RESERVE;
+  }
+  return PH - MY_TOP - RH_COL - PDF_BOTTOM_RESERVE;
+}
+
+/** PDF pagination — same break rules as preview, PDF-accurate row heights. */
 function layoutPdfPages(rows, doc) {
   const timelineRows = prepareTimelineExportRows(rows);
-  const firstAvail = PH - MY_TOP - HDR_H - RH_COL - PDF_PAGE_BOTTOM;
-  const otherAvail = PH - MY_TOP - RH_COL - PDF_PAGE_BOTTOM;
   const pages = [];
   let curr = [];
   let used = 0;
+
   for (const row of timelineRows) {
-    const h = measuredRowHeight(row, doc);
-    const avail = pages.length === 0 ? firstAvail : otherAvail;
+    const h = calculatePdfRowHeight(row, doc);
+    const avail = pdfUsableContentHeight(pages.length === 0);
     if (curr.length > 0 && used + h > avail) {
       pages.push(curr);
       curr = [];
@@ -276,7 +294,7 @@ function layoutPdfPages(rows, doc) {
     curr.push(row);
     used += h;
   }
-  pages.push(curr);
+  if (curr.length > 0) pages.push(curr);
   return pages;
 }
 
@@ -855,6 +873,7 @@ export async function printTimeline(params) {
 export {
   TimelinePreview,
   layoutPreviewPages,
+  layoutPdfPages,
   prepareTimelineExportRows,
   fmtDateLong,
   hexToRgb,

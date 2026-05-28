@@ -1,4 +1,4 @@
-import { prepareTimelineExportRows, layoutPreviewPages } from "./exportPdf";
+import { prepareTimelineExportRows, layoutPreviewPages, layoutPdfPages } from "./exportPdf";
 
 describe("prepareTimelineExportRows", () => {
   it("sorts rows by time ascending", () => {
@@ -36,5 +36,22 @@ describe("layoutPreviewPages", () => {
     const ids = flat.map((r) => r.id);
     expect(ids.length).toBe(new Set(ids).size);
     expect(ids.length).toBe(rows.length);
+  });
+});
+
+describe("layoutPdfPages", () => {
+  it("fits multiple event rows per page (not one row per page)", () => {
+    const rows = Array.from({ length: 22 }, (_, i) => ({
+      id: i + 1,
+      time: 12 * 60 + i * 15,
+      event: `Details: Event ${i}`,
+      duration: 30,
+      type: "event",
+    }));
+    const pages = layoutPdfPages(rows, null);
+    const previewPages = layoutPreviewPages(rows);
+    expect(pages.length).toBeLessThan(22);
+    expect(pages.length).toBe(previewPages.length);
+    expect(pages.flat()).toHaveLength(22);
   });
 });
