@@ -43,15 +43,18 @@ const RH_GAP  = 3;   // gap after standard event / constraint rows
 const LOC_ROW_GAP = 5; // extra gap after location blocks
 const HDR_H   = 122; // first-page header height
 const FTR_H   = 22;  // footer height
-const COL_TIME = 66, COL_DUR = 34;
+const COL_TIME = 66;
+/** Right-hand column for duration (width of former Min + Setting columns). */
+const COL_TRAIL = 62;
+const COL_DURATION_LABEL = "Duration";
 const LOC_TEXT_W = CW - 16;
 const PDF_LOC_TIME_X = MX + 5;
 const PDF_LOC_BODY_X = MX + COL_TIME;
 const PDF_LOC_BODY_W = CW - COL_TIME - 8;
 const PDF_EVT_TIME_X = MX + 5;
 const PDF_EVT_BODY_X = MX + COL_TIME;
-const PDF_EVT_BODY_W = CW - COL_TIME - COL_DUR - 4;
-const EVT_NOTES_W = CW - COL_TIME - COL_DUR - 8;
+const PDF_EVT_BODY_W = CW - COL_TIME - COL_TRAIL - 4;
+const EVT_NOTES_W = CW - COL_TIME - COL_TRAIL - 8;
 const PDF_DUR_X = PW - MX - 4;
 /** Reserved space at bottom of each PDF page (footer + margin). */
 const PDF_BOTTOM_RESERVE = MY_BOT + FTR_H + 8;
@@ -520,11 +523,12 @@ function PvHeader({ bride, groom, date, photoStartHour, photoStartMinute, photoS
 
 function PvColHeaders() {
   const lbl = { fontSize: 6.5, fontFamily: "'Jost', sans-serif", fontWeight: 400, color: 'var(--wtb-accent)', textTransform: 'uppercase', letterSpacing: '0.1em' };
+  const durLbl = { fontSize: 6.5, fontFamily: "'Jost', sans-serif", fontWeight: 400, color: 'var(--wtb-accent)', letterSpacing: '0.08em', flexShrink: 0, whiteSpace: 'nowrap' };
   return (
     <div style={{ display: 'flex', height: RH_COL, flexShrink: 0, alignItems: 'center', borderBottom: '0.5px solid var(--wtb-accent)', marginBottom: 3 }}>
-      <div style={{ ...lbl, width: COL_TIME }}>Time</div>
-      <div style={{ ...lbl, flex: 1 }}>Event</div>
-      <div style={{ ...lbl, width: COL_DUR, textAlign: 'right', paddingRight: 4 }}>Duration</div>
+      <div style={{ ...lbl, width: COL_TIME, flexShrink: 0 }}>Time</div>
+      <div style={{ ...lbl, flex: 1, minWidth: 0 }}>Event</div>
+      <div style={{ ...durLbl, width: COL_TRAIL, textAlign: 'right', paddingRight: 4 }}>{COL_DURATION_LABEL}</div>
     </div>
   );
 }
@@ -629,7 +633,7 @@ function PvRow({ row }) {
           </div>
         ))}
       </div>
-      <div style={{ width: COL_DUR, fontSize: 8.5, fontFamily: "'Jost', sans-serif", color: '#666', textAlign: 'right', flexShrink: 0, paddingTop: 2, paddingRight: 4 }}>{row.duration}</div>
+      <div style={{ width: COL_TRAIL, fontSize: 8.5, fontFamily: "'Jost', sans-serif", color: '#666', textAlign: 'right', flexShrink: 0, paddingTop: 2, paddingRight: 4 }}>{row.duration}</div>
     </div>
   );
 }
@@ -792,7 +796,7 @@ async function buildTimelinePdfDoc(params) {
     doc.setTextColor(...PDF_ACCENT_RGB);
     doc.text('TIME', MX, csY + 13);
     doc.text('EVENT', MX + COL_TIME, csY + 13);
-    doc.text('DURATION', PDF_DUR_X, csY + 13, { align: 'right' });
+    doc.text(COL_DURATION_LABEL, PDF_DUR_X, csY + 13, { align: 'right' });
     doc.setDrawColor(...PDF_ACCENT_RGB);
     doc.setLineWidth(0.5);
     doc.line(MX, csY + RH_COL, PW - MX, csY + RH_COL);
