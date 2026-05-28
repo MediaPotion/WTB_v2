@@ -86,10 +86,17 @@ const THEME_CSS = `
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
+    justify-content: flex-start;
+    padding: 48px 20px 64px;
+    overflow-y: auto;
+    box-sizing: border-box;
     background: var(--wtb-bg);
     color: var(--wtb-text);
+  }
+
+  .wtb-welcome-manual-btn:hover {
+    opacity: 1;
+    background: var(--wtb-surface-raised);
   }
 
   .wtb-timeline-screen-theme {

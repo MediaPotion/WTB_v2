@@ -78,24 +78,140 @@ function computeTimelineCoverage(rows) {
   };
 }
 
-function TimelineCoverageCounter({ coverage }) {
+/** Coverage window from project settings start/end times. */
+function computeMediaCoverageWindow(
+  enabled,
+  startHour,
+  startMinute,
+  startPeriod,
+  endHour,
+  endMinute,
+  endPeriod
+) {
+  if (!enabled) return null;
+  const startMin = parseTimeInput(startHour, startMinute, startPeriod);
+  const endMin = parseTimeInput(endHour, endMinute, endPeriod);
+  if (endMin <= startMin) return null;
+  return {
+    startMin,
+    endMin,
+    totalMinutes: endMin - startMin,
+  };
+}
+
+function isWizardCoverageHoursSpecified(hoursValue) {
+  const trimmed = String(hoursValue ?? "").trim();
+  if (!trimmed) return false;
+  const n = parseFloat(trimmed);
+  return !Number.isNaN(n) && n > 0;
+}
+
+/**
+ * Photography / videography coverage for display, based on project settings
+ * and (when applicable) wizard hour entries. Omits types not configured.
+ */
+function computeProjectMediaCoverage({
+  photoEnabled,
+  videoEnabled,
+  photoStartHour,
+  photoStartMinute,
+  photoStartPeriod,
+  photoEndHour,
+  photoEndMinute,
+  photoEndPeriod,
+  videoStartHour,
+  videoStartMinute,
+  videoStartPeriod,
+  videoEndHour,
+  videoEndMinute,
+  videoEndPeriod,
+  enteredViaWizard = false,
+  wiz_photoCoverageHours = "",
+  wiz_videoCoverageHours = "",
+}) {
+  const photoSpecified =
+    photoEnabled &&
+    (!enteredViaWizard || isWizardCoverageHoursSpecified(wiz_photoCoverageHours));
+  const videoSpecified =
+    videoEnabled &&
+    (!enteredViaWizard || isWizardCoverageHoursSpecified(wiz_videoCoverageHours));
+
+  return {
+    photo: photoSpecified
+      ? computeMediaCoverageWindow(
+          true,
+          photoStartHour,
+          photoStartMinute,
+          photoStartPeriod,
+          photoEndHour,
+          photoEndMinute,
+          photoEndPeriod
+        )
+      : null,
+    video: videoSpecified
+      ? computeMediaCoverageWindow(
+          true,
+          videoStartHour,
+          videoStartMinute,
+          videoStartPeriod,
+          videoEndHour,
+          videoEndMinute,
+          videoEndPeriod
+        )
+      : null,
+  };
+}
+
+const coverageLineStyle = {
+  fontSize: 13,
+  color: "var(--wtb-accent)",
+  fontFamily: "'Jost', sans-serif",
+  fontWeight: 300,
+  letterSpacing: "0.04em",
+};
+
+function CoverageTimeLine({ label, coverage }) {
   if (!coverage) return null;
+  const prefix = label ? `${label} ` : "";
   return (
-    <div
-      style={{
-        fontSize: 13,
-        color: "var(--wtb-accent)",
-        marginTop: 6,
-        fontFamily: "'Jost', sans-serif",
-        fontWeight: 300,
-        letterSpacing: "0.04em",
-      }}
-    >
-      Coverage Time: {formatDurationSpan(coverage.totalMinutes)}
+    <div style={coverageLineStyle}>
+      {prefix}Coverage Time: {formatDurationSpan(coverage.totalMinutes)}
       <span style={{ color: "var(--wtb-text-muted)", fontWeight: 200 }}>
         {" "}
         ({formatClockLabel(coverage.startMin)} – {formatClockLabel(coverage.endMin)})
       </span>
+    </div>
+  );
+}
+
+function TimelineCoverageCounter({ photoCoverage, videoCoverage, coverage, style }) {
+  if (coverage) {
+    return (
+      <div style={{ marginTop: 6, ...style }}>
+        <CoverageTimeLine label="" coverage={coverage} />
+      </div>
+    );
+  }
+
+  const lines = [];
+  if (photoCoverage) lines.push({ label: "Photography", coverage: photoCoverage });
+  if (videoCoverage) lines.push({ label: "Videography", coverage: videoCoverage });
+  if (lines.length === 0) return null;
+
+  return (
+    <div
+      style={{
+        marginTop: 6,
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
+        alignItems: "center",
+        ...style,
+      }}
+    >
+      {lines.map(({ label, coverage: cov }) => (
+        <CoverageTimeLine key={label} label={label} coverage={cov} />
+      ))}
     </div>
   );
 }
@@ -106,6 +222,8 @@ export {
   formatClockLabel,
   formatDurationSpan,
   computeTimelineCoverage,
+  computeMediaCoverageWindow,
+  computeProjectMediaCoverage,
   TimelineCoverageCounter,
   MINUTE_OPTIONS_5,
   snapMinuteToFive,

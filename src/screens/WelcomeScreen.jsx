@@ -29,7 +29,10 @@ function WelcomeScreen({ showAutosaveBanner, restoreAutosave, clearAutosave, onC
         <h1 className="welcome-fade-up" style={{ fontSize: "clamp(36px,6vw,72px)", fontWeight: 300, color: "var(--wtb-text)", margin: "0 0 8px 0", fontFamily: "'Cormorant Garamond', serif", letterSpacing: "0.05em" }}>
           Wedding Timeline Builder
         </h1>
-        <div className="welcome-fade-up" style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 48 }}>
+        <div
+          className="welcome-fade-up wtb-welcome-actions"
+          style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 48, width: "100%" }}
+        >
           <button
             onClick={onCreateNewTimeline}
             style={{ padding: "18px 32px", backgroundColor: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 8, fontSize: 18, fontWeight: 300, cursor: "pointer", width: "100%", fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
@@ -47,22 +50,25 @@ function WelcomeScreen({ showAutosaveBanner, restoreAutosave, clearAutosave, onC
           <button
             type="button"
             onClick={onStartManually}
+            className="wtb-welcome-manual-btn"
             style={{
-              padding: "14px 28px",
-              background: "transparent",
-              color: "var(--wtb-text-muted)",
-              border: "1px solid var(--wtb-border)",
+              padding: "14px 24px",
+              background: "var(--wtb-surface)",
+              color: "var(--wtb-text)",
+              border: "1px solid var(--wtb-accent)",
               borderRadius: 8,
               fontSize: 15,
               fontWeight: 300,
               cursor: "pointer",
               width: "100%",
+              boxSizing: "border-box",
               fontFamily: "'Jost', sans-serif",
               letterSpacing: "0.03em",
               textAlign: "center",
+              opacity: 0.92,
             }}
           >
-            <span style={{ display: "block", color: "var(--wtb-text)" }}>Start Manually</span>
+            <span style={{ display: "block" }}>Start Manually</span>
             <span
               style={{
                 display: "block",

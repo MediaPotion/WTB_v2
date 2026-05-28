@@ -2,6 +2,7 @@ import { formatTime, parseTimeInput } from "./time";
 import { resolveGoldenHourForAnswers, GOLDEN_HOUR_PORTRAIT_DURATION } from "./goldenHour";
 import { durationOverride } from "./logisticsEventAdjustments";
 import { resolveWeddingLocations } from "./weddingLocations";
+import { insertCoverageStartBlocks } from "./coverageStartBlocks";
 import { resolveRowTierFields } from "./rowTier";
 
 const GOLDEN_HOUR_EVENT = "Bride & Groom: Golden Hour Portraits";
@@ -163,6 +164,12 @@ export function generateTimeline(wizardAnswers) {
     photoStartHour: wiz_photoStartHour,
     photoStartMinute: wiz_photoStartMinute,
     photoStartPeriod: wiz_photoStartPeriod,
+    videoStartHour: wiz_videoStartHour,
+    videoStartMinute: wiz_videoStartMinute,
+    videoStartPeriod: wiz_videoStartPeriod,
+    photoCoverageHours: wiz_photoCoverageHours,
+    videoCoverageHours: wiz_videoCoverageHours,
+    enteredViaWizard = true,
     goldenHour: wiz_goldenHourFlag,
     includeGoldenHour: wiz_includeGoldenHourFlag,
     venueLat: wiz_venueLat,
@@ -633,6 +640,20 @@ export function generateTimeline(wizardAnswers) {
       }
     }
 
+  insertCoverageStartBlocks(allBlocks, {
+    photoEnabled,
+    videoEnabled,
+    photoStartHour: wiz_photoStartHour,
+    photoStartMinute: wiz_photoStartMinute,
+    photoStartPeriod: wiz_photoStartPeriod,
+    videoStartHour: wiz_videoStartHour,
+    videoStartMinute: wiz_videoStartMinute,
+    videoStartPeriod: wiz_videoStartPeriod,
+    enteredViaWizard,
+    wiz_photoCoverageHours: photoCoverageHours,
+    wiz_videoCoverageHours: videoCoverageHours,
+  });
+
   const flexibility = {
     dinnerFlexibility: wiz_dinnerFlexibility,
     receptionStartFlexibility: wiz_receptionStartFlexibility,
@@ -659,8 +680,8 @@ export function generateTimeline(wizardAnswers) {
       location: block.location || "",
       isOutdoor:
         block.event === GOLDEN_HOUR_EVENT ? true : block.isOutdoor || false,
-      photo: photoEnabled,
-      video: videoEnabled,
+      photo: typeof block.photo === "boolean" ? block.photo : photoEnabled,
+      video: typeof block.video === "boolean" ? block.video : videoEnabled,
       notes: block.notes || "",
       isTimeLocked: false,
       color: block.color || "",

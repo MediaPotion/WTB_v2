@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { EVENT_BLOCKS } from "../../constants/events";
 import { getEventColor } from "../../constants/colors";
-import { formatTime, parseTimeInput, snapMinuteToFive } from "../../lib/time";
+import { formatTime, parseTimeInput, snapMinuteToFive, MINUTE_OPTIONS_5 } from "../../lib/time";
 
 function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, currentTime }) {
   const [customEvent, setCustomEvent] = useState(currentEvent || "");

@@ -1,4 +1,6 @@
 import React from "react";
+import { formatClockLabel, parseTimeInput } from "../../lib/time";
+import { isWizardCoverageHoursSpecified } from "../../lib/coverageStartBlocks";
 
 function WizardConfirm(props) {
   const {
@@ -16,7 +18,10 @@ function WizardConfirm(props) {
     wiz_sameLocation, setWiz_sameLocation, wiz_portraitsAtReadyLocations, setWiz_portraitsAtReadyLocations,
     wiz_bridePortraitsAtReadyLocation, setWiz_bridePortraitsAtReadyLocation, wiz_groomPortraitsAtReadyLocation, setWiz_groomPortraitsAtReadyLocation,
     wiz_hairMakeupDoneHour, setWiz_hairMakeupDoneHour, wiz_hairMakeupDoneMinute, setWiz_hairMakeupDoneMinute, wiz_hairMakeupDonePeriod, setWiz_hairMakeupDonePeriod,
-    wiz_photoCoverageHours, setWiz_photoCoverageHours, wiz_videoCoverageHours, setWiz_videoCoverageHours, wiz_ceremonyOutdoor, setWiz_ceremonyOutdoor,
+    wiz_photoCoverageHours, setWiz_photoCoverageHours, wiz_videoCoverageHours, setWiz_videoCoverageHours,
+    photoStartHour, photoStartMinute, photoStartPeriod,
+    videoStartHour, videoStartMinute, videoStartPeriod,
+    wiz_ceremonyOutdoor, setWiz_ceremonyOutdoor,
     wiz_photographerCount, setWiz_photographerCount, wiz_videographerCount, setWiz_videographerCount, wiz_drone, setWiz_drone, wiz_narration, setWiz_narration,
     wiz_hasFirstLooks, setWiz_hasFirstLooks, wiz_firstLookGroom, setWiz_firstLookGroom, wiz_firstLookParent, setWiz_firstLookParent,
     wiz_firstLookBridesmaids, setWiz_firstLookBridesmaids, wiz_firstLookOther, setWiz_firstLookOther,
@@ -119,8 +124,22 @@ function WizardConfirm(props) {
                 {sectionHeading("Package")}
                 {reviewRow("Photo Coverage", wiz_photoCoverageHours ? wiz_photoCoverageHours + " hrs" : "(not entered)", !wiz_photoCoverageHours)}
                 {reviewRow("Photographers", String(wiz_photographerCount))}
+                {isWizardCoverageHoursSpecified(wiz_photoCoverageHours) &&
+                  reviewRow(
+                    "Photographer starts shooting",
+                    formatClockLabel(
+                      parseTimeInput(photoStartHour, photoStartMinute, photoStartPeriod)
+                    )
+                  )}
                 {reviewRow("Video Coverage", wiz_videoCoverageHours ? wiz_videoCoverageHours + " hrs" : "(not entered)", !wiz_videoCoverageHours)}
                 {reviewRow("Videographers", String(wiz_videographerCount))}
+                {isWizardCoverageHoursSpecified(wiz_videoCoverageHours) &&
+                  reviewRow(
+                    "Videographer starts shooting",
+                    formatClockLabel(
+                      parseTimeInput(videoStartHour, videoStartMinute, videoStartPeriod)
+                    )
+                  )}
                 {reviewRow("Drone Coverage", wiz_drone ? "Yes" : "No")}
                 {reviewRow("Narration Recording", wiz_narration ? "Yes" : "No")}
               </div>

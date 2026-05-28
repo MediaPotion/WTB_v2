@@ -8,7 +8,11 @@ import { SETTINGS_WIZARD_TABS, PROJECT_VERSION, AUTOSAVE_KEY, DESKTOP_MIN_WIDTH 
 import { DEFAULT_ROW_TIER_FIELDS } from "../constants/tiers";
 import { getDefaultTierForEvent } from "../lib/rowTier";
 import { defaultIsOutdoorForEvent } from "../constants/colors";
-import { formatTime, parseTimeInput, computeTimelineCoverage, TimelineCoverageCounter, useMediaQuery } from "../lib/time";
+import { formatTime, parseTimeInput, computeProjectMediaCoverage, TimelineCoverageCounter, useMediaQuery } from "../lib/time";
+import {
+  buildCoverageStartBlockDefs,
+  coverageDefsToUserRows,
+} from "../lib/coverageStartBlocks";
 import { computeOverlaps } from "../lib/overlaps";
 import { generateTimeline as generateTimelineLib } from "../lib/generateTimeline";
 import { buildWizardAnswers } from "../lib/buildWizardAnswers";
@@ -327,7 +331,47 @@ export default function MobileApp() {
   const sortableRowIds = useMemo(() => rows.map((r) => String(r.id)), [rows]);
 
   const overlapMap = useMemo(() => computeOverlaps(userRows), [userRows]);
-  const timelineCoverage = useMemo(() => computeTimelineCoverage(rows), [rows]);
+  const mediaCoverage = useMemo(
+    () =>
+      computeProjectMediaCoverage({
+        photoEnabled,
+        videoEnabled,
+        photoStartHour,
+        photoStartMinute,
+        photoStartPeriod,
+        photoEndHour,
+        photoEndMinute,
+        photoEndPeriod,
+        videoStartHour,
+        videoStartMinute,
+        videoStartPeriod,
+        videoEndHour,
+        videoEndMinute,
+        videoEndPeriod,
+        enteredViaWizard,
+        wiz_photoCoverageHours,
+        wiz_videoCoverageHours,
+      }),
+    [
+      photoEnabled,
+      videoEnabled,
+      photoStartHour,
+      photoStartMinute,
+      photoStartPeriod,
+      photoEndHour,
+      photoEndMinute,
+      photoEndPeriod,
+      videoStartHour,
+      videoStartMinute,
+      videoStartPeriod,
+      videoEndHour,
+      videoEndMinute,
+      videoEndPeriod,
+      enteredViaWizard,
+      wiz_photoCoverageHours,
+      wiz_videoCoverageHours,
+    ]
+  );
 
   useEffect(() => {
     if (isDesktop) {
@@ -978,33 +1022,58 @@ export default function MobileApp() {
     setScreen("settings");
   };
 
+  const buildCoverageStartRowsForProject = () => {
+    const defs = buildCoverageStartBlockDefs({
+      photoEnabled,
+      videoEnabled,
+      photoStartHour,
+      photoStartMinute,
+      photoStartPeriod,
+      videoStartHour,
+      videoStartMinute,
+      videoStartPeriod,
+      enteredViaWizard,
+      wiz_photoCoverageHours,
+      wiz_videoCoverageHours,
+    });
+    return coverageDefsToUserRows(defs, {
+      startId: 1,
+      photoEnabled,
+      videoEnabled,
+    });
+  };
+
   const continueFromProjectSettings = () => {
-    if (enteredViaWizard) {
-      if (fixedEvents.length > 0) {
-        const newRows = fixedEvents.map((fe, idx) => ({
-          id: idx + 1,
-          event: fe.event,
-          time: parseTimeInput(fe.timeHour, fe.timeMinute, fe.timePeriod),
-          duration: fe.duration || 30,
-          location: "",
-          isOutdoor: false,
-          photo: photoEnabled,
-          video: videoEnabled,
-          notes: "",
-          isTimeLocked: true,
-          color: "",
-          tier: getDefaultTierForEvent(fe.event),
-          flexibilityMinutes: 0,
-        }));
-        setUserRows(newRows);
-        setNextId(fixedEvents.length + 1);
-      }
-    } else {
-      setUserRows([]);
-      setNextId(1);
-      setHistory([]);
-      setRedoStack([]);
+    const coverageRows = buildCoverageStartRowsForProject();
+    let nextRows = coverageRows;
+    let nextRowId = coverageRows.length + 1;
+
+    if (enteredViaWizard && fixedEvents.length > 0) {
+      const fixedRows = fixedEvents.map((fe) => ({
+        id: nextRowId++,
+        event: fe.event,
+        time: parseTimeInput(fe.timeHour, fe.timeMinute, fe.timePeriod),
+        duration: fe.duration || 30,
+        location: "",
+        isOutdoor: false,
+        photo: photoEnabled,
+        video: videoEnabled,
+        notes: "",
+        isTimeLocked: true,
+        color: "",
+        tier: getDefaultTierForEvent(fe.event),
+        flexibilityMinutes: 0,
+        type: "event",
+        address: "",
+        ...DEFAULT_ROW_TIER_FIELDS,
+      }));
+      nextRows = [...coverageRows, ...fixedRows];
     }
+
+    setUserRows(nextRows);
+    setNextId(nextRowId);
+    setHistory([]);
+    setRedoStack([]);
     setScreen("timeline");
     if (mainScrollRef.current) mainScrollRef.current.scrollTop = 0;
   };
@@ -1230,30 +1299,29 @@ export default function MobileApp() {
     setHistory([]);
     setRedoStack([]);
 
-    if (rows.length > 0) {
-      const coverageStart = rows[0].time;
-      if (wiz_photoCoverageHours) {
-        const photoEnd = coverageStart + parseFloat(wiz_photoCoverageHours) * 60;
-        const ps = formatTime(coverageStart);
-        const pe = formatTime(photoEnd);
-        setPhotoStartHour(ps.hour);
-        setPhotoStartMinute(ps.minute);
-        setPhotoStartPeriod(ps.period);
-        setPhotoEndHour(pe.hour);
-        setPhotoEndMinute(pe.minute);
-        setPhotoEndPeriod(pe.period);
-      }
-      if (wiz_videoCoverageHours) {
-        const videoEnd = coverageStart + parseFloat(wiz_videoCoverageHours) * 60;
-        const vs = formatTime(coverageStart);
-        const ve = formatTime(videoEnd);
-        setVideoStartHour(vs.hour);
-        setVideoStartMinute(vs.minute);
-        setVideoStartPeriod(vs.period);
-        setVideoEndHour(ve.hour);
-        setVideoEndMinute(ve.minute);
-        setVideoEndPeriod(ve.period);
-      }
+    if (wiz_photoCoverageHours && photoEnabled) {
+      const photoStart = parseTimeInput(
+        photoStartHour,
+        photoStartMinute,
+        photoStartPeriod
+      );
+      const photoEnd = photoStart + parseFloat(wiz_photoCoverageHours) * 60;
+      const pe = formatTime(photoEnd);
+      setPhotoEndHour(pe.hour);
+      setPhotoEndMinute(pe.minute);
+      setPhotoEndPeriod(pe.period);
+    }
+    if (wiz_videoCoverageHours && videoEnabled) {
+      const videoStart = parseTimeInput(
+        videoStartHour,
+        videoStartMinute,
+        videoStartPeriod
+      );
+      const videoEnd = videoStart + parseFloat(wiz_videoCoverageHours) * 60;
+      const ve = formatTime(videoEnd);
+      setVideoEndHour(ve.hour);
+      setVideoEndMinute(ve.minute);
+      setVideoEndPeriod(ve.period);
     }
 
     setScreen("timeline");
@@ -1358,6 +1426,7 @@ export default function MobileApp() {
     wiz_logisticsEventAdjustments, setWiz_logisticsEventAdjustments,
     photoStartHour, photoStartMinute, photoStartPeriod, setPhotoStartHour, setPhotoStartMinute, setPhotoStartPeriod,
     photoEndHour, photoEndMinute, photoEndPeriod, setPhotoEndHour, setPhotoEndMinute, setPhotoEndPeriod,
+    videoStartHour, videoStartMinute, videoStartPeriod, setVideoStartHour, setVideoStartMinute, setVideoStartPeriod,
     videoEndHour, videoEndMinute, videoEndPeriod, setVideoEndHour, setVideoEndMinute, setVideoEndPeriod,
     photoEnabled, videoEnabled,
     wizSectionHeading,
@@ -1445,17 +1514,28 @@ export default function MobileApp() {
             />
             Photography
           </label>
-          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4, paddingLeft: 24, opacity: photoEnabled ? 1 : 0.5 }}>
-            <select value={photoStartHour} onChange={(e) => setPhotoStartHour(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !photoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderHourOptions()}</select>
-            <span style={{ color: "var(--wtb-text-muted)" }}>:</span>
-            <select value={photoStartMinute} onChange={(e) => setPhotoStartMinute(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !photoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderMinuteOptions()}</select>
-            <select value={photoStartPeriod} onChange={(e) => setPhotoStartPeriod(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !photoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}><option value="AM">AM</option><option value="PM">PM</option></select>
-            <span style={{ margin: "0 4px", color: "var(--wtb-text-muted)" }}>—</span>
-            <select value={photoEndHour} onChange={(e) => setPhotoEndHour(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !photoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderHourOptions()}</select>
-            <span style={{ color: "var(--wtb-text-muted)" }}>:</span>
-            <select value={photoEndMinute} onChange={(e) => setPhotoEndMinute(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !photoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderMinuteOptions()}</select>
-            <select value={photoEndPeriod} onChange={(e) => setPhotoEndPeriod(e.target.value)} disabled={!photoEnabled} style={{ ...settingsSelectStyle, background: !photoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !photoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}><option value="AM">AM</option><option value="PM">PM</option></select>
-          </div>
+          {photoEnabled && (
+            <div style={{ paddingLeft: 24 }}>
+              <p style={{ margin: "0 0 6px 0", fontSize: 12, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif" }}>
+                When should the photographer start shooting?
+              </p>
+              <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+                <select value={photoStartHour} onChange={(e) => setPhotoStartHour(e.target.value)} style={{ ...settingsSelectStyle }}>{renderHourOptions()}</select>
+                <span style={{ color: "var(--wtb-text-muted)" }}>:</span>
+                <select value={photoStartMinute} onChange={(e) => setPhotoStartMinute(e.target.value)} style={{ ...settingsSelectStyle }}>{renderMinuteOptions()}</select>
+                <select value={photoStartPeriod} onChange={(e) => setPhotoStartPeriod(e.target.value)} style={{ ...settingsSelectStyle }}><option value="AM">AM</option><option value="PM">PM</option></select>
+              </div>
+              <p style={{ margin: "0 0 6px 0", fontSize: 12, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif" }}>
+                Photography coverage ends at:
+              </p>
+              <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
+                <select value={photoEndHour} onChange={(e) => setPhotoEndHour(e.target.value)} style={{ ...settingsSelectStyle }}>{renderHourOptions()}</select>
+                <span style={{ color: "var(--wtb-text-muted)" }}>:</span>
+                <select value={photoEndMinute} onChange={(e) => setPhotoEndMinute(e.target.value)} style={{ ...settingsSelectStyle }}>{renderMinuteOptions()}</select>
+                <select value={photoEndPeriod} onChange={(e) => setPhotoEndPeriod(e.target.value)} style={{ ...settingsSelectStyle }}><option value="AM">AM</option><option value="PM">PM</option></select>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Videography */}
@@ -1472,17 +1552,28 @@ export default function MobileApp() {
             />
             Videography
           </label>
-          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4, paddingLeft: 24, opacity: videoEnabled ? 1 : 0.5 }}>
-            <select value={videoStartHour} onChange={(e) => setVideoStartHour(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !videoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderHourOptions()}</select>
-            <span style={{ color: "var(--wtb-text-muted)" }}>:</span>
-            <select value={videoStartMinute} onChange={(e) => setVideoStartMinute(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !videoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderMinuteOptions()}</select>
-            <select value={videoStartPeriod} onChange={(e) => setVideoStartPeriod(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !videoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}><option value="AM">AM</option><option value="PM">PM</option></select>
-            <span style={{ margin: "0 4px", color: "var(--wtb-text-muted)" }}>—</span>
-            <select value={videoEndHour} onChange={(e) => setVideoEndHour(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !videoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderHourOptions()}</select>
-            <span style={{ color: "var(--wtb-text-muted)" }}>:</span>
-            <select value={videoEndMinute} onChange={(e) => setVideoEndMinute(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !videoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}>{renderMinuteOptions()}</select>
-            <select value={videoEndPeriod} onChange={(e) => setVideoEndPeriod(e.target.value)} disabled={!videoEnabled} style={{ ...settingsSelectStyle, background: !videoEnabled ? "var(--wtb-disabled-bg)" : "var(--wtb-input-bg)", color: !videoEnabled ? "var(--wtb-text-faint)" : "var(--wtb-text)" }}><option value="AM">AM</option><option value="PM">PM</option></select>
-          </div>
+          {videoEnabled && (
+            <div style={{ paddingLeft: 24 }}>
+              <p style={{ margin: "0 0 6px 0", fontSize: 12, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif" }}>
+                When should the videographer start shooting?
+              </p>
+              <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+                <select value={videoStartHour} onChange={(e) => setVideoStartHour(e.target.value)} style={{ ...settingsSelectStyle }}>{renderHourOptions()}</select>
+                <span style={{ color: "var(--wtb-text-muted)" }}>:</span>
+                <select value={videoStartMinute} onChange={(e) => setVideoStartMinute(e.target.value)} style={{ ...settingsSelectStyle }}>{renderMinuteOptions()}</select>
+                <select value={videoStartPeriod} onChange={(e) => setVideoStartPeriod(e.target.value)} style={{ ...settingsSelectStyle }}><option value="AM">AM</option><option value="PM">PM</option></select>
+              </div>
+              <p style={{ margin: "0 0 6px 0", fontSize: 12, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif" }}>
+                Videography coverage ends at:
+              </p>
+              <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
+                <select value={videoEndHour} onChange={(e) => setVideoEndHour(e.target.value)} style={{ ...settingsSelectStyle }}>{renderHourOptions()}</select>
+                <span style={{ color: "var(--wtb-text-muted)" }}>:</span>
+                <select value={videoEndMinute} onChange={(e) => setVideoEndMinute(e.target.value)} style={{ ...settingsSelectStyle }}>{renderMinuteOptions()}</select>
+                <select value={videoEndPeriod} onChange={(e) => setVideoEndPeriod(e.target.value)} style={{ ...settingsSelectStyle }}><option value="AM">AM</option><option value="PM">PM</option></select>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1623,7 +1714,10 @@ export default function MobileApp() {
                       {new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
                     </div>
                   )}
-                  <TimelineCoverageCounter coverage={timelineCoverage} />
+                  <TimelineCoverageCounter
+                    photoCoverage={mediaCoverage.photo}
+                    videoCoverage={mediaCoverage.video}
+                  />
                 </div>
                 <div className="wtb-mobile-header-actions" ref={mobileGearMenuRef}>
                   <ThemeToggle theme={theme} onToggle={toggleTheme} inline />
@@ -1733,7 +1827,10 @@ export default function MobileApp() {
                     {new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
                   </div>
                 )}
-                <TimelineCoverageCounter coverage={timelineCoverage} />
+                <TimelineCoverageCounter
+                  photoCoverage={mediaCoverage.photo}
+                  videoCoverage={mediaCoverage.video}
+                />
               </div>
             )}
 
