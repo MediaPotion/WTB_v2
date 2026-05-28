@@ -45,7 +45,14 @@ const HDR_H   = 122; // first-page header height
 const FTR_H   = 22;  // footer height
 const COL_TIME = 66, COL_DUR = 34, COL_SET = 28;
 const LOC_TEXT_W = CW - 16;
+const PDF_LOC_TIME_X = MX + 5;
+const PDF_LOC_BODY_X = MX + COL_TIME;
+const PDF_LOC_BODY_W = CW - COL_TIME - 8;
+const PDF_EVT_TIME_X = MX + 5;
+const PDF_EVT_BODY_X = MX + COL_TIME;
+const PDF_EVT_BODY_W = CW - COL_TIME - COL_DUR - COL_SET - 4;
 const EVT_NOTES_W = CW - COL_TIME - COL_DUR - COL_SET - 8;
+const PDF_PAGE_BOTTOM = PH - MY_BOT - FTR_H - 8;
 const LOC_PAD_TOP = 10;
 const LOC_PAD_BOTTOM = 10;
 const LOC_LINE_GAP = 3;
@@ -121,6 +128,51 @@ function textBlockHeight(lines, fontSize, maxWidth, doc, previewLineH) {
   return lines.length * previewLineH;
 }
 
+/** jsPDF stacked-line height (baseline-to-baseline advance). PDF export only. */
+function pdfStackedTextHeight(doc, fontSize, textOrLines, maxWidth) {
+  doc.setFontSize(fontSize);
+  const lines =
+    typeof textOrLines === "string"
+      ? maxWidth
+        ? doc.splitTextToSize(textOrLines, maxWidth)
+        : [textOrLines]
+      : textOrLines;
+  if (!lines?.length) return fontSize * 1.15;
+  const opts = maxWidth ? { maxWidth } : {};
+  return doc.getTextDimensions(lines, opts).h;
+}
+
+/** Measure PDF location inner stack (preview uses measureLocationBlock with doc=null). */
+function measurePdfLocationBlock(row, doc) {
+  const eventLines = wrapTextLines(row.event || "(Travel)", PDF_LOC_BODY_W, 10, doc);
+  const addressLines = row.address?.trim()
+    ? wrapTextLines(row.address, PDF_LOC_BODY_W, 8, doc)
+    : [];
+  const noteLines = row.notes?.trim()
+    ? wrapTextLines(row.notes, PDF_LOC_BODY_W, 8, doc)
+    : [];
+  const travelText = `Travel time: ${row.duration} min`;
+
+  let inner = pdfStackedTextHeight(doc, 7.5, "12:00 PM", COL_TIME - 10);
+  inner += LOC_LINE_GAP;
+  inner += pdfStackedTextHeight(doc, 10, eventLines, PDF_LOC_BODY_W) + LOC_LINE_GAP;
+  if (addressLines.length) {
+    inner += pdfStackedTextHeight(doc, 8, addressLines, PDF_LOC_BODY_W) + LOC_LINE_GAP;
+  }
+  inner += pdfStackedTextHeight(doc, 7.5, travelText, PDF_LOC_BODY_W);
+  if (noteLines.length) {
+    inner += LOC_LINE_GAP + pdfStackedTextHeight(doc, 8, noteLines, PDF_LOC_BODY_W);
+  }
+
+  return {
+    locH: LOC_PAD_TOP + inner + LOC_PAD_BOTTOM,
+    eventLines,
+    addressLines,
+    noteLines,
+    travelText,
+  };
+}
+
 /** Total inner height for a location block (content + notes), excluding RH_GAP. */
 function measureLocationBlock(row, doc = null) {
   const eventLines = wrapTextLines(row.event || "(Travel)", LOC_TEXT_W, 10, doc);
@@ -130,6 +182,10 @@ function measureLocationBlock(row, doc = null) {
   const noteLines = row.notes?.trim()
     ? wrapTextLines(row.notes, LOC_TEXT_W, 8, doc)
     : [];
+
+  if (doc) {
+    return measurePdfLocationBlock(row, doc);
+  }
 
   let inner = 12; // time
   inner += textBlockHeight(eventLines, 10, LOC_TEXT_W, doc, PREVIEW_LINE_H.event);
@@ -150,7 +206,28 @@ function measureLocationBlock(row, doc = null) {
   };
 }
 
+function measurePdfEventRow(row, doc) {
+  const eventLines = wrapTextLines(row.event || "(empty)", PDF_EVT_BODY_W, 9, doc);
+  const noteLines = row.notes?.trim()
+    ? wrapTextLines(row.notes, EVT_NOTES_W, 8, doc)
+    : [];
+  const timeSample = "12:00 PM";
+  const mainH = Math.max(
+    pdfStackedTextHeight(doc, 8.5, timeSample, COL_TIME - 10),
+    pdfStackedTextHeight(doc, 9, eventLines.length ? eventLines : ["(empty)"], PDF_EVT_BODY_W)
+  );
+  let inner = EVT_PAD_TOP + mainH + 4;
+  if (noteLines.length) {
+    inner += pdfStackedTextHeight(doc, 8, noteLines, EVT_NOTES_W) + 2;
+  }
+  inner += 4;
+  return { rowH: Math.max(RH_EVT, inner), noteLines, eventLines };
+}
+
 function measureEventRow(row, doc = null) {
+  if (doc) {
+    return measurePdfEventRow(row, doc);
+  }
   const noteLines = row.notes?.trim()
     ? wrapTextLines(row.notes, EVT_NOTES_W, 8, doc)
     : [];
@@ -175,6 +252,29 @@ function layoutPreviewPages(rows) {
     const avail = pages.length === 0 ? firstAvail : otherAvail;
     if (curr.length > 0 && used + h > avail) { pages.push(curr); curr = []; used = 0; }
     curr.push(row); used += h;
+  }
+  pages.push(curr);
+  return pages;
+}
+
+/** PDF pagination using jsPDF text metrics (preview layout unchanged). */
+function layoutPdfPages(rows, doc) {
+  const timelineRows = prepareTimelineExportRows(rows);
+  const firstAvail = PH - MY_TOP - HDR_H - RH_COL - PDF_PAGE_BOTTOM;
+  const otherAvail = PH - MY_TOP - RH_COL - PDF_PAGE_BOTTOM;
+  const pages = [];
+  let curr = [];
+  let used = 0;
+  for (const row of timelineRows) {
+    const h = measuredRowHeight(row, doc);
+    const avail = pages.length === 0 ? firstAvail : otherAvail;
+    if (curr.length > 0 && used + h > avail) {
+      pages.push(curr);
+      curr = [];
+      used = 0;
+    }
+    curr.push(row);
+    used += h;
   }
   pages.push(curr);
   return pages;
@@ -254,7 +354,8 @@ function hexToRgb(hex) {
 
 /** Draw a location block on PDF; returns vertical space consumed (height + gap). */
 function drawPdfLocationRow(doc, row, y, ts) {
-  const { locH, eventLines, addressLines, noteLines } = measureLocationBlock(row, doc);
+  const { locH, eventLines, addressLines, noteLines, travelText } =
+    measurePdfLocationBlock(row, doc);
 
   doc.setFillColor(248, 246, 243);
   doc.rect(MX, y, CW, locH, "F");
@@ -266,88 +367,117 @@ function drawPdfLocationRow(doc, row, y, ts) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(160, 160, 160);
-  doc.text(ts, MX + 8, ly + 9);
-  ly += 12;
+  doc.text(ts, PDF_LOC_TIME_X, ly);
+  ly += pdfStackedTextHeight(doc, 7.5, ts, COL_TIME - 10) + LOC_LINE_GAP;
 
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(26, 26, 26);
-  doc.text(eventLines, MX + 8, ly);
-  ly += textBlockHeight(eventLines, 10, LOC_TEXT_W, doc, PREVIEW_LINE_H.event) + LOC_LINE_GAP;
+  doc.text(eventLines, PDF_LOC_BODY_X, ly);
+  ly += pdfStackedTextHeight(doc, 10, eventLines, PDF_LOC_BODY_W) + LOC_LINE_GAP;
 
   if (addressLines.length) {
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
-    doc.text(addressLines, MX + 8, ly);
-    ly += textBlockHeight(addressLines, 8, LOC_TEXT_W, doc, PREVIEW_LINE_H.address) + LOC_LINE_GAP;
+    doc.text(addressLines, PDF_LOC_BODY_X, ly);
+    ly += pdfStackedTextHeight(doc, 8, addressLines, PDF_LOC_BODY_W) + LOC_LINE_GAP;
   }
 
   doc.setFontSize(7.5);
   doc.setTextColor(150, 150, 150);
-  doc.text(`Travel time: ${row.duration} min`, MX + 8, ly);
-  ly += 12;
+  doc.text(travelText, PDF_LOC_BODY_X, ly);
+  ly += pdfStackedTextHeight(doc, 7.5, travelText, PDF_LOC_BODY_W);
 
   if (noteLines.length) {
+    ly += LOC_LINE_GAP;
     doc.setFont("times", "italic");
     doc.setFontSize(8);
     doc.setTextColor(130, 130, 130);
-    doc.text(noteLines, MX + 8, ly + LOC_LINE_GAP);
+    doc.text(noteLines, PDF_LOC_BODY_X, ly);
   }
 
   return locH + LOC_ROW_GAP;
 }
 
+/** Draw a standard/custom event row on PDF; returns vertical space consumed. */
+function drawPdfEventRow(doc, row, y, ts) {
+  const { rowH, noteLines, eventLines } = measurePdfEventRow(row, doc);
+  const [ar, ag, ab] = hexToRgb(getEventColor(row.event));
+
+  doc.setFillColor(ar, ag, ab);
+  doc.rect(MX, y, 2.5, rowH, "F");
+  doc.setDrawColor(240, 237, 232);
+  doc.setLineWidth(0.4);
+  doc.line(MX, y + rowH, PW - MX, y + rowH);
+
+  let ly = y + EVT_PAD_TOP;
+  const mainBase = ly;
+
+  doc.setFont("helvetica", PDF_TIME_WEIGHT);
+  doc.setFontSize(8.5);
+  doc.setTextColor(50, 50, 50);
+  doc.text(ts, PDF_EVT_TIME_X, mainBase);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(26, 26, 26);
+  doc.text(eventLines, PDF_EVT_BODY_X, mainBase, { maxWidth: PDF_EVT_BODY_W });
+
+  doc.setFontSize(8.5);
+  doc.setTextColor(110, 110, 110);
+  doc.text(String(row.duration), PW - MX - COL_SET - 4, mainBase, { align: "right" });
+  doc.setFontSize(8);
+  doc.setTextColor(80, 80, 80);
+  doc.text(row.isOutdoor ? "OUT" : "IN", PW - MX - COL_SET / 2, mainBase, { align: "center" });
+
+  const mainH = Math.max(
+    pdfStackedTextHeight(doc, 8.5, ts, COL_TIME - 10),
+    pdfStackedTextHeight(doc, 9, eventLines, PDF_EVT_BODY_W)
+  );
+  ly = mainBase + mainH + 4;
+
+  if (noteLines.length) {
+    doc.setFont("times", "italic");
+    doc.setFontSize(8);
+    doc.setTextColor(130, 130, 130);
+    doc.text(noteLines, PDF_EVT_BODY_X, ly);
+  }
+
+  return rowH + RH_GAP;
+}
+
+function drawPdfConstraintRow(doc, row, y, ts) {
+  doc.setFillColor(255, 245, 245);
+  doc.rect(MX, y, CW, RH_CON, "F");
+  doc.setFillColor(204, 68, 68);
+  doc.rect(MX, y, 3, RH_CON, "F");
+
+  const midY = y + RH_CON / 2 + 3;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text(ts, PDF_EVT_TIME_X, midY);
+  doc.setTextColor(204, 68, 68);
+  doc.setFontSize(9);
+  doc.text("[!] TIME CONSTRAINT", PDF_EVT_BODY_X, midY);
+
+  return RH_CON + RH_GAP;
+}
+
 function drawPdfTimelineRows(doc, pageRows, csY) {
   let y = csY + RH_COL + 4;
+
   for (const row of pageRows) {
     const t = formatTime(row.time);
     const ts = `${t.hour}:${t.minute} ${t.period}`;
-    if (row.type === 'location') {
+
+    if (row.type === "location") {
       y += drawPdfLocationRow(doc, row, y, ts);
-    } else if (row.type === 'constraint') {
-      doc.setFillColor(255, 245, 245);
-      doc.rect(MX, y, CW, RH_CON, 'F');
-      doc.setFillColor(204, 68, 68);
-      doc.rect(MX, y, 3, RH_CON, 'F');
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(ts, MX + 8, y + RH_CON / 2 + 3);
-      doc.setTextColor(204, 68, 68);
-      doc.setFontSize(9);
-      doc.text('[!] TIME CONSTRAINT', MX + COL_TIME, y + RH_CON / 2 + 3);
-      y += RH_CON + RH_GAP;
+    } else if (row.type === "constraint") {
+      y += drawPdfConstraintRow(doc, row, y, ts);
     } else {
-      const { rowH, noteLines } = measureEventRow(row, doc);
-      const [ar, ag, ab] = hexToRgb(getEventColor(row.event));
-      doc.setFillColor(ar, ag, ab);
-      doc.rect(MX, y, 2.5, rowH, 'F');
-      doc.setDrawColor(240, 237, 232);
-      doc.setLineWidth(0.4);
-      doc.line(MX, y + rowH, PW - MX, y + rowH);
-      const textY = y + EVT_PAD_TOP + 10;
-      doc.setFont('helvetica', PDF_TIME_WEIGHT);
-      doc.setFontSize(8.5);
-      doc.setTextColor(50, 50, 50);
-      doc.text(ts, MX + 5, textY);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      doc.setTextColor(26, 26, 26);
-      doc.text(row.event || '(empty)', MX + COL_TIME, textY, {
-        maxWidth: CW - COL_TIME - COL_DUR - COL_SET - 4,
-      });
-      doc.setFontSize(8.5);
-      doc.setTextColor(110, 110, 110);
-      doc.text(String(row.duration), PW - MX - COL_SET - 4, textY, { align: 'right' });
-      doc.setFontSize(8);
-      doc.setTextColor(80, 80, 80);
-      doc.text(row.isOutdoor ? 'OUT' : 'IN', PW - MX - COL_SET / 2, textY, { align: 'center' });
-      if (noteLines.length) {
-        doc.setFont('times', 'italic');
-        doc.setFontSize(8);
-        doc.setTextColor(130, 130, 130);
-        doc.text(noteLines, MX + COL_TIME, y + RH_EVT + 6);
-      }
-      y += rowH + RH_GAP;
+      y += drawPdfEventRow(doc, row, y, ts);
     }
   }
 }
@@ -627,7 +757,7 @@ async function buildTimelinePdfDoc(params) {
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({ unit: 'pt', format: 'letter' });
   const timelineRows = prepareTimelineExportRows(userRows);
-  const allPages = layoutPreviewPages(timelineRows);
+  const allPages = layoutPdfPages(timelineRows, doc);
   const headerParams = {
     bride, groom, date,
     photoStartHour, photoStartMinute, photoStartPeriod,
