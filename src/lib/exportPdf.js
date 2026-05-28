@@ -43,15 +43,16 @@ const RH_GAP  = 3;   // gap after standard event / constraint rows
 const LOC_ROW_GAP = 5; // extra gap after location blocks
 const HDR_H   = 122; // first-page header height
 const FTR_H   = 22;  // footer height
-const COL_TIME = 66, COL_DUR = 34, COL_SET = 28;
+const COL_TIME = 66, COL_DUR = 34;
 const LOC_TEXT_W = CW - 16;
 const PDF_LOC_TIME_X = MX + 5;
 const PDF_LOC_BODY_X = MX + COL_TIME;
 const PDF_LOC_BODY_W = CW - COL_TIME - 8;
 const PDF_EVT_TIME_X = MX + 5;
 const PDF_EVT_BODY_X = MX + COL_TIME;
-const PDF_EVT_BODY_W = CW - COL_TIME - COL_DUR - COL_SET - 4;
-const EVT_NOTES_W = CW - COL_TIME - COL_DUR - COL_SET - 8;
+const PDF_EVT_BODY_W = CW - COL_TIME - COL_DUR - 4;
+const EVT_NOTES_W = CW - COL_TIME - COL_DUR - 8;
+const PDF_DUR_X = PW - MX - 4;
 /** Reserved space at bottom of each PDF page (footer + margin). */
 const PDF_BOTTOM_RESERVE = MY_BOT + FTR_H + 8;
 /** Y coordinate where timeline content must stop (for runtime overflow checks). */
@@ -444,10 +445,7 @@ function drawPdfEventRow(doc, row, y, ts) {
 
   doc.setFontSize(8.5);
   doc.setTextColor(110, 110, 110);
-  doc.text(String(row.duration), PW - MX - COL_SET - 4, mainBase, { align: "right" });
-  doc.setFontSize(8);
-  doc.setTextColor(80, 80, 80);
-  doc.text(row.isOutdoor ? "OUT" : "IN", PW - MX - COL_SET / 2, mainBase, { align: "center" });
+  doc.text(String(row.duration), PDF_DUR_X, mainBase, { align: "right" });
 
   const mainH = Math.max(
     pdfStackedTextHeight(doc, 8.5, ts, COL_TIME - 10),
@@ -526,8 +524,7 @@ function PvColHeaders() {
     <div style={{ display: 'flex', height: RH_COL, flexShrink: 0, alignItems: 'center', borderBottom: '0.5px solid var(--wtb-accent)', marginBottom: 3 }}>
       <div style={{ ...lbl, width: COL_TIME }}>Time</div>
       <div style={{ ...lbl, flex: 1 }}>Event</div>
-      <div style={{ ...lbl, width: COL_DUR, textAlign: 'right' }}>Min</div>
-      <div style={{ ...lbl, width: COL_SET, textAlign: 'center' }}>Setting</div>
+      <div style={{ ...lbl, width: COL_DUR, textAlign: 'right', paddingRight: 4 }}>Duration</div>
     </div>
   );
 }
@@ -632,8 +629,7 @@ function PvRow({ row }) {
           </div>
         ))}
       </div>
-      <div style={{ width: COL_DUR, fontSize: 8.5, fontFamily: "'Jost', sans-serif", color: '#666', textAlign: 'right', flexShrink: 0, paddingTop: 2 }}>{row.duration}</div>
-      <div style={{ width: COL_SET, fontSize: 9, textAlign: 'center', flexShrink: 0, paddingTop: 2 }}>{row.isOutdoor ? '☀' : '⌂'}</div>
+      <div style={{ width: COL_DUR, fontSize: 8.5, fontFamily: "'Jost', sans-serif", color: '#666', textAlign: 'right', flexShrink: 0, paddingTop: 2, paddingRight: 4 }}>{row.duration}</div>
     </div>
   );
 }
@@ -796,8 +792,7 @@ async function buildTimelinePdfDoc(params) {
     doc.setTextColor(...PDF_ACCENT_RGB);
     doc.text('TIME', MX, csY + 13);
     doc.text('EVENT', MX + COL_TIME, csY + 13);
-    doc.text('MIN', PW - MX - COL_SET - 2, csY + 13, { align: 'right' });
-    doc.text('SETTING', PW - MX - COL_SET / 2, csY + 13, { align: 'center' });
+    doc.text('DURATION', PDF_DUR_X, csY + 13, { align: 'right' });
     doc.setDrawColor(...PDF_ACCENT_RGB);
     doc.setLineWidth(0.5);
     doc.line(MX, csY + RH_COL, PW - MX, csY + RH_COL);
