@@ -528,84 +528,7 @@ export default function MobileApp() {
     if (userRowIndex === -1) return;
 
     const newUserRows = userRows.filter((_, idx) => idx !== userRowIndex);
-
-    if (newUserRows.length === 0) {
-      saveToHistory(newUserRows);
-      return;
-    }
-
-    // Identify ceremony block
-    const isCeremony = (r) => r.event === "Ceremony: Average" || r.event === "Ceremony: Catholic";
-    const ceremonyRow = newUserRows.find(isCeremony);
-
-    // No ceremony in timeline, or the ceremony itself was deleted — no anchor logic
-    if (!ceremonyRow || isCeremony(row)) {
-      saveToHistory(newUserRows);
-      return;
-    }
-
-    const ceremonyTime = ceremonyRow.time;
-    const ceremonyEnd = ceremonyTime + ceremonyRow.duration;
-    const sorted = [...newUserRows].sort((a, b) => a.time - b.time);
-
-    if (row.time < ceremonyTime) {
-      // Pre-ceremony deletion: cascade backwards from ceremony start so blocks shift later
-      const pre  = sorted.filter(r => r.time < ceremonyTime);
-      const rest = sorted.filter(r => r.time >= ceremonyTime); // ceremony + post, untouched
-
-      let t = ceremonyTime;
-      const newPre = [...pre].reverse().map(r => {
-        t -= r.duration;
-        return { ...r, time: t };
-      }).reverse();
-
-      const result = [...newPre, ...rest];
-      saveToHistory(newUserRows.map(ur => result.find(r => r.id === ur.id) || ur));
-    } else {
-      // Post-ceremony deletion: cascade forwards from ceremony end so blocks shift earlier
-      const preAndCeremony = sorted.filter(r => r.time <= ceremonyTime); // untouched
-      const post = sorted.filter(r => r.time > ceremonyTime);
-
-      let t = ceremonyEnd;
-      const newPost = post.map(r => {
-        const updated = { ...r, time: t };
-        t += r.duration;
-        return updated;
-      });
-
-      const result = [...preAndCeremony, ...newPost];
-      saveToHistory(newUserRows.map(ur => result.find(r => r.id === ur.id) || ur));
-    }
-  };
-
-  // Cascade all pre- or post-ceremony blocks around the ceremony anchor.
-  // insertedRowTime determines which side to cascade; only that side is recalculated.
-  const applyCeremonyAnchorCascade = (rows, insertedRowTime) => {
-    const isCeremony = (r) => r.event === "Ceremony: Average" || r.event === "Ceremony: Catholic";
-    const ceremonyRow = rows.find(isCeremony);
-    if (!ceremonyRow) return rows; // no anchor — return unchanged
-
-    const ceremonyTime = ceremonyRow.time;
-    const ceremonyEnd  = ceremonyTime + ceremonyRow.duration;
-    const sorted = [...rows].sort((a, b) => a.time - b.time);
-
-    if (insertedRowTime < ceremonyTime) {
-      // Pre-ceremony: cascade backwards from ceremony start (day starts earlier)
-      const pre  = sorted.filter(r => r.id !== ceremonyRow.id && r.time < ceremonyTime);
-      const rest = sorted.filter(r => r.id === ceremonyRow.id || r.time >= ceremonyTime);
-      let t = ceremonyTime;
-      const newPre = [...pre].reverse().map(r => { t -= r.duration; return { ...r, time: t }; }).reverse();
-      const result = [...newPre, ...rest];
-      return rows.map(r => result.find(u => u.id === r.id) || r);
-    } else {
-      // Post-ceremony: cascade forwards from ceremony end (blocks shift later)
-      const preAndCeremony = sorted.filter(r => r.id === ceremonyRow.id || r.time <= ceremonyTime);
-      const post = sorted.filter(r => r.id !== ceremonyRow.id && r.time > ceremonyTime);
-      let t = ceremonyEnd;
-      const newPost = post.map(r => { const u = { ...r, time: t }; t += r.duration; return u; });
-      const result = [...preAndCeremony, ...newPost];
-      return rows.map(r => result.find(u => u.id === r.id) || r);
-    }
+    saveToHistory(newUserRows);
   };
 
   // Cascade times based on the visual (array index) order of rows, using the
@@ -743,27 +666,27 @@ export default function MobileApp() {
       const userRowIndex = userRows.findIndex((u) => u.id === displayRow.id);
       if (userRowIndex !== -1) {
         const newUserRows = [...userRows];
-        const outdoorDefault = defaultIsOutdoorForEvent(eventData.event);
-        newUserRows[userRowIndex] = {
-          ...newUserRows[userRowIndex],
-          event: eventData.event,
-          duration: eventData.duration,
-          ...(eventData.time !== undefined ? { time: eventData.time } : {}),
-          ...(outdoorDefault !== undefined ? { isOutdoor: outdoorDefault } : {}),
-        };
-
-        // Recalculate subsequent times starting from this row in display order
-        const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
-        const sortedIndex = sortedRows.findIndex((r) => r.id === newUserRows[userRowIndex].id);
-        const recalculated = recalculateTimes(sortedRows, sortedIndex);
-
-        // Map recalculated times back to original order
-        recalculated.forEach((recalcRow, i) => {
-          const originalIndex = newUserRows.findIndex((r) => r.id === sortedRows[i].id);
-          if (originalIndex !== -1) {
-            newUserRows[originalIndex] = recalcRow;
-          }
-        });
+        if (eventData.type === "location") {
+          newUserRows[userRowIndex] = {
+            ...newUserRows[userRowIndex],
+            type: "location",
+            event: eventData.event ?? "",
+            duration: eventData.duration ?? 15,
+            address: eventData.address ?? "",
+            color: "",
+            ...(eventData.time !== undefined ? { time: eventData.time } : {}),
+          };
+        } else {
+          const outdoorDefault = defaultIsOutdoorForEvent(eventData.event);
+          newUserRows[userRowIndex] = {
+            ...newUserRows[userRowIndex],
+            type: "event",
+            event: eventData.event,
+            duration: eventData.duration,
+            ...(eventData.time !== undefined ? { time: eventData.time } : {}),
+            ...(outdoorDefault !== undefined ? { isOutdoor: outdoorDefault } : {}),
+          };
+        }
 
         saveToHistory(newUserRows);
       }
@@ -850,7 +773,7 @@ export default function MobileApp() {
 
 
     setNextId(nextId + 1);
-    saveToHistory(applyCeremonyAnchorCascade(newUserRows, newRow.time));
+    saveToHistory(newUserRows);
   };
 
   // Append a new row at the end of the list
@@ -913,8 +836,7 @@ export default function MobileApp() {
       setNextId(nextId + 1);
     }
 
-    const cascaded = applyCeremonyAnchorCascade(newUserRows, targetRow.time);
-    saveToHistory(cascaded);
+    saveToHistory(newUserRows);
   };
 
   const reorderRowAtIndex = (sourceRowId, insertIndex) => {

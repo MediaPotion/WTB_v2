@@ -1,4 +1,16 @@
-import { prepareTimelineExportRows, layoutPreviewPages, layoutPdfPages } from "./exportPdf";
+import {
+  prepareTimelineExportRows,
+  layoutPreviewPages,
+  layoutPdfPages,
+  formatNotesLines,
+} from "./exportPdf";
+
+describe("formatNotesLines", () => {
+  it("preserves blank lines and paragraph breaks from textarea notes", () => {
+    const lines = formatNotesLines("Line one\n\nLine two", 200, 8, null);
+    expect(lines).toEqual(["Line one", "", "Line two"]);
+  });
+});
 
 describe("prepareTimelineExportRows", () => {
   it("sorts rows by time ascending", () => {

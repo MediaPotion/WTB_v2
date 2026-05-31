@@ -281,6 +281,53 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
           Or Select Preset Event:
         </div>
 
+        <div style={{ breakInside: "avoid", WebkitColumnBreakInside: "avoid", marginBottom: 12 }}>
+          <div
+            style={{
+              fontSize: 10,
+              color: "#ffffff",
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              margin: "10px 0 4px",
+              fontFamily: "'Jost', sans-serif",
+              fontWeight: 400,
+              borderTop: "1px solid var(--wtb-border-subtle)",
+              paddingTop: 8,
+              textAlign: "center",
+            }}
+          >
+            Travel
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const newTime = parseTimeInput(timeHour, timeMinute, timePeriod);
+              onSelect({ type: "location", event: "", duration: 15, time: newTime });
+            }}
+            style={{
+              width: "100%",
+              padding: 12,
+              margin: "4px 0",
+              backgroundColor: "var(--wtb-surface)",
+              border: "2px solid #ffffff",
+              borderRadius: 8,
+              cursor: "pointer",
+              textAlign: "left",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              fontSize: 14,
+              fontWeight: 500,
+              color: "var(--wtb-text)",
+            }}
+          >
+            <span>Location / Travel</span>
+            <span style={{ fontSize: 12, color: "var(--wtb-text-muted)", fontWeight: "bold", marginLeft: "16px", whiteSpace: "nowrap" }}>
+              15 min
+            </span>
+          </button>
+        </div>
+
         {(() => {
           const groups = [];
           const groupMap = {};

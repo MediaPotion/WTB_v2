@@ -67,7 +67,9 @@ const EVT_PAD_TOP = 4;
 const PDF_ACCENT_RGB = [184, 144, 106];
 const PDF_TIME_WEIGHT = "bold";
 /** Fallback per-line heights when jsPDF is not available (preview layout). */
-const PREVIEW_LINE_H = { event: 12, address: 11, note: 14 };
+const PREVIEW_LINE_H = { event: 12, address: 11, note: 11 };
+/** Matches PvNotes: fontSize 8 × lineHeight 1.35 */
+const PREVIEW_NOTE_LINE_H = 11;
 
 /** Sort by time ascending and drop duplicate row ids (keeps first occurrence). */
 function prepareTimelineExportRows(rows) {
@@ -100,12 +102,21 @@ function measuredRowHeight(row, doc = null) {
 function wrapTextLines(text, maxWidth, fontSize, doc) {
   const s = (text || "").trim();
   if (!s) return [];
+  return wrapParagraph(s, maxWidth, fontSize, doc);
+}
+
+function wrapParagraph(text, maxWidth, fontSize, doc) {
+  const s = text ?? "";
+  if (!s) return [];
   if (doc) {
     doc.setFontSize(fontSize);
     return doc.splitTextToSize(s, maxWidth);
   }
-  const charsPerLine = Math.max(28, Math.floor(maxWidth / (fontSize * 0.48)));
-  const words = s.split(/\s+/);
+  // Serif italic notes run wider than Helvetica; avoid over-splitting lines in preview layout.
+  const charW = fontSize <= 8 ? fontSize * 0.58 : fontSize * 0.48;
+  const charsPerLine = Math.max(28, Math.floor(maxWidth / charW));
+  const words = s.split(/ +/).filter(Boolean);
+  if (!words.length) return s ? [s] : [];
   const lines = [];
   let cur = "";
   for (const w of words) {
@@ -123,6 +134,83 @@ function wrapTextLines(text, maxWidth, fontSize, doc) {
   }
   if (cur) lines.push(cur);
   return lines;
+}
+
+/** Preserve runs of spaces so PDF renderers do not collapse them. */
+function preserveSpacesForPdf(text) {
+  return String(text).replace(/ {2,}/g, (m) => "\u00A0".repeat(m.length));
+}
+
+/**
+ * Notes/textarea text: keep explicit newlines and blank lines; word-wrap each paragraph.
+ */
+function formatNotesLines(text, maxWidth, fontSize, doc) {
+  const raw = text ?? "";
+  if (!raw.trim() && !raw.includes("\n")) return [];
+  if (doc) {
+    doc.setFont("times", "italic");
+    doc.setFontSize(fontSize);
+  }
+  const lines = [];
+  for (const para of raw.split("\n")) {
+    if (para === "") {
+      lines.push("");
+      continue;
+    }
+    const wrapped = wrapParagraph(preserveSpacesForPdf(para), maxWidth, fontSize, doc);
+    lines.push(...(wrapped.length ? wrapped : [""]));
+  }
+  return lines;
+}
+
+function pdfNotesBlockHeight(doc, fontSize, lines, maxWidth) {
+  if (!lines.length) return 0;
+  doc.setFont("times", "italic");
+  doc.setFontSize(fontSize);
+  return pdfStackedTextHeight(doc, fontSize, noteLinesForPdfDraw(lines), maxWidth);
+}
+
+function noteLinesForPdfDraw(lines) {
+  return lines.map((line) => (line === "" ? "\u00A0" : line));
+}
+
+const NOTES_PREVIEW_LINE_GAP = 2;
+
+function notesBlockHeight(lines, fontSize, maxWidth, doc, previewLineH) {
+  if (!lines.length) return 0;
+  if (doc) {
+    return pdfNotesBlockHeight(doc, fontSize, lines, maxWidth);
+  }
+  let h = 0;
+  lines.forEach((line, i) => {
+    h += line === "" ? previewLineH * 0.85 : previewLineH;
+    if (i < lines.length - 1) h += NOTES_PREVIEW_LINE_GAP;
+  });
+  return h;
+}
+
+function PvNotes({ lines }) {
+  if (!lines.length) return null;
+  const lineStyle = {
+    margin: 0,
+    lineHeight: 1.35,
+    fontSize: 8,
+    fontFamily: "'Cormorant Garamond', serif",
+    fontStyle: "italic",
+    color: "#777",
+  };
+  return lines.map((line, i) => (
+    <div
+      key={`note-${i}`}
+      style={{
+        ...lineStyle,
+        minHeight: line === "" ? "0.85em" : undefined,
+        marginBottom: i < lines.length - 1 ? NOTES_PREVIEW_LINE_GAP : 0,
+      }}
+    >
+      {line || "\u00A0"}
+    </div>
+  ));
 }
 
 /** Pixel height of a wrapped text block (PDF-accurate when doc is provided). */
@@ -155,8 +243,8 @@ function measurePdfLocationBlock(row, doc) {
   const addressLines = row.address?.trim()
     ? wrapTextLines(row.address, PDF_LOC_BODY_W, 8, doc)
     : [];
-  const noteLines = row.notes?.trim()
-    ? wrapTextLines(row.notes, PDF_LOC_BODY_W, 8, doc)
+  const noteLines = row.notes?.trim() || String(row.notes || "").includes("\n")
+    ? formatNotesLines(row.notes, PDF_LOC_BODY_W, 8, doc)
     : [];
   const travelText = `Travel time: ${row.duration} min`;
 
@@ -168,7 +256,7 @@ function measurePdfLocationBlock(row, doc) {
   }
   inner += pdfStackedTextHeight(doc, 7.5, travelText, PDF_LOC_BODY_W);
   if (noteLines.length) {
-    inner += LOC_LINE_GAP + pdfStackedTextHeight(doc, 8, noteLines, PDF_LOC_BODY_W);
+    inner += LOC_LINE_GAP + pdfNotesBlockHeight(doc, 8, noteLines, PDF_LOC_BODY_W);
   }
 
   return {
@@ -186,8 +274,8 @@ function measureLocationBlock(row, doc = null) {
   const addressLines = row.address?.trim()
     ? wrapTextLines(row.address, LOC_TEXT_W, 8, doc)
     : [];
-  const noteLines = row.notes?.trim()
-    ? wrapTextLines(row.notes, LOC_TEXT_W, 8, doc)
+  const noteLines = row.notes?.trim() || String(row.notes || "").includes("\n")
+    ? formatNotesLines(row.notes, LOC_TEXT_W, 8, doc)
     : [];
 
   if (doc) {
@@ -202,7 +290,7 @@ function measureLocationBlock(row, doc = null) {
   }
   inner += 12; // travel
   if (noteLines.length) {
-    inner += LOC_LINE_GAP + textBlockHeight(noteLines, 8, LOC_TEXT_W, doc, PREVIEW_LINE_H.note);
+    inner += LOC_LINE_GAP + notesBlockHeight(noteLines, 8, LOC_TEXT_W, doc, PREVIEW_NOTE_LINE_H);
   }
 
   return {
@@ -215,8 +303,8 @@ function measureLocationBlock(row, doc = null) {
 
 function measurePdfEventRow(row, doc) {
   const eventLines = wrapTextLines(row.event || "(empty)", PDF_EVT_BODY_W, 9, doc);
-  const noteLines = row.notes?.trim()
-    ? wrapTextLines(row.notes, EVT_NOTES_W, 8, doc)
+  const noteLines = row.notes?.trim() || String(row.notes || "").includes("\n")
+    ? formatNotesLines(row.notes, EVT_NOTES_W, 8, doc)
     : [];
   const timeSample = "12:00 PM";
   const mainH = Math.max(
@@ -225,23 +313,31 @@ function measurePdfEventRow(row, doc) {
   );
   let inner = EVT_PAD_TOP + mainH + 4;
   if (noteLines.length) {
-    inner += pdfStackedTextHeight(doc, 8, noteLines, EVT_NOTES_W) + 2;
+    inner += pdfNotesBlockHeight(doc, 8, noteLines, EVT_NOTES_W) + 2;
   }
   inner += 4;
   return { rowH: Math.max(RH_EVT, inner), noteLines, eventLines };
+}
+
+function measurePreviewEventRow(row) {
+  const eventLines = wrapTextLines(row.event || "(empty)", EVT_NOTES_W, 9, null);
+  const noteLines = row.notes?.trim() || String(row.notes || "").includes("\n")
+    ? formatNotesLines(row.notes, EVT_NOTES_W, 8, null)
+    : [];
+  const mainH = Math.max(12, eventLines.length * PREVIEW_LINE_H.event);
+  let contentH = mainH + 4;
+  if (noteLines.length) {
+    contentH += notesBlockHeight(noteLines, 8, EVT_NOTES_W, null, PREVIEW_NOTE_LINE_H) + 2;
+  }
+  const rowH = EVT_PAD_TOP + Math.max(RH_EVT - EVT_PAD_TOP - 4, contentH) + 4;
+  return { rowH, contentH, noteLines, eventLines };
 }
 
 function measureEventRow(row, doc = null) {
   if (doc) {
     return measurePdfEventRow(row, doc);
   }
-  const noteLines = row.notes?.trim()
-    ? wrapTextLines(row.notes, EVT_NOTES_W, 8, doc)
-    : [];
-  const notesH = noteLines.length
-    ? textBlockHeight(noteLines, 8, EVT_NOTES_W, doc, PREVIEW_LINE_H.note)
-    : 0;
-  return { rowH: RH_EVT + notesH, noteLines };
+  return measurePreviewEventRow(row);
 }
 
 function previewRowH(row) {
@@ -416,7 +512,7 @@ function drawPdfLocationRow(doc, row, y, ts) {
     doc.setFont("times", "italic");
     doc.setFontSize(8);
     doc.setTextColor(130, 130, 130);
-    doc.text(noteLines, PDF_LOC_BODY_X, ly);
+    doc.text(noteLinesForPdfDraw(noteLines), PDF_LOC_BODY_X, ly);
   }
 
   return locH + LOC_ROW_GAP;
@@ -424,14 +520,8 @@ function drawPdfLocationRow(doc, row, y, ts) {
 
 /** Draw a standard/custom event row on PDF; returns vertical space consumed. */
 function drawPdfEventRow(doc, row, y, ts) {
-  const { rowH, noteLines, eventLines } = measurePdfEventRow(row, doc);
+  const { noteLines, eventLines } = measurePdfEventRow(row, doc);
   const [ar, ag, ab] = hexToRgb(getEventColor(row.event));
-
-  doc.setFillColor(ar, ag, ab);
-  doc.rect(MX, y, 2.5, rowH, "F");
-  doc.setDrawColor(240, 237, 232);
-  doc.setLineWidth(0.4);
-  doc.line(MX, y + rowH, PW - MX, y + rowH);
 
   let ly = y + EVT_PAD_TOP;
   const mainBase = ly;
@@ -460,10 +550,19 @@ function drawPdfEventRow(doc, row, y, ts) {
     doc.setFont("times", "italic");
     doc.setFontSize(8);
     doc.setTextColor(130, 130, 130);
-    doc.text(noteLines, PDF_EVT_BODY_X, ly);
+    doc.text(noteLinesForPdfDraw(noteLines), PDF_EVT_BODY_X, ly);
+    ly += pdfNotesBlockHeight(doc, 8, noteLines, EVT_NOTES_W);
   }
 
-  return rowH + RH_GAP;
+  const consumed = Math.max(RH_EVT, ly - y + 4);
+
+  doc.setFillColor(ar, ag, ab);
+  doc.rect(MX, y, 2.5, consumed, "F");
+  doc.setDrawColor(240, 237, 232);
+  doc.setLineWidth(0.4);
+  doc.line(MX, y + consumed, PW - MX, y + consumed);
+
+  return consumed + RH_GAP;
 }
 
 function drawPdfConstraintRow(doc, row, y, ts) {
@@ -581,57 +680,39 @@ function PvRow({ row }) {
         <div style={{ fontSize: 7.5, color: "#aaa", fontFamily: "'Jost', sans-serif", ...lineStyle, marginBottom: noteLines.length ? LOC_LINE_GAP : 0 }}>
           Travel time: {row.duration} min
         </div>
-        {noteLines.map((line, i) => (
-          <div
-            key={`nt-${i}`}
-            style={{
-              fontSize: 8,
-              fontFamily: "'Cormorant Garamond', serif",
-              fontStyle: "italic",
-              color: "#777",
-              ...lineStyle,
-              marginBottom: i < noteLines.length - 1 ? 2 : 0,
-            }}
-          >
-            {line}
-          </div>
-        ))}
+        <PvNotes lines={noteLines} />
       </div>
     );
   }
   if (row.type === 'constraint') {
+    const constraintNoteLines = row.notes?.trim() || String(row.notes || "").includes("\n")
+      ? formatNotesLines(row.notes, EVT_NOTES_W, 7.5, null)
+      : [];
     return (
       <div style={{ display: 'flex', alignItems: 'center', height: RH_CON, flexShrink: 0, marginBottom: RH_GAP, paddingLeft: 7, paddingRight: 4, background: 'repeating-linear-gradient(45deg,#fff8f8,#fff8f8 6px,#fff2f2 6px,#fff2f2 12px)', borderLeft: '3px solid #cc4444', gap: 10 }}>
         <div style={{ fontSize: 8, color: '#999', fontFamily: "'Jost', sans-serif", flexShrink: 0 }}>{timeStr}</div>
         <div style={{ fontSize: 8.5, color: '#cc4444', fontFamily: "'Jost', sans-serif", fontWeight: 500 }}>⚠ Time Constraint</div>
-        {row.notes && row.notes.trim() && <div style={{ fontSize: 7.5, color: '#888', fontFamily: "'Cormorant Garamond', serif", fontStyle: 'italic', marginLeft: 'auto' }}>{row.notes}</div>}
+        {constraintNoteLines.length > 0 && (
+          <div style={{ flex: 1, minWidth: 0, marginLeft: 10 }}>
+            <PvNotes lines={constraintNoteLines} />
+          </div>
+        )}
       </div>
     );
   }
   const accent = getEventColor(row.event);
-  const { rowH, noteLines } = measureEventRow(row);
+  const { contentH, noteLines } = measureEventRow(row);
   const lineStyle = { margin: 0, lineHeight: 1.25 };
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', height: rowH, minHeight: rowH, flexShrink: 0, marginBottom: RH_GAP, paddingTop: EVT_PAD_TOP, paddingLeft: 5, paddingRight: 4, borderLeft: `2.5px solid ${accent}`, borderBottom: '0.4px solid #f0ede8', overflow: 'hidden', boxSizing: 'border-box' }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', minHeight: contentH, flexShrink: 0, marginBottom: RH_GAP, paddingTop: EVT_PAD_TOP, paddingBottom: 4, paddingLeft: 5, paddingRight: 4, borderLeft: `2.5px solid ${accent}`, borderBottom: '0.4px solid #f0ede8', boxSizing: 'border-box' }}>
       <div style={{ width: COL_TIME - 5, fontSize: 8.5, fontFamily: "'Jost', sans-serif", color: '#333', fontWeight: 700, flexShrink: 0, paddingTop: 2 }}>{timeStr}</div>
       <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
         <div style={{ fontSize: 9, fontFamily: "'Jost', sans-serif", color: '#1a1a1a', ...lineStyle }}>{row.event || '(empty)'}</div>
-        {noteLines.map((line, i) => (
-          <div
-            key={`en-${i}`}
-            style={{
-              fontSize: 8,
-              fontFamily: "'Cormorant Garamond', serif",
-              fontStyle: 'italic',
-              color: '#777',
-              ...lineStyle,
-              marginTop: i === 0 ? 2 : 0,
-              marginBottom: i < noteLines.length - 1 ? 2 : 0,
-            }}
-          >
-            {line}
+        {noteLines.length > 0 && (
+          <div style={{ marginTop: 2 }}>
+            <PvNotes lines={noteLines} />
           </div>
-        ))}
+        )}
       </div>
       <div style={{ width: COL_TRAIL, fontSize: 8.5, fontFamily: "'Jost', sans-serif", color: '#666', textAlign: 'right', flexShrink: 0, paddingTop: 2, paddingRight: 4 }}>{row.duration}</div>
     </div>
@@ -874,6 +955,7 @@ export {
   layoutPreviewPages,
   layoutPdfPages,
   prepareTimelineExportRows,
+  formatNotesLines,
   fmtDateLong,
   hexToRgb,
 };
