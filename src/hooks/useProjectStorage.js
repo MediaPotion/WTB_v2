@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { PROJECT_VERSION, AUTOSAVE_KEY } from "../constants/wizard";
+import { PROJECT_VERSION, AUTOSAVE_KEY, WIZARD_ENABLED } from "../constants/wizard";
 import { normalizeTimelineRow } from "../lib/rowTier";
 
 export function useProjectStorage(state) {
@@ -215,7 +215,10 @@ export function useProjectStorage(state) {
 
     setFixedEvents(projectData.fixedEvents || []);
     setEnteredViaWizard(
-      typeof projectData.enteredViaWizard === "boolean" ? projectData.enteredViaWizard : true
+      WIZARD_ENABLED &&
+        typeof projectData.enteredViaWizard === "boolean"
+        ? projectData.enteredViaWizard
+        : false
     );
     setHistory([]);
     setRedoStack([]);

@@ -1,7 +1,7 @@
 import React from "react";
 import mediaPotionLogo from "../assets/mediapotion_logo.png";
 
-function WelcomeScreen({ showAutosaveBanner, restoreAutosave, clearAutosave, onCreateNewTimeline, onStartManually, loadProject }) {
+function WelcomeScreen({ showAutosaveBanner, restoreAutosave, clearAutosave, onCreateNewTimeline, loadProject }) {
   return (
     <div className="wtb-welcome-screen">
       <div style={{ textAlign: "center", maxWidth: 500, width: "100%" }}>
@@ -34,10 +34,23 @@ function WelcomeScreen({ showAutosaveBanner, restoreAutosave, clearAutosave, onC
           style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 48, width: "100%" }}
         >
           <button
+            type="button"
             onClick={onCreateNewTimeline}
             style={{ padding: "18px 32px", backgroundColor: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 8, fontSize: 18, fontWeight: 300, cursor: "pointer", width: "100%", fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
           >
-            Create New Timeline
+            <span style={{ display: "block" }}>Create New Timeline</span>
+            <span
+              style={{
+                display: "block",
+                marginTop: 8,
+                fontSize: 14,
+                fontWeight: 300,
+                lineHeight: 1.45,
+                opacity: 0.92,
+              }}
+            >
+              Set up your project, then build your timeline in the editor.
+            </span>
           </button>
 
           <label
@@ -46,42 +59,6 @@ function WelcomeScreen({ showAutosaveBanner, restoreAutosave, clearAutosave, onC
             Load Existing Timeline
             <input type="file" accept=".json" onChange={loadProject} style={{ display: "none" }} />
           </label>
-
-          <button
-            type="button"
-            onClick={onStartManually}
-            className="wtb-welcome-manual-btn"
-            style={{
-              padding: "14px 24px",
-              background: "var(--wtb-surface)",
-              color: "var(--wtb-text)",
-              border: "1px solid var(--wtb-accent)",
-              borderRadius: 8,
-              fontSize: 15,
-              fontWeight: 300,
-              cursor: "pointer",
-              width: "100%",
-              boxSizing: "border-box",
-              fontFamily: "'Jost', sans-serif",
-              letterSpacing: "0.03em",
-              textAlign: "center",
-              opacity: 0.92,
-            }}
-          >
-            <span style={{ display: "block" }}>Start Manually</span>
-            <span
-              style={{
-                display: "block",
-                marginTop: 6,
-                fontSize: 13,
-                fontWeight: 300,
-                lineHeight: 1.45,
-                color: "var(--wtb-text-muted)",
-              }}
-            >
-              Build your timeline from scratch using the timeline editor.
-            </span>
-          </button>
         </div>
 
         <div style={{ marginTop: 48, textAlign: "center" }}>

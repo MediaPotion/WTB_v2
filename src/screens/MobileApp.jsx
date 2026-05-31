@@ -4,7 +4,13 @@ import { MOBILE_TWEAKS, SETTINGS_SELECT_STYLE } from "../constants/styles";
 import { THEME_CSS } from "../constants/theme";
 import { useTheme } from "../hooks/useTheme";
 import { ThemeToggle } from "../components/ThemeToggle";
-import { SETTINGS_WIZARD_TABS, PROJECT_VERSION, AUTOSAVE_KEY, DESKTOP_MIN_WIDTH } from "../constants/wizard";
+import {
+  WIZARD_ENABLED,
+  SETTINGS_WIZARD_TABS,
+  PROJECT_VERSION,
+  AUTOSAVE_KEY,
+  DESKTOP_MIN_WIDTH,
+} from "../constants/wizard";
 import { DEFAULT_ROW_TIER_FIELDS } from "../constants/tiers";
 import { getDefaultTierForEvent } from "../lib/rowTier";
 import { defaultIsOutdoorForEvent } from "../constants/colors";
@@ -331,6 +337,15 @@ export default function MobileApp() {
   const sortableRowIds = useMemo(() => rows.map((r) => String(r.id)), [rows]);
 
   const overlapMap = useMemo(() => computeOverlaps(userRows), [userRows]);
+  const showWizardFeatures = WIZARD_ENABLED && enteredViaWizard;
+
+  useEffect(() => {
+    if (!WIZARD_ENABLED && screen === "wizard") {
+      setEnteredViaWizard(false);
+      setScreen("settings");
+    }
+  }, [screen]);
+
   const mediaCoverage = useMemo(
     () =>
       computeProjectMediaCoverage({
@@ -1048,7 +1063,7 @@ export default function MobileApp() {
     let nextRows = coverageRows;
     let nextRowId = coverageRows.length + 1;
 
-    if (enteredViaWizard && fixedEvents.length > 0) {
+    if (showWizardFeatures && fixedEvents.length > 0) {
       const fixedRows = fixedEvents.map((fe) => ({
         id: nextRowId++,
         event: fe.event,
@@ -1578,7 +1593,7 @@ export default function MobileApp() {
       </div>
 
       {/* Section 3: Fixed-Time Events (wizard / legacy settings path only) */}
-      {enteredViaWizard && (
+      {showWizardFeatures && (
       <div style={{ background: "var(--wtb-surface)", border: "1px solid var(--wtb-surface-raised)", borderRadius: 8, padding: 20, marginBottom: 16 }}>
         <h3 style={{ margin: "0 0 4px 0", fontSize: 12, color: "var(--wtb-accent)", fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.15em", textTransform: "uppercase" }}>Fixed-Time Events</h3>
         <p style={{ margin: "0 0 14px 0", fontSize: 13, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif" }}>Events that must start at a specific time — added to your timeline as time-locked anchors.</p>
@@ -1650,17 +1665,11 @@ export default function MobileApp() {
           showAutosaveBanner={showAutosaveBanner}
           restoreAutosave={restoreAutosave}
           clearAutosave={clearAutosave}
-          onCreateNewTimeline={() => {
-            if (!confirmDiscardAutosaveIfNeeded()) return;
-            setEnteredViaWizard(true);
-            setWizardStep(1);
-            setScreen("wizard");
-          }}
-          onStartManually={startManualTimeline}
+          onCreateNewTimeline={startManualTimeline}
           loadProject={loadProject}
         />
-      ) : screen === "wizard" ? (
-        /* ============ WIZARD SCREEN ============ */
+      ) : screen === "wizard" && WIZARD_ENABLED ? (
+        /* ============ WIZARD SCREEN (dev only when WIZARD_ENABLED) ============ */
         renderWizard(wizardProps)
       ) : screen === "settings" ? (
         /* ============ PROJECT SETTINGS SCREEN ============ */
@@ -1768,7 +1777,7 @@ export default function MobileApp() {
                       >
                         {copyConfirm ? "Copied!" : "Copy Timeline"}
                       </button>
-                      {enteredViaWizard && (
+                      {showWizardFeatures && (
                       <button
                         type="button"
                         role="menuitem"
@@ -1928,7 +1937,7 @@ export default function MobileApp() {
                     pointerEvents: "auto",
                   }}
                 >
-                  {enteredViaWizard && (
+                  {showWizardFeatures && (
                   <LogisticsCheckButton
                     status={logisticsStatus}
                     onClick={() => setShowLogisticsModal(true)}
@@ -2215,7 +2224,7 @@ export default function MobileApp() {
                   </button>
                 </div>
 
-                {enteredViaWizard ? (
+                {showWizardFeatures ? (
                   <>
                     <div style={{ display: "flex", flexWrap: "nowrap", gap: 4, marginBottom: 20, borderBottom: "1px solid var(--wtb-border)", paddingBottom: 12, overflowX: "auto" }}>
                       {SETTINGS_WIZARD_TABS.map((tab, i) => (
@@ -2303,7 +2312,7 @@ export default function MobileApp() {
         </div>
       )}
 
-      {enteredViaWizard && showLogisticsModal && (
+      {showWizardFeatures && showLogisticsModal && (
         <div
           style={{
             position: "fixed",

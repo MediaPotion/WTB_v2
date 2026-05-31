@@ -1,3 +1,6 @@
+/** Set true to re-enable the rough-draft wizard flow for development. */
+const WIZARD_ENABLED = false;
+
 const DESKTOP_MIN_WIDTH = "(min-width: 901px)";
 
 const SETTINGS_WIZARD_TABS = [
@@ -13,4 +16,10 @@ const SETTINGS_WIZARD_TABS = [
 const PROJECT_VERSION = 2;
 const AUTOSAVE_KEY = "wtb_autosave";
 
-export { SETTINGS_WIZARD_TABS, PROJECT_VERSION, AUTOSAVE_KEY, DESKTOP_MIN_WIDTH };
+export {
+  WIZARD_ENABLED,
+  SETTINGS_WIZARD_TABS,
+  PROJECT_VERSION,
+  AUTOSAVE_KEY,
+  DESKTOP_MIN_WIDTH,
+};
