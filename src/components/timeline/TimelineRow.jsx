@@ -24,6 +24,7 @@ function TimelineRow({
   dragHandleAttributes,
   isDragging = false,
   overlapWith,
+  onDismissOverlap,
   isMobile = false,
 }) {
   const t = formatTime(row.time);
@@ -122,28 +123,60 @@ function TimelineRow({
       {overlapWith && (
         <div
           style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 20 }}
-          onMouseEnter={() => setShowOverlapTip(true)}
-          onMouseLeave={() => setShowOverlapTip(false)}
         >
-          <div style={{
-            width: 36, height: 36, borderRadius: "50%",
-            background: "#cc2222", color: "#fff",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 22, fontWeight: "bold", cursor: "default",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.45)",
-            userSelect: "none", lineHeight: 1,
-          }}>!</div>
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setShowOverlapTip((v) => !v)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setShowOverlapTip((v) => !v);
+              }
+            }}
+            title="Overlap warning — click for details"
+            style={{
+              width: 36, height: 36, borderRadius: "50%",
+              background: "#cc2222", color: "#fff",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 22, fontWeight: "bold", cursor: "pointer",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.45)",
+              userSelect: "none", lineHeight: 1,
+            }}>!</div>
           {showOverlapTip && (
             <div style={{
               position: "absolute", top: 40, left: "50%", transform: "translateX(-50%)",
               background: "var(--wtb-surface-alt)", color: "var(--wtb-text)",
-              fontSize: 11, padding: "5px 9px", borderRadius: 4,
+              fontSize: 11, padding: "8px 9px", borderRadius: 4,
               width: 210, lineHeight: 1.5,
               boxShadow: "0 2px 8px rgba(0,0,0,0.55)",
               border: "1px solid #cc4444",
-              pointerEvents: "none", whiteSpace: "normal",
+              whiteSpace: "normal",
             }}>
-              Overlaps with &ldquo;{overlapWith}&rdquo;. Overlapping events are allowed but may indicate a scheduling conflict.
+              <div>
+                Overlaps with &ldquo;{overlapWith}&rdquo;. Overlapping events are allowed but may indicate a scheduling conflict.
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowOverlapTip(false);
+                  onDismissOverlap?.();
+                }}
+                style={{
+                  marginTop: 7,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "#cc4444",
+                  background: "none",
+                  border: "1px solid #cc4444",
+                  borderRadius: 4,
+                  padding: "3px 8px",
+                  cursor: "pointer",
+                }}
+              >
+                Dismiss
+              </button>
             </div>
           )}
         </div>

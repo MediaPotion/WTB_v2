@@ -25,6 +25,7 @@ import { buildWizardAnswers } from "../lib/buildWizardAnswers";
 import { geocodeCeremonyLocation } from "../lib/goldenHour";
 import { exportTimeline as exportTimelineLib, copyTimeline as copyTimelineLib } from "../lib/exportTxt";
 import { exportPDF as exportPDFLib, printTimeline as printTimelineLib, TimelinePreview } from "../lib/exportPdf";
+import { sendToMediaPotion } from "../lib/sendToMediaPotion";
 import { useProjectStorage } from "../hooks/useProjectStorage";
 import { RowDropZone } from "../components/timeline/RowDropZone";
 import { SortableTimelineRow } from "../components/timeline/SortableTimelineRow";
@@ -105,6 +106,13 @@ export default function MobileApp() {
   const [redoStack, setRedoStack] = useState([]);
   const [copyConfirm, setCopyConfirm] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [sendStatus, setSendStatus] = useState(null); // null | "sending" | "sent" | "error"
+  // Reminder popup nudging users to send their finished timeline to Media Potion.
+  // Shown once per session, and skipped entirely once a send has succeeded.
+  const [showSendReminder, setShowSendReminder] = useState(false);
+  const sendReminderShownRef = useRef(false);
+  const hasSentTimelineRef = useRef(false);
+  const pendingExportActionRef = useRef(null);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const exportMenuRef = useRef(null);
   const mobileGearMenuRef = useRef(null);
@@ -293,7 +301,7 @@ export default function MobileApp() {
     isDirtyRef.current = false;
   };
 
-  const { buildDefaultFilename, clearAutosave, saveProject, loadProject, restoreAutosave, flushAutosave } = useProjectStorage({
+  const { buildDefaultFilename, buildProjectData, clearAutosave, saveProject, loadProject, restoreAutosave, flushAutosave } = useProjectStorage({
     date, bride, groom, brideLabel, groomLabel,
     photoStartHour, photoStartMinute, photoStartPeriod,
     photoEndHour, photoEndMinute, photoEndPeriod,
@@ -337,6 +345,58 @@ export default function MobileApp() {
   const sortableRowIds = useMemo(() => rows.map((r) => String(r.id)), [rows]);
 
   const overlapMap = useMemo(() => computeOverlaps(userRows), [userRows]);
+
+  // Same filter + sort computeOverlaps uses internally, so "neighbor" here
+  // matches the adjacency that actually drives overlap detection.
+  const overlapSortedRows = useMemo(() => {
+    return [...userRows]
+      .filter((r) => r.type !== "constraint")
+      .sort((a, b) => a.time - b.time);
+  }, [userRows]);
+
+  const getOverlapNeighborSignature = (rowId) => {
+    const idx = overlapSortedRows.findIndex((r) => r.id === rowId);
+    if (idx === -1) return null;
+    const self = overlapSortedRows[idx];
+    const prev = overlapSortedRows[idx - 1];
+    const next = overlapSortedRows[idx + 1];
+    return JSON.stringify({
+      self: { time: self.time, duration: self.duration },
+      prev: prev ? { id: prev.id, time: prev.time, duration: prev.duration } : null,
+      next: next ? { id: next.id, time: next.time, duration: next.duration } : null,
+    });
+  };
+
+  // Overlap warnings can be dismissed per-row. A dismissal only clears — letting
+  // the warning re-appear — if the flagged row itself changes, or if the row
+  // directly before/after it (in time order) changes. Edits elsewhere in the
+  // timeline don't affect it.
+  const [dismissedOverlaps, setDismissedOverlaps] = useState(() => new Map());
+  useEffect(() => {
+    setDismissedOverlaps((prev) => {
+      if (prev.size === 0) return prev;
+      let changed = false;
+      const next = new Map();
+      prev.forEach((signature, rowId) => {
+        const currentSignature = getOverlapNeighborSignature(rowId);
+        if (currentSignature !== null && currentSignature === signature) {
+          next.set(rowId, signature);
+        } else {
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [userRows]);
+
+  const handleDismissOverlap = (rowId) => {
+    setDismissedOverlaps((prev) => {
+      const next = new Map(prev);
+      next.set(rowId, getOverlapNeighborSignature(rowId));
+      return next;
+    });
+  };
+
   const showWizardFeatures = WIZARD_ENABLED && enteredViaWizard;
 
   useEffect(() => {
@@ -1052,6 +1112,55 @@ export default function MobileApp() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  const sendTimelineToMediaPotion = async () => {
+    if (sendStatus === "sending") return;
+    setSendStatus("sending");
+    try {
+      await sendToMediaPotion({
+        exportParams,
+        projectData: buildProjectData(),
+        jsonFilename: buildDefaultFilename("json"),
+      });
+      hasSentTimelineRef.current = true;
+      setSendStatus("sent");
+      setTimeout(() => {
+        setSendStatus(null);
+        setShowExportMenu(false);
+        setShowMobileMenu(false);
+        setShowSendReminder(false);
+      }, 2500);
+    } catch (err) {
+      console.error("Send to Media Potion failed:", err);
+      setSendStatus("error");
+      setTimeout(() => setSendStatus(null), 5000);
+    }
+  };
+
+  // Wraps an export action: the first time per session, show the send-reminder
+  // popup instead and stash the action to run if the user continues.
+  const withSendReminder = (action) => {
+    if (sendReminderShownRef.current || hasSentTimelineRef.current) {
+      action();
+      return;
+    }
+    sendReminderShownRef.current = true;
+    pendingExportActionRef.current = action;
+    setShowSendReminder(true);
+  };
+
+  const closeSendReminder = (proceed) => {
+    setShowSendReminder(false);
+    const action = pendingExportActionRef.current;
+    pendingExportActionRef.current = null;
+    if (proceed && action) action();
+  };
+
+  const sendMenuLabel =
+    sendStatus === "sending" ? "Sending…" :
+    sendStatus === "sent" ? "Sent! ✓" :
+    sendStatus === "error" ? "Send failed — tap to retry" :
+    "Send to Media Potion";
+
   const exportPDF = () => exportPDFLib(exportParams);
   const printTimeline = () => printTimelineLib(exportParams);
   const exportTimeline = () => exportTimelineLib(exportParams);
@@ -1722,7 +1831,7 @@ export default function MobileApp() {
                         type="button"
                         role="menuitem"
                         className="wtb-mobile-gear-menu-item"
-                        onClick={exportPDF}
+                        onClick={() => withSendReminder(exportPDF)}
                         disabled={exporting}
                       >
                         {exporting ? "Exporting PDF…" : "Export as PDF"}
@@ -1731,9 +1840,19 @@ export default function MobileApp() {
                         type="button"
                         role="menuitem"
                         className="wtb-mobile-gear-menu-item"
-                        onClick={() => { exportTimeline(); closeMobileGearMenu(); }}
+                        onClick={() => withSendReminder(() => { exportTimeline(); closeMobileGearMenu(); })}
                       >
                         Export as TXT
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="wtb-mobile-gear-menu-item"
+                        onClick={sendTimelineToMediaPotion}
+                        disabled={sendStatus === "sending" || sendStatus === "sent"}
+                        style={sendStatus === "error" ? { color: "#cc4444" } : undefined}
+                      >
+                        {sendMenuLabel}
                       </button>
                       <button
                         type="button"
@@ -1883,7 +2002,7 @@ export default function MobileApp() {
                 </button>
                 <div ref={isDesktop ? exportMenuRef : null} style={{ position: "relative" }}>
                   <button
-                    onClick={() => setShowExportMenu(v => !v)}
+                    onClick={() => withSendReminder(() => setShowExportMenu(v => !v))}
                     style={{ padding: "6px 14px", backgroundColor: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
                   >
                     Export Timeline ▾
@@ -1899,9 +2018,16 @@ export default function MobileApp() {
                       </button>
                       <button
                         onClick={() => { exportTimeline(); setShowExportMenu(false); }}
-                        style={{ display: "block", width: "100%", padding: "9px 14px", background: "none", border: "none", color: "var(--wtb-text)", textAlign: "left", fontSize: 13, fontFamily: "'Jost', sans-serif", cursor: "pointer" }}
+                        style={{ display: "block", width: "100%", padding: "9px 14px", background: "none", border: "none", color: "var(--wtb-text)", textAlign: "left", fontSize: 13, fontFamily: "'Jost', sans-serif", cursor: "pointer", borderBottom: "1px solid var(--wtb-border)" }}
                       >
                         Save as TXT
+                      </button>
+                      <button
+                        onClick={sendTimelineToMediaPotion}
+                        disabled={sendStatus === "sending" || sendStatus === "sent"}
+                        style={{ display: "block", width: "100%", padding: "9px 14px", background: "none", border: "none", color: sendStatus === "error" ? "#cc4444" : sendStatus === "sent" ? "var(--wtb-accent)" : sendStatus === "sending" ? "var(--wtb-text-muted)" : "var(--wtb-text)", textAlign: "left", fontSize: 13, fontFamily: "'Jost', sans-serif", cursor: sendStatus === "sending" ? "wait" : "pointer", whiteSpace: "nowrap" }}
+                      >
+                        {sendMenuLabel}
                       </button>
                     </div>
                   )}
@@ -2008,7 +2134,8 @@ export default function MobileApp() {
                     onTimeSet={(h, m, p) =>
                       handleTimeSet(index, parseTimeInput(h, m, p))
                     }
-                    overlapWith={overlapMap.get(row.id) || null}
+                    overlapWith={dismissedOverlaps.has(row.id) ? null : overlapMap.get(row.id) || null}
+                    onDismissOverlap={() => handleDismissOverlap(row.id)}
                     isMobile={!isDesktop}
                   />
 
@@ -2125,6 +2252,60 @@ export default function MobileApp() {
           </TimelineDndProvider>
 
           {/* Project Settings Modal */}
+          {showSendReminder && (
+            <div
+              style={{
+                position: "fixed", inset: 0, backgroundColor: "var(--wtb-overlay)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                zIndex: 1100, padding: "20px 16px",
+              }}
+              onClick={(e) => { if (e.target === e.currentTarget) closeSendReminder(false); }}
+            >
+              <div style={{ background: "var(--wtb-surface)", border: "1px solid var(--wtb-border)", borderRadius: 10, maxWidth: 420, width: "100%", padding: 24, position: "relative", textAlign: "center" }}>
+                <button
+                  onClick={() => closeSendReminder(false)}
+                  aria-label="Close"
+                  style={{ position: "absolute", top: 12, right: 14, background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--wtb-text-muted)", lineHeight: 1 }}
+                >
+                  ✕
+                </button>
+                <h2 style={{ margin: "4px 0 12px", fontSize: 22, color: "var(--wtb-text)", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>
+                  Don&rsquo;t forget to send us your timeline!
+                </h2>
+                <p style={{ margin: "0 0 20px", fontSize: 13, lineHeight: 1.6, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif" }}>
+                  When your timeline is finished, use <strong style={{ color: "var(--wtb-text)" }}>Send to Media Potion</strong> and
+                  we&rsquo;ll automatically receive a copy for your wedding file &mdash; no need to attach anything to an email.
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <button
+                    onClick={sendTimelineToMediaPotion}
+                    disabled={sendStatus === "sending" || sendStatus === "sent"}
+                    style={{
+                      padding: "10px 16px",
+                      backgroundColor: sendStatus === "error" ? "#cc4444" : "var(--wtb-accent)",
+                      color: "var(--wtb-on-accent)", border: "none", borderRadius: 5,
+                      cursor: sendStatus === "sending" ? "wait" : "pointer",
+                      fontSize: 14, fontWeight: 400, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em",
+                      opacity: sendStatus === "sending" ? 0.7 : 1,
+                    }}
+                  >
+                    {sendMenuLabel}
+                  </button>
+                  <button
+                    onClick={() => closeSendReminder(true)}
+                    style={{
+                      padding: "8px 16px", background: "transparent",
+                      color: "var(--wtb-text-muted)", border: "1px solid var(--wtb-border)", borderRadius: 5,
+                      cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif",
+                    }}
+                  >
+                    My timeline isn&rsquo;t finished yet &mdash; continue to export
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {showSettingsModal && (
             <div
               style={{

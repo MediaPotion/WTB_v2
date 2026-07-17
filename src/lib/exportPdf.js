@@ -938,6 +938,16 @@ export async function exportPDF(params) {
   }
 }
 
+export async function buildTimelinePdfBlob(params) {
+  const doc = await buildTimelinePdfDoc(params);
+  const brideFirst = (params.bride || 'Bride').trim().split(/\s+/)[0];
+  const groomFirst = (params.groom || 'Groom').trim().split(/\s+/)[0];
+  return {
+    blob: doc.output('blob'),
+    filename: `${brideFirst}-${groomFirst}-Wedding-Timeline.pdf`,
+  };
+}
+
 export async function printTimeline(params) {
   const { setShowExportMenu, closeMobileGearMenu } = params;
   setShowExportMenu?.(false);
