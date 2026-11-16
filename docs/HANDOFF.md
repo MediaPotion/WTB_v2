@@ -22,18 +22,21 @@ arithmetic to the client, and nothing is shared.
   GitHub (`MediaPotion/WTB_v2`, pull requests #1–#7, 2026-11-16). 71 tests
   pass and the build succeeds on `main`. The merged phase branches are still
   on GitHub and can be deleted; everything in them is in `main`.
-- **Decisions:** the owner merged D1, D2 and D3 as the roadmap recommended,
-  the 2.7 labels, and D4 (npm). **D5 (live address) is still open**; it
-  blocks switching on sharing and the send endpoint's origin check.
-- **Vercel:** pull requests on this repo trigger preview builds in five
-  Vercel projects (`wedding-timeline`, `wtb-v2`, `wtb-v2-4b6h`,
-  `wtb-v2-e5gv`, `wtb-v2-gqrf`). The live app may be one of them — see D5.
+- **Decisions:** all settled. The owner merged D1, D2 and D3 as the roadmap
+  recommended, the 2.7 labels, and D4 (npm). D5: the owner confirmed the
+  live app is **https://wtb-v2.vercel.app** (Vercel project `wtb-v2`, which
+  redeploys whenever `main` changes).
+- **Live now:** everything except sharing, which waits for the Hostinger
+  setup below. "Send to Media Potion" still goes through the old
+  `send-timeline.php` on the server until the new one is uploaded.
+- **Vercel:** pull requests also build previews in four other projects
+  (`wedding-timeline`, `wtb-v2-4b6h`, `wtb-v2-e5gv`, `wtb-v2-gqrf`). Only
+  `wtb-v2` is the live one.
 - **Not run:** the PHP files (no PHP on this machine). `send-timeline.php`
   changed in Phases 0 and 4; `timeline-api.php` is new. Sharing was tested
   against `scripts/dev-timeline-api.js`, a Node stand-in.
 - **Dependencies are installed** (`node_modules`, via `npm ci`, Node 18).
-- **It runs:** `npm start` serves the app; `npm run build` succeeds on every
-  branch.
+- **It runs:** `npm start` serves the app; `npm run build` succeeds.
 - **Old local prototype** is preserved on the branch
   `backup/codesandbox-prototype`.
 
@@ -58,40 +61,37 @@ To see the phone layout, make the window narrower than 901 px.
 
 ## What to do next
 
-1. **Decide D5** (where the live site is — check the Vercel projects above
-   first). Then upload the PHP files and set up sharing (below), and fill in
-   `ALLOWED_ORIGINS` in `send-timeline.php`. If the app is on Vercel, set
-   `REACT_APP_TIMELINE_API` in that project's environment variables instead
-   of building locally, and put the Vercel address in both origin lists.
-2. **Run the PHP once on Hostinger** (it has never been run) and try a shared
-   timeline end to end before telling clients.
-3. Optional: delete the merged phase branches on GitHub, and the duplicate
-   Vercel projects.
+1. **Set up sharing** (below). The PHP has never been run, so try a shared
+   timeline end to end on the live site before telling clients.
+2. **Upload the new `send-timeline.php`** (rate limit, file checks, origin
+   check, link in the email). It only accepts sends from
+   https://wtb-v2.vercel.app, so a local `npm start` can no longer send.
+3. Optional: delete the merged phase branches on GitHub, and the Vercel
+   projects other than `wtb-v2`.
 4. Phase 5 ideas remain unscheduled.
 
 ## Setting up sharing (Phase 4)
 
-Needs the live site's address (D5) and access to Hostinger.
+The app is on Vercel (project `wtb-v2`, https://wtb-v2.vercel.app); the
+PHP files go on Hostinger next to the existing send endpoint
+(`https://weddingpotion.com/wtb/`).
 
 1. hPanel → Databases → MySQL: create a database and a user.
 2. Copy `hostinger/timeline-config.example.php` to `timeline-config.php`,
-   fill in the database details and the site address in `allowed_origins`.
-   Never commit it (it is in `.gitignore`).
+   fill in the database details. `allowed_origins` already lists
+   `https://wtb-v2.vercel.app`. Never commit it (it is in `.gitignore`).
 3. Upload `timeline-api.php` and `timeline-config.php` to the same folder as
    `send-timeline.php` (e.g. `public_html/wtb/`), and re-upload
    `send-timeline.php` (it now includes the link).
-4. Build the app with the API address, then deploy `build/`:
-
-```bash
-REACT_APP_TIMELINE_API=https://weddingpotion.com/wtb/timeline-api.php npm run build
-```
-
+4. Vercel → project `wtb-v2` → Settings → Environment Variables: add
+   `REACT_APP_TIMELINE_API` = `https://weddingpotion.com/wtb/timeline-api.php`
+   for Production, then redeploy (Deployments → latest → Redeploy). The
+   variable is read at build time, so it has no effect until the redeploy.
 5. Check: create a timeline, click Share, open both links in another browser.
 
-## Decisions waiting on the owner
+## Decisions
 
-Listed at the end of ROADMAP. D1–D4 are settled (merged); D5 (how and where
-the site is deployed) is still open.
+None. D1–D5 are settled; see the end of ROADMAP.
 
 ## Working rules for this repo
 

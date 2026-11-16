@@ -14,9 +14,9 @@
  * 3. The SECRET below must match the one in the app (src/lib/sendToMediaPotion.js).
  *    The secret ships in the app's public JavaScript, so it is not real
  *    protection; the origin check, rate limit and file checks below are.
- * 4. Once the live site's address is known, list it in ALLOWED_ORIGINS
- *    (scheme + host, no trailing slash). While the list is empty, any site
- *    may send, as before.
+ * 4. ALLOWED_ORIGINS lists the live site (scheme + host, no trailing slash).
+ *    Other sites, including a local `npm start`, can't send. While the list
+ *    is empty, any site may send, as before.
  */
 
 const RECIPIENT    = 'info@mediapotion.net';
@@ -27,7 +27,7 @@ const MAX_BYTES    = 15728640; // 15 MB per file
 
 // Sites allowed to send, e.g. ['https://weddingpotion.com', 'https://www.weddingpotion.com'].
 // Empty = allow any origin (the old behaviour).
-const ALLOWED_ORIGINS = [];
+const ALLOWED_ORIGINS = ['https://wtb-v2.vercel.app'];
 
 // Per-IP rate limit: at most RATE_LIMIT sends in RATE_WINDOW seconds.
 const RATE_LIMIT  = 3;

@@ -32,8 +32,7 @@ Small fixes that unblock later phases.
 - 0.1 done — 7 of 7 tests pass.
 - 0.2 done in code, not live. Rate limit (3 sends per minute per IP) and
   content checks (real PDF, real timeline JSON) are in. The origin check is in
-  but switched off until the live address is known (D5): fill
-  `ALLOWED_ORIGINS` in the PHP file. The owner must upload the file to
+  lists https://wtb-v2.vercel.app (D5). The owner must upload the file to
   Hostinger. Not run — there is no PHP on the dev machine.
 - 0.3 done. Old names now appear in `src/` only in the rename table
   `src/lib/renamedEvents.js`, which maps them on load; tested.
@@ -184,7 +183,7 @@ Needs decision **D3** (where the data lives) before any work.
 recommended: `hostinger/timeline-api.php` (PHP + MySQL via PDO; tables made
 on first use), secret links, no logins. **Off until it is set up:** the app
 shares only when built with `REACT_APP_TIMELINE_API` set to that file's URL,
-so it is inert until D5 (the live address) is known and the owner follows
+so it is inert until the owner follows
 "Setting up sharing" in HANDOFF. **The PHP has not been run** (no PHP here). The
 app was tested end to end against `scripts/dev-timeline-api.js`, a Node
 stand-in with the same requests and responses.
@@ -214,7 +213,7 @@ stand-in with the same requests and responses.
 
 ---
 
-## Open decisions for the owner
+## Decisions
 
 | # | Question | Recommendation |
 |---|---|---|
@@ -222,4 +221,4 @@ stand-in with the same requests and responses.
 | D2 | Bring back the full 7-step wizard, or only the short quick-start? | Short quick-start only. Leave the old wizard code in place, switched off, until Phase 3 proves out. **Taken as recommended; merged by the owner (PR #5).** |
 | D3 | Where do shared timelines live? | A small PHP + MySQL service on the existing Hostinger account, with secret links and no logins. Alternative: a hosted database service (for example Supabase) if live co-editing is wanted later. **Taken as recommended; merged by the owner (PR #6).** |
 | D4 | The repo has both `package-lock.json` and `pnpm-lock.yaml`. Which package manager? | npm — the launcher script already uses it. **Taken (Phase 0).** |
-| D5 | How is the live site deployed, and at what address? | Unknown — see NOTES "Unknowns". Pull requests trigger previews in five Vercel projects, so the live app may be on Vercel. Needed before sharing is switched on. |
+| D5 | How is the live site deployed, and at what address? | **Settled by the owner (2026-11-16): Vercel, project `wtb-v2`, https://wtb-v2.vercel.app.** The PHP stays on Hostinger at `weddingpotion.com/wtb/`. |

@@ -84,7 +84,7 @@ version 3), color, tier, flexibilityMinutes
 | 19 | The preview's fit-to-width subtracted the panel padding twice, so pages were drawn narrower than the panel. Fixed in Phase 2. | read | `exportPdf.js` `TimelinePreview` |
 | 13 | No sharing: Save downloads a `.json`; others must load that file. | seen | `useProjectStorage.js` |
 | 14 | Draft generator throws `ReferenceError: photoCoverageHours is not defined`; 2 of 7 tests fail because of it. **Fixed in Phase 0.** | test run | `generateTimeline.js:653-654` |
-| 15 | The send secret is in the public JavaScript and the endpoint allows any origin. **Phase 0 adds a rate limit, content checks and an origin list (empty until D5); not uploaded.** | read | `sendToMediaPotion.js:8`, `send-timeline.php:27` |
+| 15 | The send secret is in the public JavaScript and the endpoint allows any origin. **Phase 0 adds a rate limit, content checks and an origin list (https://wtb-v2.vercel.app); not uploaded.** | read | `sendToMediaPotion.js:8`, `send-timeline.php:27` |
 | 16 | Typos in block names. **Fixed in Phase 0.** | seen | `events.js:3`, `:42` |
 
 ## Gotchas
@@ -185,15 +185,12 @@ also needs entries in `src/lib/renamedEvents.js` and updates to `colors.js`,
 - The GitHub command-line tool (`gh`) is not installed on this machine.
 - Vercel and CodeSandbox bots comment on every pull request. Vercel builds
   previews in five projects: `wedding-timeline`, `wtb-v2`, `wtb-v2-4b6h`,
-  `wtb-v2-e5gv`, `wtb-v2-gqrf` (all built successfully for PR #7).
+  `wtb-v2-e5gv`, `wtb-v2-gqrf` (all built successfully for PR #7). The live
+  app is `wtb-v2` at https://wtb-v2.vercel.app (owner confirmed 2026-11-16);
+  it serves from `/`, so no `homepage` setting is needed.
 
 ## Unknowns
 
-- How and where the live site is deployed. The send endpoint is on
-  `weddingpotion.com/wtb/`, and the build assumes it is served from `/`, so the
-  app may live elsewhere or need a `homepage` setting. The five Vercel
-  projects above suggest the app is (or was) hosted on Vercel; which one, if
-  any, is live is not known.
 - Why the wizard was switched off for clients (commit message says only
   "for client-facing builds").
 - The wizard was read but never run during the assessment.

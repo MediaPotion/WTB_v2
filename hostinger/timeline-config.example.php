@@ -9,6 +9,6 @@ return [
   'password' => 'YOUR_DB_PASSWORD',
 
   // Sites allowed to use shared timelines (scheme + host, no trailing slash),
-  // e.g. ['https://weddingpotion.com']. Empty = any site.
-  'allowed_origins' => [],
+  // Empty = any site.
+  'allowed_origins' => ['https://wtb-v2.vercel.app'],
 ];
