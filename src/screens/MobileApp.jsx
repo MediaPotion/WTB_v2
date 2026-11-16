@@ -36,6 +36,9 @@ import { EventSidebar } from "../components/sidebar/EventSidebar";
 import { WelcomeScreen } from "./WelcomeScreen";
 import { QuickStartScreen } from "./QuickStartScreen";
 import { generateQuickStartRows, quickStartProjectSettings } from "../lib/quickStart";
+import { API_URL, sharingEnabled } from "../lib/sharing";
+import { useSharedTimeline } from "../hooks/useSharedTimeline";
+import { ShareStatus, ShareDialog } from "../components/sharing/SharingUI";
 import { renderWizard } from "./WizardScreen";
 import { WizardLogisticsCheck } from "../components/wizard/WizardLogisticsCheck";
 import { LogisticsCheckButton } from "../components/timeline/LogisticsCheckButton";
@@ -307,7 +310,7 @@ export default function MobileApp() {
     isDirtyRef.current = false;
   };
 
-  const { buildDefaultFilename, buildProjectData, clearAutosave, saveProject, loadProject, restoreAutosave, flushAutosave } = useProjectStorage({
+  const { buildDefaultFilename, buildProjectData, applyProjectData, clearAutosave, saveProject, loadProject, restoreAutosave, flushAutosave } = useProjectStorage({
     date, bride, groom, brideLabel, groomLabel,
     photoStartHour, photoStartMinute, photoStartPeriod,
     photoEndHour, photoEndMinute, photoEndPeriod,
@@ -327,6 +330,43 @@ export default function MobileApp() {
     isApplyingProjectRef, suppressDirtyRef, dirtyTrackingEnabledRef,
     autosaveTimerRef,
   });
+
+  // Phase 4: shared timelines (only when the build sets REACT_APP_TIMELINE_API).
+  const SHARING = sharingEnabled();
+  const projectJson = JSON.stringify(buildProjectData());
+  const sharing = useSharedTimeline({
+    enabled: SHARING,
+    apiUrl: API_URL,
+    screen,
+    projectJson,
+    isEmpty: isTimelineEmpty(),
+    applyProjectData,
+    setScreen,
+    clearDirty,
+    isApplyingProjectRef,
+    setVersionNotice,
+  });
+  const readOnly = sharing.readOnly;
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  // Leaving the page: no "unsaved changes" warning once the server has everything.
+  const savedOnlineRef = useRef(false);
+  savedOnlineRef.current = !!sharing.share && (readOnly || sharing.status === "saved");
+
+  // Opening a file starts a separate timeline (with its own links).
+  const loadProjectFile = (e) => {
+    sharing.stop();
+    loadProject(e);
+  };
+  // "Restore" reopens a shared timeline from the server rather than copying it.
+  const restoreSession = () => {
+    const link = SHARING ? sharing.autosaveShareLink() : null;
+    if (link) {
+      setShowAutosaveBanner(false);
+      sharing.open(link.role, link.key);
+    } else {
+      restoreAutosave();
+    }
+  };
 
   const exportParams = {
     userRows, bride, groom, date,
@@ -349,6 +389,16 @@ export default function MobileApp() {
   const rows = userRows;
 
   const sortableRowIds = useMemo(() => rows.map((r) => String(r.id)), [rows]);
+
+  // Comments by row id (Phase 4).
+  const commentsByRow = useMemo(() => {
+    const map = new Map();
+    sharing.comments.forEach((c) => {
+      const k = String(c.rowId);
+      map.set(k, [...(map.get(k) || []), c]);
+    });
+    return map;
+  }, [sharing.comments]);
 
   // "Runs 20 min into …" / "20 min free before …" on pinned rows.
   const notices = useMemo(() => pinnedNotices(rows), [rows]);
@@ -464,7 +514,7 @@ export default function MobileApp() {
 
   useEffect(() => {
     const handler = (e) => {
-      if (isDirtyRef.current && !isTimelineEmpty()) {
+      if (isDirtyRef.current && !isTimelineEmpty() && !savedOnlineRef.current) {
         e.preventDefault();
         e.returnValue = "";
       }
@@ -483,11 +533,13 @@ export default function MobileApp() {
   // Every change that can move times goes through here: flow, then save to
   // history. After a reorder pass the old day start so the day keeps it.
   const commitRows = (newUserRows, { startTime } = {}) => {
+    if (readOnly) return;
     saveToHistory(flowTimes(newUserRows, { startTime }));
   };
 
 
   const handleChange = (displayIndex, field, value) => {
+    if (readOnly) return;
     if (beforeEditSnapshotRef.current === null) {
       beforeEditSnapshotRef.current = userRows.map(r => ({ ...r })); // deep-enough clone before any mutation
     }
@@ -781,6 +833,7 @@ export default function MobileApp() {
   };
 
   const startNewTimeline = () => {
+    sharing.stop();
     clearAutosave();
     clearDirty();
     resetTimelineState();
@@ -943,6 +996,7 @@ export default function MobileApp() {
         exportParams,
         projectData: buildProjectData(),
         jsonFilename: buildDefaultFilename("json"),
+        link: sharing.links.edit || "",
       });
       hasSentTimelineRef.current = true;
       setSendStatus("sent");
@@ -1568,10 +1622,10 @@ export default function MobileApp() {
       {screen === "welcome" ? (
         <WelcomeScreen
           showAutosaveBanner={showAutosaveBanner}
-          restoreAutosave={restoreAutosave}
+          restoreAutosave={restoreSession}
           clearAutosave={clearAutosave}
           onCreateNewTimeline={startManualTimeline}
-          loadProject={loadProject}
+          loadProject={loadProjectFile}
         />
       ) : screen === "quickstart" ? (
         <QuickStartScreen
@@ -1608,18 +1662,19 @@ export default function MobileApp() {
               style={{ padding: "10px 24px", background: "transparent", color: "var(--wtb-accent)", border: "1px solid var(--wtb-accent)", borderRadius: 6, fontSize: 14, fontWeight: 300, cursor: "pointer", textAlign: "center", width: "100%", maxWidth: 360, boxSizing: "border-box", fontFamily: "'Jost', sans-serif" }}
             >
               Load Existing Project
-              <input type="file" accept=".json" onChange={loadProject} style={{ display: "none" }} />
+              <input type="file" accept=".json" onChange={loadProjectFile} style={{ display: "none" }} />
             </label>
           </div>
         </div>
       ) : (
         /* ============ TIMELINE SCREEN ============ */
-        <div className="wtb-timeline-screen wtb-timeline-screen-theme" style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", zIndex: 1, fontFamily: "'Jost', sans-serif" }}>
+        <div className={`wtb-timeline-screen wtb-timeline-screen-theme${readOnly ? " wtb-readonly" : ""}`} style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", zIndex: 1, fontFamily: "'Jost', sans-serif" }}>
           {versionNotice && (
             <div style={{ flexShrink: 0, padding: "8px 12px", background: "var(--wtb-surface-raised)", borderBottom: "1px solid var(--wtb-border)", fontSize: 13, color: "var(--wtb-text-muted)", textAlign: "center", fontFamily: "'Jost', sans-serif", fontWeight: 300 }}>
               {versionNotice}
             </div>
           )}
+          <ShareStatus sharing={sharing} onOpenShare={() => setShowShareDialog(true)} />
           {/* Header: names/date + controls */}
           <div className="wtb-header-bar" style={{ flexShrink: 0, padding: isDesktop ? "4px 10px 0" : "4px 8px 0" }}>
             {/* Names & date (+ mobile gear top-right) */}
@@ -1663,19 +1718,19 @@ export default function MobileApp() {
                       >
                         New Timeline
                       </button>
-                      <label role="menuitem" className="wtb-mobile-gear-menu-item" style={{ cursor: "pointer", margin: 0 }}>
+                      <label role="menuitem" className="wtb-mobile-gear-menu-item wtb-edit-only" style={{ cursor: "pointer", margin: 0 }}>
                         Load Project
                         <input
                           type="file"
                           accept=".json"
-                          onChange={(e) => { loadProject(e); closeMobileGearMenu(); }}
+                          onChange={(e) => { loadProjectFile(e); closeMobileGearMenu(); }}
                           style={{ display: "none" }}
                         />
                       </label>
                       <button
                         type="button"
                         role="menuitem"
-                        className="wtb-mobile-gear-menu-item wtb-mobile-gear-menu-item--primary"
+                        className="wtb-mobile-gear-menu-item wtb-mobile-gear-menu-item--primary wtb-edit-only"
                         onClick={() => { saveProject(); closeMobileGearMenu(); }}
                       >
                         Save Project
@@ -1737,7 +1792,7 @@ export default function MobileApp() {
                       <button
                         type="button"
                         role="menuitem"
-                        className="wtb-mobile-gear-menu-item"
+                        className="wtb-mobile-gear-menu-item wtb-edit-only"
                         onClick={() => { setShowSettingsModal(true); closeMobileGearMenu(); }}
                       >
                         Project Settings
@@ -1789,18 +1844,21 @@ export default function MobileApp() {
                   New Timeline
                 </button>
                 <label
+                  className="wtb-edit-only"
                   style={{ padding: "6px 14px", background: "transparent", color: "var(--wtb-text)", border: "1px solid var(--wtb-border)", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, display: "inline-block", fontFamily: "'Jost', sans-serif" }}
                 >
                   Load Project
-                  <input type="file" accept=".json" onChange={loadProject} style={{ display: "none" }} />
+                  <input type="file" accept=".json" onChange={loadProjectFile} style={{ display: "none" }} />
                 </label>
                 <button
+                  className="wtb-edit-only"
                   onClick={saveProject}
                   style={{ padding: "6px 14px", backgroundColor: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
                 >
                   Save Project
                 </button>
                 <button
+                  className="wtb-edit-only"
                   onClick={() => setShowSettingsModal(true)}
                   style={{ padding: "6px 14px", background: "transparent", color: "var(--wtb-text)", border: "1px solid var(--wtb-border)", borderRadius: 4, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
                 >
@@ -1833,6 +1891,7 @@ export default function MobileApp() {
                   }}
                 >
                   <button
+                    className="wtb-edit-only"
                     onClick={undo}
                     disabled={history.length === 0}
                     style={{ padding: "6px 14px", background: history.length > 0 ? "var(--wtb-undo-bg-active)" : "var(--wtb-undo-bg)", color: history.length > 0 ? "var(--wtb-text)" : "var(--wtb-undo-text-disabled)", border: "none", borderRadius: 4, cursor: history.length > 0 ? "pointer" : "not-allowed", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", display: "flex", alignItems: "center", gap: 5 }}
@@ -1840,6 +1899,7 @@ export default function MobileApp() {
                     <span style={{ fontSize: 15, lineHeight: 1 }}>↺</span> Undo
                   </button>
                   <button
+                    className="wtb-edit-only"
                     onClick={redo}
                     disabled={redoStack.length === 0}
                     style={{ padding: "6px 14px", background: redoStack.length > 0 ? "var(--wtb-undo-bg-active)" : "var(--wtb-undo-bg)", color: redoStack.length > 0 ? "var(--wtb-text)" : "var(--wtb-undo-text-disabled)", border: "none", borderRadius: 4, cursor: redoStack.length > 0 ? "pointer" : "not-allowed", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", display: "flex", alignItems: "center", gap: 5 }}
@@ -1960,11 +2020,11 @@ export default function MobileApp() {
             rowIds={sortableRowIds}
             onDragComplete={handleTimelineDragComplete}
           >
-          <div className="wtb-shell" style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+          <div className={`wtb-shell${readOnly ? " wtb-shell--single" : ""}`} style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
             {/* MAIN — scrolls independently */}
             <div
               ref={mainScrollRef}
-              className={`wtb-timeline-scroll${!isDesktop && mobileMainTab === "timeline" ? " wtb-has-mobile-dock" : ""}`}
+              className={`wtb-timeline-scroll${!isDesktop && mobileMainTab === "timeline" && !readOnly ? " wtb-has-mobile-dock" : ""}`}
               style={{
                 overflowY: "auto",
                 height: "100%",
@@ -2002,12 +2062,18 @@ export default function MobileApp() {
 
             <div style={{ width: "100%" }}>
               {/* Top drop zone (before first row) */}
-              <RowDropZone index={0} onAddRow={() => addRowAtIndex(0)} />
+              {readOnly ? <div style={{ height: 8 }} /> : <RowDropZone index={0} onAddRow={() => addRowAtIndex(0)} />}
               {rows.map((row, index) => (
                 <React.Fragment key={row.id}>
                   <SortableTimelineRow
                     row={row}
-                    sortDisabled={!isDesktop}
+                    sortDisabled={!isDesktop || readOnly}
+                    readOnly={readOnly}
+                    commentsEnabled={!!sharing.share}
+                    comments={commentsByRow.get(String(row.id)) || []}
+                    onAddComment={(body) => sharing.addComment(row.id, body)}
+                    myName={sharing.myName}
+                    onSetName={sharing.setMyName}
                     index={index}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -2028,11 +2094,15 @@ export default function MobileApp() {
                     isMobile={!isDesktop}
                   />
 
-                  <RowDropZone
-                    index={index + 1}
-                    onAddRow={() => addRowAtIndex(index + 1)}
-                    isLast={index === rows.length - 1}
-                  />
+                  {readOnly ? (
+                    <div style={{ height: 8 }} />
+                  ) : (
+                    <RowDropZone
+                      index={index + 1}
+                      onAddRow={() => addRowAtIndex(index + 1)}
+                      isLast={index === rows.length - 1}
+                    />
+                  )}
                 </React.Fragment>
               ))}
             </div>
@@ -2047,6 +2117,7 @@ export default function MobileApp() {
               }}
             >
               <button
+                className="wtb-edit-only"
                 onClick={addRow}
                 style={{
                   display: 'flex',
@@ -2118,7 +2189,7 @@ export default function MobileApp() {
         </div>
 
         {/* Sidebar: event blocks + preview (desktop only; mobile uses tap-to-select modal) */}
-        {isDesktop && (
+        {isDesktop && !readOnly && (
           <EventSidebar />
         )}
       </div>
@@ -2159,6 +2230,10 @@ export default function MobileApp() {
                 </div>
               </div>
             </div>
+          )}
+
+          {showShareDialog && (
+            <ShareDialog sharing={sharing} onClose={() => setShowShareDialog(false)} />
           )}
 
           {deleteToast && (
@@ -2299,7 +2374,7 @@ export default function MobileApp() {
           )}
 
           {/* Mobile: fixed undo/redo at bottom (Timeline Events tab only) */}
-          {!isDesktop && mobileMainTab === "timeline" && (
+          {!isDesktop && mobileMainTab === "timeline" && !readOnly && (
             <div className="wtb-mobile-undo-dock" role="toolbar" aria-label="Undo and redo">
               <button
                 type="button"

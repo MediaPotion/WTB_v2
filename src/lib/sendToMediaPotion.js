@@ -14,7 +14,7 @@ const SHARED_SECRET = "46b8dc32b9ba8c17ad96c7237d352b0b953cd06ea8f8fb57";
  *
  * Throws on any failure; resolves on success.
  */
-export async function sendToMediaPotion({ exportParams, projectData, jsonFilename }) {
+export async function sendToMediaPotion({ exportParams, projectData, jsonFilename, link = "" }) {
   const { blob: pdfBlob, filename: pdfFilename } = await buildTimelinePdfBlob(exportParams);
   const jsonBlob = new Blob([JSON.stringify(projectData, null, 2)], {
     type: "application/json",
@@ -29,6 +29,8 @@ export async function sendToMediaPotion({ exportParams, projectData, jsonFilenam
   form.append("groom", groomFirst);
   form.append("pdf", pdfBlob, pdfFilename);
   form.append("json", jsonBlob, jsonFilename || "wedding-timeline.json");
+  // Shared timelines (Phase 4): the studio gets the live link as well.
+  if (link) form.append("link", link);
 
   let res;
   try {

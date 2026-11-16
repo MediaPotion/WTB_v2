@@ -34,6 +34,9 @@ Create React App, React 18, plain JavaScript, `@dnd-kit` for drag and drop,
 | `src/lib/exportPdf.js`, `exportTxt.js` | PDF / print / preview and text export. |
 | `src/lib/sendToMediaPotion.js` + `hostinger/send-timeline.php` | Emails the PDF and JSON to the studio. |
 | `src/screens/QuickStartScreen.jsx`, `src/lib/quickStart.js` | Phase 3 quick start: one screen of pre-filled questions → `generateTimeline` with defaults → a version-3 draft. Tested. |
+| `hostinger/timeline-api.php` (+ `timeline-config.example.php`) | Phase 4 server: create / load / save (version-checked) / comment. Edit keys stored only as hashes. Not deployed, not run. |
+| `scripts/dev-timeline-api.js` | Node stand-in for the PHP API (`npm run dev:api`, port 3001, in memory). Keep in step with the PHP. |
+| `src/lib/sharing.js`, `src/hooks/useSharedTimeline.js`, `src/components/sharing/SharingUI.jsx` | Phase 4 client: API calls, links in the URL hash, auto create/save, conflict, comments, read-only view. Sharing is on only if `REACT_APP_TIMELINE_API` is set at build time. |
 | `src/lib/flow.js` | The timing model: `flowTimes` (row order → start times, honouring pins and "same time as above") and `pinnedNotices` (overrun / free minutes before pinned rows). Tested. |
 | `src/lib/projectMigration.js` | Version 2 → 3 save-file migration (sort once, pin rows that don't follow on). Tested. |
 | `src/lib/generateTimeline.js` | Builds a full day from wizard answers (694 lines). Currently crashes — see below. |
@@ -122,6 +125,15 @@ version 3), color, tier, flexibilityMinutes
 - **Scripted tests in the preview browser:** when the page doesn't have
   focus, `blur` never fires, so typed edits don't reach Undo history. Use
   real clicks and typing to check history.
+- **Share links keep the key in the URL hash** (`#edit=…`, `#view=…`), so the
+  web server hosting the app never sees it. Anyone with the edit link can
+  change the timeline; treat it like a password.
+- **Local autosave still runs for shared timelines.** It also stores which
+  link it belongs to (`wtb_autosave_share`), so "Restore" reopens that
+  link instead of making a second online copy.
+- **Testing sharing locally:** `npm run dev:api`, then
+  `REACT_APP_TIMELINE_API=http://localhost:3001/timeline-api.php npm start`
+  (or the `dev-api` and `wtb-shared` entries in `.claude/launch.json`).
 - **Undo for a delete** is the normal undo; the message's Undo only acts while
   the delete is still the latest change.
 
@@ -163,6 +175,7 @@ also needs entries in `src/lib/renamedEvents.js` and updates to `colors.js`,
 - Remote branch `Mobile+Desktopv2` has one old commit not in main
   ("remove time arrows", 2025-08). The other remote branches are fully merged
   or older.
+- `hostinger/timeline-config.php` (database password) is in `.gitignore`.
 - No pull requests exist. The GitHub command-line tool (`gh`) is not installed
   on this machine.
 

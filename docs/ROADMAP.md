@@ -175,6 +175,30 @@ Needs decision **D3** (where the data lives) before any work.
 | 4.4 | Guard against overwriting: each save carries a version number; if the server has a newer one, the app asks the person to reload. Show "last edited by … at …". | Two browsers editing the same timeline never silently lose a change. |
 | 4.5 | Keep file export as a backup, and change "Send to Media Potion" to send the link. | Export still downloads; the email contains the link. |
 
+**Status (branch `phase-4/sharing`, stacked on Phase 3).** D3 taken as
+recommended: `hostinger/timeline-api.php` (PHP + MySQL via PDO; tables made
+on first use), secret links, no logins. **Off until it is set up:** the app
+shares only when built with `REACT_APP_TIMELINE_API` set to that file's URL,
+so it is inert until D5 (the live address) is known and the owner follows
+"Setting up sharing" in HANDOFF. **The PHP has not been run** (no PHP here). The
+app was tested end to end against `scripts/dev-timeline-api.js`, a Node
+stand-in with the same requests and responses.
+
+- 4.1 done — a timeline with content gets its server copy and an
+  `#edit=<key>` address; changes save automatically (1.2 s after the last
+  one). Seen: the edit link in a second tab showed the same timeline.
+- 4.2 done — "Share" shows an edit link and a view link. Seen: the view link
+  has no editing controls, and the server refuses a save made with it (403).
+- 4.3 done — comments under each event's options, with a name. Seen: a
+  planner's comment from the view link showed for the couple on reopen.
+- 4.4 done — saves send their base version; a stale save gets 409. Seen:
+  the stale tab said "Ava changed this timeline at …", the server kept the
+  other tab's edit, and Reload brought it in. "Saved online · last edited by
+  … at …" shows under the header.
+- 4.5 done in code — Save/Export unchanged; "Send to Media Potion" adds the
+  edit link to the email (`send-timeline.php` must be re-uploaded). The link
+  in the request is unit-tested; no real email was sent.
+
 ---
 
 ## Phase 5 — Later ideas (not scheduled)
@@ -191,6 +215,6 @@ Needs decision **D3** (where the data lives) before any work.
 |---|---|---|
 | D1 | Two shooters often cover bride and groom at the same time. How should parallel events appear in a one-after-another timeline? | Let a pinned row overlap its neighbours without warning when it is marked "at the same time as the previous event"; decide the exact control with a mock-up before building 1.1. **Taken as recommended (Phase 1 branch) — owner to confirm.** |
 | D2 | Bring back the full 7-step wizard, or only the short quick-start? | Short quick-start only. Leave the old wizard code in place, switched off, until Phase 3 proves out. **Taken as recommended (Phase 3 branch) — owner to confirm.** |
-| D3 | Where do shared timelines live? | A small PHP + MySQL service on the existing Hostinger account, with secret links and no logins. Alternative: a hosted database service (for example Supabase) if live co-editing is wanted later. |
+| D3 | Where do shared timelines live? | A small PHP + MySQL service on the existing Hostinger account, with secret links and no logins. Alternative: a hosted database service (for example Supabase) if live co-editing is wanted later. **Taken as recommended (Phase 4 branch) — owner to confirm.** |
 | D4 | The repo has both `package-lock.json` and `pnpm-lock.yaml`. Which package manager? | npm — the launcher script already uses it. **Taken (Phase 0).** |
 | D5 | How is the live site deployed, and at what address? | Unknown — see NOTES "Unknowns". Needed before anything ships. |

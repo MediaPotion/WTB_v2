@@ -148,10 +148,17 @@ foreach (['pdf' => 'application/pdf', 'json' => 'application/json'] as $key => $
 $subject  = "$bride & $groom Wedding Timeline";
 $boundary = 'wtb_' . bin2hex(random_bytes(12));
 
+// Optional link to the shared (live) timeline. Only http(s) URLs, no line breaks.
+$link = trim($_POST['link'] ?? '');
+if ($link !== '' && (strlen($link) > 300 || !preg_match('#^https?://[^\s]+$#', $link) || !filter_var($link, FILTER_VALIDATE_URL))) {
+  $link = '';
+}
+
 $bodyText = "A wedding timeline was sent from the Wedding Timeline Builder.\r\n\r\n"
           . "Couple: $bride & $groom\r\n"
           . "Sent: " . date('F j, Y g:i A T') . "\r\n\r\n"
-          . "Attached: timeline PDF and project JSON.\r\n";
+          . ($link !== '' ? "Open the live timeline (can edit): $link\r\n\r\n" : '')
+          . "Attached: timeline PDF and project JSON (backup copy).\r\n";
 
 $message  = "--$boundary\r\n";
 $message .= "Content-Type: text/plain; charset=utf-8\r\n";

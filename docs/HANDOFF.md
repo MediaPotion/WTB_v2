@@ -29,7 +29,9 @@ arithmetic to the client, and nothing is shared.
   as recommended (the owner asked for everything to be built; confirm D1).
 - **Phase 3 is on `phase-3/quick-start`, built on top of Phase 1**, with D2
   taken as recommended (confirm D2).
-- **Phase 4 has not started** — it waits on D3. 0.2's origin list waits on D5; 2.7 waits on approval of the proposed labels
+- **Phase 4 is on `phase-4/sharing`, built on top of Phase 3**, with D3 taken
+  as recommended (confirm D3). It is switched off until set up — see
+  "Setting up sharing" below. 0.2's origin list waits on D5; 2.7 waits on approval of the proposed labels
   in NOTES "Wording".
 - **Dependencies are installed** (`node_modules`, via `npm ci`, Node 18).
 - **It runs:** `npm start` serves the app; `npm run build` succeeds.
@@ -67,6 +69,25 @@ To see the phone layout, make the window narrower than 901 px.
    Branch it from Phase 2: Phase 1.2 changes the same handlers.
 3. **2.7** once the owner approves labels.
 4. **Phase 3**, then **Phase 4**, each after its open decision is settled.
+
+## Setting up sharing (Phase 4)
+
+Needs the live site's address (D5) and access to Hostinger.
+
+1. hPanel → Databases → MySQL: create a database and a user.
+2. Copy `hostinger/timeline-config.example.php` to `timeline-config.php`,
+   fill in the database details and the site address in `allowed_origins`.
+   Never commit it (it is in `.gitignore`).
+3. Upload `timeline-api.php` and `timeline-config.php` to the same folder as
+   `send-timeline.php` (e.g. `public_html/wtb/`), and re-upload
+   `send-timeline.php` (it now includes the link).
+4. Build the app with the API address, then deploy `build/`:
+
+```bash
+REACT_APP_TIMELINE_API=https://weddingpotion.com/wtb/timeline-api.php npm run build
+```
+
+5. Check: create a timeline, click Share, open both links in another browser.
 
 ## Decisions waiting on the owner
 
