@@ -1,7 +1,7 @@
 /** Minimum recommended durations for logistics inline editors (minutes). */
 export const RECEPTION_DURATION_MINIMUMS = {
   "Reception: Open Dance Floor": 15,
-  "Reception: Garder Belt Toss": 10,
+  "Reception: Garter Belt Toss": 10,
   "Reception: Bouquet Toss": 10,
 };
 

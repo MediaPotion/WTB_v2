@@ -573,10 +573,10 @@ export function generateTimeline(wizardAnswers) {
       }
     }
     if (wiz_garterToss) {
-      const garterDur = durationOverride(adjustments, "Reception: Garder Belt Toss", 15);
+      const garterDur = durationOverride(adjustments, "Reception: Garter Belt Toss", 15);
       if (garterDur != null) {
-        postGoldenHourEvents.push("Reception: Garder Belt Toss");
-        addRec({ event: "Reception: Garder Belt Toss", duration: garterDur });
+        postGoldenHourEvents.push("Reception: Garter Belt Toss");
+        addRec({ event: "Reception: Garter Belt Toss", duration: garterDur });
       }
     }
     if (wiz_bouquetToss) {
@@ -650,8 +650,8 @@ export function generateTimeline(wizardAnswers) {
     videoStartMinute: wiz_videoStartMinute,
     videoStartPeriod: wiz_videoStartPeriod,
     enteredViaWizard,
-    wiz_photoCoverageHours: photoCoverageHours,
-    wiz_videoCoverageHours: videoCoverageHours,
+    wiz_photoCoverageHours,
+    wiz_videoCoverageHours,
   });
 
   const flexibility = {

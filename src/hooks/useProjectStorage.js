@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { PROJECT_VERSION, AUTOSAVE_KEY, WIZARD_ENABLED } from "../constants/wizard";
 import { normalizeTimelineRow } from "../lib/rowTier";
+import { migrateEventName } from "../lib/renamedEvents";
 
 export function useProjectStorage(state) {
   const {
@@ -188,6 +189,7 @@ export function useProjectStorage(state) {
               video: true,
               notes: "",
               ...r,
+              event: migrateEventName(r.event),
             })
           )
         : [

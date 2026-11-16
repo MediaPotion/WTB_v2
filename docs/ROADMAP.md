@@ -27,6 +27,19 @@ Small fixes that unblock later phases.
 | 0.3 | Fix block-name typos: "Garder Belt Toss", "Rings,Invitations, & Accessories". **Event names are lookup keys** (see NOTES "Gotchas") — search the whole `src/` tree for the old string before renaming. | Old strings appear nowhere in `src/`; a file saved before the rename still loads and keeps its colours. |
 | 0.4 | Remove `scripts/split-app.js` (one-time script; reads a file that no longer exists) and keep one lockfile (see open decision D4). | `npm ci && npm run build` still succeeds. |
 
+**Status (branch `phase-0/housekeeping`):**
+
+- 0.1 done — 7 of 7 tests pass.
+- 0.2 done in code, not live. Rate limit (3 sends per minute per IP) and
+  content checks (real PDF, real timeline JSON) are in. The origin check is in
+  but switched off until the live address is known (D5): fill
+  `ALLOWED_ORIGINS` in the PHP file. The owner must upload the file to
+  Hostinger. Not run — there is no PHP on the dev machine.
+- 0.3 done. Old names now appear in `src/` only in the rename table
+  `src/lib/renamedEvents.js`, which maps them on load; tested.
+- 0.4 done. D4 taken as recommended (npm): `pnpm-lock.yaml` removed and the
+  CodeSandbox tasks switched to npm; `npm ci && npm run build` succeeds.
+
 ---
 
 ## Phase 1 — Timing that does the math
