@@ -617,6 +617,84 @@ const MOBILE_TWEAKS = `
   .wtb-row-notice--overrun { color: #e05252; background: rgba(204,34,34,0.10); }
   .wtb-row-notice--free { color: var(--wtb-text-muted); }
 
+  /* Desktop preview panel */
+  .wtb-preview-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    background: var(--wtb-overlay);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .wtb-preview-dialog {
+    width: min(980px, 100%);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--wtb-surface);
+    border: 1px solid var(--wtb-border);
+    border-radius: 10px;
+    padding: 12px 16px 16px;
+  }
+  .wtb-preview-dialog-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .wtb-preview-dialog-head h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--wtb-text);
+    font-family: 'Cormorant Garamond', serif;
+  }
+  .wtb-preview-dialog-head button {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--wtb-text-muted);
+    cursor: pointer;
+    line-height: 1;
+  }
+  .wtb-preview-dialog-body { flex: 1; min-height: 0; }
+
+  /* "Deleted … Undo" message */
+  .wtb-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    max-width: calc(100vw - 32px);
+    padding: 10px 12px 10px 16px;
+    background: var(--wtb-surface-alt);
+    color: var(--wtb-text);
+    border: 1px solid var(--wtb-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px var(--wtb-shadow);
+    font-size: 13px;
+    font-family: 'Jost', sans-serif;
+  }
+  .wtb-toast > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wtb-toast button {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    background: var(--wtb-accent);
+    color: var(--wtb-on-accent);
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: 'Jost', sans-serif;
+    cursor: pointer;
+  }
+  .wtb-toast--above-dock { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+
   /* Gap between rows: "+" to insert; grows into a drop target while dragging */
   .wtb-drop-zone {
     position: relative;
