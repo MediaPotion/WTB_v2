@@ -112,7 +112,8 @@ export function coverageDefsToUserRows(defs, { startId = 1, photoEnabled = true,
     isOutdoor: false,
     photo: def.photo && photoEnabled,
     video: def.video && videoEnabled,
-    isTimeLocked: false,
+    // Coverage starts are fixed times: pinned, so the flow never moves them.
+    isTimeLocked: true,
     color: "",
     ...DEFAULT_ROW_TIER_FIELDS,
   }));

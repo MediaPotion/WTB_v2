@@ -13,7 +13,7 @@ const SETTINGS_WIZARD_TABS = [
   { label: "The Reception",        step: 7 },
 ];
 
-const PROJECT_VERSION = 2;
+const PROJECT_VERSION = 3; // 3: row order is the truth, times flow (src/lib/projectMigration.js)
 const AUTOSAVE_KEY = "wtb_autosave";
 
 export {

@@ -25,9 +25,11 @@ arithmetic to the client, and nothing is shared.
   pushed. Merge Phase 0 first. See the status under each phase in ROADMAP.
   `main` still has only these documents and `CLAUDE.md` on top of the
   2026-07-17 app code. D4 was taken as recommended: npm only.
-- **Phases 1, 3 and 4 have not started** — each waits on a decision (D1, D2,
-  D3). 0.2's origin list waits on D5; 2.7 waits on approval of the proposed
-  labels in NOTES "Wording".
+- **Phase 1 is on `phase-1/timing`, built on top of Phase 2**, with D1 taken
+  as recommended (the owner asked for everything to be built; confirm D1).
+- **Phases 3 and 4 have not started** — each waits on a decision (D2, D3).
+  0.2's origin list waits on D5; 2.7 waits on approval of the proposed labels
+  in NOTES "Wording".
 - **Dependencies are installed** (`node_modules`, via `npm ci`, Node 18).
 - **It runs:** `npm start` serves the app; `npm run build` succeeds.
 - **Tests:** on `main`, 5 of 7 pass; on the Phase 0 branch 10 of 10; on the

@@ -591,49 +591,31 @@ const MOBILE_TWEAKS = `
     border-radius: 4px;
     color: var(--wtb-text);
   }
-  .wtb-overlap-wrap { position: relative; flex-shrink: 0; display: inline-flex; }
-  .wtb-overlap-badge {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #cc2222;
-    color: #fff;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: bold;
-    cursor: pointer;
-    user-select: none;
-  }
-  .wtb-overlap-tip {
-    position: absolute;
-    top: 26px;
-    left: -8px;
-    z-index: 30;
-    width: 220px;
-    padding: 8px 9px;
-    background: var(--wtb-surface-alt);
-    color: var(--wtb-text);
-    font-size: 11px;
-    line-height: 1.5;
-    border: 1px solid #cc4444;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.55);
-    white-space: normal;
-  }
-  .wtb-overlap-tip button {
-    display: block;
-    margin-top: 7px;
-    font-size: 11px;
-    font-weight: 600;
-    color: #cc4444;
+  .wtb-row-pin {
+    flex-shrink: 0;
+    width: 24px;
+    height: 26px;
+    margin-left: -4px;
+    padding: 0;
+    border: none;
     background: none;
-    border: 1px solid #cc4444;
-    border-radius: 4px;
-    padding: 3px 8px;
+    font-size: 12px;
+    line-height: 1;
     cursor: pointer;
+    opacity: 0.25;
+    filter: grayscale(1);
   }
+  .wtb-row-pin:hover { opacity: 0.8; }
+  .wtb-row-pin--on { opacity: 1; filter: none; }
+  .wtb-row-card--parallel { margin-left: 22px; width: calc(100% - 22px); }
+  .wtb-row-notice {
+    padding: 3px 10px;
+    font-size: 12px;
+    font-family: 'Jost', sans-serif;
+    border-bottom: 1px solid var(--wtb-border-subtle);
+  }
+  .wtb-row-notice--overrun { color: #e05252; background: rgba(204,34,34,0.10); }
+  .wtb-row-notice--free { color: var(--wtb-text-muted); }
 
   /* Desktop preview panel */
   .wtb-preview-overlay {
@@ -753,6 +735,10 @@ const MOBILE_TWEAKS = `
     .wtb-drag-handle { display: none !important; }
     .wtb-row-line { padding-left: 6px; gap: 4px; min-height: 44px; }
     .wtb-row-time { width: 66px; font-size: 16px; padding: 3px 2px; }
+    /* Phones: the lock shows only on pinned rows; pin/unpin is in the expanded options. */
+    .wtb-row-pin { width: 18px; margin-left: -3px; }
+    .wtb-row-pin:not(.wtb-row-pin--on) { display: none; }
+    .wtb-row-card--parallel { margin-left: 14px; width: calc(100% - 14px); }
     .wtb-row-time-period { margin-left: 2px; }
     .wtb-row-name-wrap::after, .wtb-row-name { padding: 5px 4px; }
     .wtb-row-marks { font-size: 10px; gap: 1px; }

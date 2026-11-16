@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { PROJECT_VERSION, AUTOSAVE_KEY, WIZARD_ENABLED } from "../constants/wizard";
 import { normalizeTimelineRow } from "../lib/rowTier";
 import { migrateEventName } from "../lib/renamedEvents";
+import { migrateSavedRows } from "../lib/projectMigration";
+import { flowTimes } from "../lib/flow";
 
 export function useProjectStorage(state) {
   const {
@@ -183,14 +185,16 @@ export function useProjectStorage(state) {
     const loadedRows = projectData.userRows;
     setUserRows(
       loadedRows && loadedRows.length > 0
-        ? loadedRows.map((r) =>
-            normalizeTimelineRow({
-              photo: true,
-              video: true,
-              notes: "",
-              ...r,
-              event: migrateEventName(r.event),
-            })
+        ? flowTimes(
+            migrateSavedRows(loadedRows, projectData.version).map((r) =>
+              normalizeTimelineRow({
+                photo: true,
+                video: true,
+                notes: "",
+                ...r,
+                event: migrateEventName(r.event),
+              })
+            )
           )
         : [
             normalizeTimelineRow({
@@ -262,7 +266,7 @@ export function useProjectStorage(state) {
         const version = projectData.version;
         if (!version || version < PROJECT_VERSION) {
           setVersionNotice(
-            "This project was saved with an older version of the app. Some features may not be available."
+            "This timeline was saved with an older version of the app. Its times are as you saved them; events with a set time are now pinned (🔒)."
           );
         } else {
           setVersionNotice(null);

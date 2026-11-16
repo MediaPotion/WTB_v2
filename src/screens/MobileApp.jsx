@@ -20,7 +20,7 @@ import {
   buildCoverageStartBlockDefs,
   coverageDefsToUserRows,
 } from "../lib/coverageStartBlocks";
-import { computeOverlaps } from "../lib/overlaps";
+import { flowTimes, pinnedNotices, dayStart } from "../lib/flow";
 import { generateTimeline as generateTimelineLib } from "../lib/generateTimeline";
 import { buildWizardAnswers } from "../lib/buildWizardAnswers";
 import { geocodeCeremonyLocation } from "../lib/goldenHour";
@@ -342,64 +342,14 @@ export default function MobileApp() {
   };
 
 
-  const rows = useMemo(() => {
-    return [...userRows].sort((a, b) => a.time - b.time);
-  }, [userRows]);
+  // Row order is the source of truth (Phase 1): the list shows rows in array
+  // order, and times flow from it (src/lib/flow.js).
+  const rows = userRows;
 
   const sortableRowIds = useMemo(() => rows.map((r) => String(r.id)), [rows]);
 
-  const overlapMap = useMemo(() => computeOverlaps(userRows), [userRows]);
-
-  // Same filter + sort computeOverlaps uses internally, so "neighbor" here
-  // matches the adjacency that actually drives overlap detection.
-  const overlapSortedRows = useMemo(() => {
-    return [...userRows]
-      .filter((r) => r.type !== "constraint")
-      .sort((a, b) => a.time - b.time);
-  }, [userRows]);
-
-  const getOverlapNeighborSignature = (rowId) => {
-    const idx = overlapSortedRows.findIndex((r) => r.id === rowId);
-    if (idx === -1) return null;
-    const self = overlapSortedRows[idx];
-    const prev = overlapSortedRows[idx - 1];
-    const next = overlapSortedRows[idx + 1];
-    return JSON.stringify({
-      self: { time: self.time, duration: self.duration },
-      prev: prev ? { id: prev.id, time: prev.time, duration: prev.duration } : null,
-      next: next ? { id: next.id, time: next.time, duration: next.duration } : null,
-    });
-  };
-
-  // Overlap warnings can be dismissed per-row. A dismissal only clears — letting
-  // the warning re-appear — if the flagged row itself changes, or if the row
-  // directly before/after it (in time order) changes. Edits elsewhere in the
-  // timeline don't affect it.
-  const [dismissedOverlaps, setDismissedOverlaps] = useState(() => new Map());
-  useEffect(() => {
-    setDismissedOverlaps((prev) => {
-      if (prev.size === 0) return prev;
-      let changed = false;
-      const next = new Map();
-      prev.forEach((signature, rowId) => {
-        const currentSignature = getOverlapNeighborSignature(rowId);
-        if (currentSignature !== null && currentSignature === signature) {
-          next.set(rowId, signature);
-        } else {
-          changed = true;
-        }
-      });
-      return changed ? next : prev;
-    });
-  }, [userRows]);
-
-  const handleDismissOverlap = (rowId) => {
-    setDismissedOverlaps((prev) => {
-      const next = new Map(prev);
-      next.set(rowId, getOverlapNeighborSignature(rowId));
-      return next;
-    });
-  };
+  // "Runs 20 min into …" / "20 min free before …" on pinned rows.
+  const notices = useMemo(() => pinnedNotices(rows), [rows]);
 
   const showWizardFeatures = WIZARD_ENABLED && enteredViaWizard;
 
@@ -521,16 +471,17 @@ export default function MobileApp() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty, userRows, date, bride, groom]);
 
-  // Preserve existing times by default; only the chain action should advance times
-  const recalculateTimes = (rowsIn, startIndex = 0) => {
-    return [...rowsIn];
-  };
-
   const saveToHistory = (newUserRows) => {
     if (JSON.stringify(newUserRows) === JSON.stringify(userRows)) return;
     setHistory((prev) => [...prev.slice(-11), userRows]);
     setRedoStack([]);
     setUserRows(newUserRows);
+  };
+
+  // Every change that can move times goes through here: flow, then save to
+  // history. After a reorder pass the old day start so the day keeps it.
+  const commitRows = (newUserRows, { startTime } = {}) => {
+    saveToHistory(flowTimes(newUserRows, { startTime }));
   };
 
 
@@ -547,23 +498,10 @@ export default function MobileApp() {
     if (field === "duration") {
       const newDuration = parseInt(value, 10) || 0;
       newUserRows[userRowIndex] = { ...newUserRows[userRowIndex], duration: newDuration };
-
-      const sortedRows = [...newUserRows].sort((a, b) => a.time - b.time);
-      const sortedIndex = sortedRows.findIndex(
-        (r) => r.id === newUserRows[userRowIndex].id
-      );
-      const recalculated = recalculateTimes(sortedRows, sortedIndex);
-
-      recalculated.forEach((recalcRow, i) => {
-        const originalIndex = newUserRows.findIndex(
-          (r) => r.id === sortedRows[i].id
-        );
-        if (originalIndex !== -1) {
-          newUserRows[originalIndex] = { ...recalcRow, isTimeLocked: newUserRows[originalIndex].isTimeLocked };
-        }
-      });
-      setUserRows(newUserRows);
-      latestUserRowsRef.current = newUserRows;
+      // Later rows follow; history is saved on blur (handleBlur).
+      const flowed = flowTimes(newUserRows);
+      setUserRows(flowed);
+      latestUserRowsRef.current = flowed;
       return;
     }
 
@@ -594,59 +532,12 @@ export default function MobileApp() {
     if (userRowIndex === -1) return;
 
     const newUserRows = userRows.filter((_, idx) => idx !== userRowIndex);
-    saveToHistory(newUserRows);
+    commitRows(newUserRows, { startTime: dayStart(userRows) });
     const name = String(row.event || "").trim();
     setDeleteToast({
       label: name ? `Deleted “${name}”` : row.type === "location" ? "Deleted location" : "Deleted event",
       rowsBefore: userRows,
     });
-  };
-
-  // Cascade times based on the visual (array index) order of rows, using the
-  // ceremony row as a fixed anchor. Pre-ceremony rows cascade backwards from
-  // ceremony start; post-ceremony rows cascade forwards from ceremony end.
-  const cascadeTimesByOrder = (orderedRows) => {
-    const isCeremony = (r) => r.event === "Ceremony: Average" || r.event === "Ceremony: Catholic";
-    const ceremonyIdx = orderedRows.findIndex(isCeremony);
-    const result = orderedRows.map(r => ({ ...r }));
-
-    if (ceremonyIdx === -1) {
-      // No ceremony anchor — cascade forward from the first row's existing time
-      let t = result[0]?.time ?? 0;
-      for (let i = 0; i < result.length; i++) {
-        if (result[i].isTimeLocked) {
-          t = result[i].time + result[i].duration;
-        } else {
-          result[i].time = t;
-          t += result[i].duration;
-        }
-      }
-      return result;
-    }
-
-    // Cascade pre-ceremony rows backwards from ceremony start
-    let t = result[ceremonyIdx].time;
-    for (let i = ceremonyIdx - 1; i >= 0; i--) {
-      if (result[i].isTimeLocked) {
-        t = result[i].time;
-      } else {
-        t -= result[i].duration;
-        result[i].time = t;
-      }
-    }
-
-    // Cascade post-ceremony rows forwards from ceremony end
-    t = result[ceremonyIdx].time + result[ceremonyIdx].duration;
-    for (let i = ceremonyIdx + 1; i < result.length; i++) {
-      if (result[i].isTimeLocked) {
-        t = result[i].time + result[i].duration;
-      } else {
-        result[i].time = t;
-        t += result[i].duration;
-      }
-    }
-
-    return result;
   };
 
   // Chain current row's time to previous row's end time
@@ -677,53 +568,16 @@ export default function MobileApp() {
     }
   };
 
-  const handleMoveUp = (displayIndex) => {
-    if (displayIndex === 0) return;
-    const currentRow = rows[displayIndex];
-    const previousRow = rows[displayIndex - 1];
-
-    // Find the positions of these rows in userRows
-    const currentUserIndex = userRows.findIndex(r => r.id === currentRow.id);
-    const previousUserIndex = userRows.findIndex(r => r.id === previousRow.id);
-    
-    if (currentUserIndex === -1 || previousUserIndex === -1) return;
-
-    // Create new userRows array with swapped positions AND times
-    const newUserRows = [...userRows];
-    
-    // Swap the entire rows but also swap their times
-    const currentRowCopy = { ...newUserRows[currentUserIndex], time: previousRow.time };
-    const previousRowCopy = { ...newUserRows[previousUserIndex], time: currentRow.time };
-    
-    newUserRows[currentUserIndex] = previousRowCopy;
-    newUserRows[previousUserIndex] = currentRowCopy;
-
-    saveToHistory(newUserRows);
+  // Phone arrows: swap with the neighbour; times follow the new order.
+  const moveRow = (displayIndex, delta) => {
+    const target = displayIndex + delta;
+    if (target < 0 || target >= userRows.length) return;
+    const working = [...userRows];
+    [working[displayIndex], working[target]] = [working[target], working[displayIndex]];
+    commitRows(working, { startTime: dayStart(userRows) });
   };
-
-  const handleMoveDown = (displayIndex) => {
-    if (displayIndex === rows.length - 1) return;
-    const currentRow = rows[displayIndex];
-    const nextRow = rows[displayIndex + 1];
-
-    // Find the positions of these rows in userRows
-    const currentUserIndex = userRows.findIndex(r => r.id === currentRow.id);
-    const nextUserIndex = userRows.findIndex(r => r.id === nextRow.id);
-    
-    if (currentUserIndex === -1 || nextUserIndex === -1) return;
-
-    // Create new userRows array with swapped positions AND times
-    const newUserRows = [...userRows];
-    
-    // Swap the entire rows but also swap their times
-    const currentRowCopy = { ...newUserRows[currentUserIndex], time: nextRow.time };
-    const nextRowCopy = { ...newUserRows[nextUserIndex], time: currentRow.time };
-    
-    newUserRows[currentUserIndex] = nextRowCopy;
-    newUserRows[nextUserIndex] = currentRowCopy;
-
-    saveToHistory(newUserRows);
-  };
+  const handleMoveUp = (displayIndex) => moveRow(displayIndex, -1);
+  const handleMoveDown = (displayIndex) => moveRow(displayIndex, 1);
 
   // "Change" on a row: pick a different event for that row.
   const handleEventClick = (index) => {
@@ -765,8 +619,9 @@ export default function MobileApp() {
   const insertEventAt = (index, eventData) => {
     if (!eventData) return;
     const fields = eventFieldsFrom(eventData);
-    const time =
-      eventData.time !== undefined ? eventData.time : insertTimeAt(rows, index, fields.duration);
+    // A time chosen in the event list pins the row; otherwise it follows.
+    const pinned = eventData.time !== undefined;
+    const time = pinned ? eventData.time : insertTimeAt(rows, index, fields.duration);
     const newRow = {
       id: nextId,
       location: "",
@@ -779,9 +634,10 @@ export default function MobileApp() {
       ...DEFAULT_ROW_TIER_FIELDS,
       ...fields,
       time,
+      isTimeLocked: pinned,
     };
     setNextId(nextId + 1);
-    saveToHistory(insertRowAt(userRows, rows, index, newRow));
+    commitRows(insertRowAt(userRows, rows, index, newRow), { startTime: dayStart(userRows) });
   };
 
   // Handle selecting an event from the EventBlockSelector
@@ -796,9 +652,11 @@ export default function MobileApp() {
         newUserRows[userRowIndex] = {
           ...newUserRows[userRowIndex],
           ...eventFieldsFrom(eventData),
-          ...(eventData.time !== undefined ? { time: eventData.time } : {}),
+          ...(eventData.time !== undefined
+            ? { time: eventData.time, isTimeLocked: true, withPrevious: false }
+            : {}),
         };
-        saveToHistory(newUserRows);
+        commitRows(newUserRows);
       }
     }
     closeEventSelector();
@@ -832,7 +690,7 @@ export default function MobileApp() {
     const displayRow = rows[displayIndex];
     if (!displayRow) return;
     const fields = eventFieldsFrom(eventData);
-    saveToHistory(userRows.map((r) => (r.id === displayRow.id ? { ...r, ...fields } : r)));
+    commitRows(userRows.map((r) => (r.id === displayRow.id ? { ...r, ...fields } : r)));
   };
 
   const reorderRowAtIndex = (sourceRowId, insertIndex) => {
@@ -845,7 +703,7 @@ export default function MobileApp() {
     if (sourceIndex < insertIndex) targetIndex = Math.max(0, insertIndex - 1);
     working.splice(targetIndex, 0, moved);
 
-    saveToHistory(cascadeTimesByOrder(working));
+    commitRows(working, { startTime: dayStart(userRows) });
   };
 
   const handleTimelineDragComplete = ({ activeId, overId, activeData }) => {
@@ -1148,10 +1006,37 @@ export default function MobileApp() {
     const userRowIndex = userRows.findIndex((u) => u.id === row.id);
     if (userRowIndex === -1) return;
 
+    // Setting a time by hand pins the row there.
     const newUserRows = userRows.map((r, i) =>
-      i === userRowIndex ? { ...r, time } : r
+      i === userRowIndex ? { ...r, time, isTimeLocked: true, withPrevious: false } : r
     );
-    saveToHistory(newUserRows);
+    commitRows(newUserRows);
+  };
+
+  // Lock icon: pin the row to its current time, or let it follow again.
+  const handleTogglePin = (displayIndex) => {
+    const row = rows[displayIndex];
+    if (!row) return;
+    commitRows(
+      userRows.map((r) =>
+        r.id === row.id
+          ? { ...r, isTimeLocked: !r.isTimeLocked, ...(r.isTimeLocked ? {} : { withPrevious: false }) }
+          : r
+      )
+    );
+  };
+
+  // "Same time as the event above" (two shooters covering two things at once).
+  const handleToggleWithPrevious = (displayIndex) => {
+    const row = rows[displayIndex];
+    if (!row || displayIndex === 0) return;
+    commitRows(
+      userRows.map((r) =>
+        r.id === row.id
+          ? { ...r, withPrevious: !r.withPrevious, ...(r.withPrevious ? {} : { isTimeLocked: false }) }
+          : r
+      )
+    );
   };
 
   // ---- Project Settings helpers ----
@@ -2100,8 +1985,9 @@ export default function MobileApp() {
                     onTimeSet={(h, m, p) =>
                       handleTimeSet(index, parseTimeInput(h, m, p))
                     }
-                    overlapWith={dismissedOverlaps.has(row.id) ? null : overlapMap.get(row.id) || null}
-                    onDismissOverlap={() => handleDismissOverlap(row.id)}
+                    notice={notices.get(row.id) || null}
+                    onTogglePin={handleTogglePin}
+                    onToggleWithPrevious={handleToggleWithPrevious}
                     isMobile={!isDesktop}
                   />
 

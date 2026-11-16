@@ -33,6 +33,8 @@ Create React App, React 18, plain JavaScript, `@dnd-kit` for drag and drop,
 | `src/hooks/useProjectStorage.js` | Save to file, load from file, autosave to the browser. |
 | `src/lib/exportPdf.js`, `exportTxt.js` | PDF / print / preview and text export. |
 | `src/lib/sendToMediaPotion.js` + `hostinger/send-timeline.php` | Emails the PDF and JSON to the studio. |
+| `src/lib/flow.js` | The timing model: `flowTimes` (row order → start times, honouring pins and "same time as above") and `pinnedNotices` (overrun / free minutes before pinned rows). Tested. |
+| `src/lib/projectMigration.js` | Version 2 → 3 save-file migration (sort once, pin rows that don't follow on). Tested. |
 | `src/lib/generateTimeline.js` | Builds a full day from wizard answers (694 lines). Currently crashes — see below. |
 | `src/components/wizard/*`, `src/screens/WizardScreen.jsx`, `src/lib/calculateLogistics.js`, `logistics*.js`, `goldenHour.js` | The 7-step wizard and its "logistics check". Switched off; about 5,000 lines clients never see. |
 
@@ -43,12 +45,14 @@ A row (`userRows` in `MobileApp.jsx`):
 ```
 id, type ("event" | "location" | "constraint"), event (name), time (minutes
 from midnight), duration (minutes), notes, address, location, photo, video,
-isOutdoor, isTimeLocked, color, tier, flexibilityMinutes
+isOutdoor, isTimeLocked (pinned), withPrevious (same time as the row above,
+version 3), color, tier, flexibilityMinutes
 ```
 
-- The list shown on screen is `userRows` **sorted by time** (`MobileApp.jsx:341`).
-  Array order is not what the user sees.
-- Saved file (`useProjectStorage.js:109`): `version` (2), names, date, coverage
+- **Since version 3 (Phase 1) array order is display order** and times are
+  derived by `flowTimes`. Before that, the list was `userRows` sorted by time
+  and array order meant nothing; version-2 files are migrated on load.
+- Saved file (`useProjectStorage.js:109`): `version` (3), names, date, coverage
   start/end for photo and video, `userRows`, `fixedEvents`, `enteredViaWizard`.
 - Autosave: `localStorage` key `wtb_autosave`, per browser, same shape plus
   `screen` and `nextId`.
@@ -61,10 +65,10 @@ isOutdoor, isTimeLocked, color, tier, flexibilityMinutes
 | 1 | No rough draft: a new timeline is one "Coverage Start" block. | seen | `MobileApp.jsx:1043` |
 | 2 | A sidebar block can only drop on an existing row, snaps to the nearest one, and replaces it. First drop replaced "Coverage Start" and kept its note. No drop between rows. **Fixed in Phase 2.** | seen | `TimelineDnd.jsx:24`, `MobileApp.jsx:854` |
 | 3 | Hint says "Drag a block onto a row" when there may be no empty row. **Fixed in Phase 2.** | seen | `EventSidebar.jsx:20` |
-| 4 | Changing a duration moves nothing; both rows get a red "!". | seen | `MobileApp.jsx:521` (function returns its input unchanged) |
-| 5 | Dragging a row re-times everything from the moved row's old time; the day start went from 12:00 to 12:20. | seen | `MobileApp.jsx:902`, `:597` |
-| 6 | Phone up/down arrows swap the two rows' times. | read | `MobileApp.jsx:669`, `:693` |
-| 7 | "Lock time" and "snap to previous event" exist in logic with no button. | read | `isTimeLocked`; `MobileApp.jsx:642` has no caller |
+| 4 | Changing a duration moves nothing; both rows get a red "!". **Fixed in Phase 1.** | seen | `MobileApp.jsx:521` (function returns its input unchanged) |
+| 5 | Dragging a row re-times everything from the moved row's old time; the day start went from 12:00 to 12:20. **Fixed in Phase 1.** | seen | `MobileApp.jsx:902`, `:597` |
+| 6 | Phone up/down arrows swap the two rows' times. **Fixed in Phase 1.** | read | `MobileApp.jsx:669`, `:693` |
+| 7 | "Lock time" and "snap to previous event" exist in logic with no button. **Phase 1: the lock is the pin; unpinning snaps back. `handleChainToPrevious` is still there with no caller.** | read | `isTimeLocked`; `MobileApp.jsx:642` has no caller |
 | 8 | Clicking the event name opens a dialog; its duration box is always 30. "Use Custom Event" would save 30 over the row's duration. **Fixed in Phase 2.** | dialog seen; overwrite read, not clicked | `TimelineRow.jsx:338`, `EventBlockSelector.jsx:8` |
 | 9 | About 3 rows per desktop screen and 1.5 per phone screen. **Phase 2: 10 and 11.** | seen | `TimelineRow.jsx` layout |
 | 10 | Preview is unreadable at its default size and replaces the block palette. **Fixed in Phase 2.** | seen | `EventSidebar.jsx` tabs |
@@ -109,6 +113,13 @@ isOutdoor, isTimeLocked, color, tier, flexibilityMinutes
   browser preview.
 - **Testing in the browser:** put a timeline in `localStorage` key
   `wtb_autosave`, reload, then click "Restore Timeline".
+- **Every change that can move times goes through `commitRows`** in
+  `MobileApp.jsx` (flow, then history). Typing a duration flows straight away
+  and is saved to history on blur. After a reorder, pass the old day start
+  (`dayStart(userRows)`) so the day keeps its start time.
+- **Scripted tests in the preview browser:** when the page doesn't have
+  focus, `blur` never fires, so typed edits don't reach Undo history. Use
+  real clicks and typing to check history.
 - **Undo for a delete** is the normal undo; the message's Undo only acts while
   the delete is still the latest change.
 
