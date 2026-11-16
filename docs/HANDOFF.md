@@ -18,10 +18,10 @@ arithmetic to the client, and nothing is shared.
 
 ## Where things stand
 
-- **Code:** local `main` matches GitHub (`MediaPotion/WTB_v2`, commit `7d4aed6`,
-  2026-07-17). That is the newest version anywhere on GitHub.
-- **Nothing has been built yet.** The only changes are these documents and
-  `CLAUDE.md`, which are not committed.
+- **Code:** local `main` matches GitHub (`MediaPotion/WTB_v2`). The app code is
+  the 2026-07-17 version (commit `7d4aed6`); nothing newer exists on GitHub.
+- **Nothing has been built yet.** The only changes since then are these
+  documents and `CLAUDE.md`, which are committed on `main`.
 - **Dependencies are installed** (`node_modules`, via `npm ci`, Node 18).
 - **It runs:** `npm start` serves the app; `npm run build` succeeds.
 - **Tests:** 5 of 7 pass. The 2 failures are one real bug (ROADMAP 0.1).

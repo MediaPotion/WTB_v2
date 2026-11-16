@@ -104,7 +104,8 @@ Candidates for plainer labels (Phase 2.7): "Project Settings", "Save Project",
 
 ## Repository state
 
-- `main` matches `origin/main` at `7d4aed6`.
+- `main` matches `origin/main`. App code is unchanged since `7d4aed6`; later
+  commits only add these documents.
 - `backup/codesandbox-prototype` (local only) holds the two old prototype
   commits that used to be on local `main`. Safe to delete once the owner agrees.
 - Remote branch `Mobile+Desktopv2` has one old commit not in main
