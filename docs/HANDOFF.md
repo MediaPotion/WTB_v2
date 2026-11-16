@@ -21,6 +21,7 @@ arithmetic to the client, and nothing is shared.
 - **Code:** local `main` matches GitHub (`MediaPotion/WTB_v2`). The app code is
   the 2026-07-17 version (commit `7d4aed6`); nothing newer exists on GitHub.
 - **Phase 0 is on branch `phase-0/housekeeping`** (not merged, not pushed).
+  D4 was taken as recommended: npm only.
   See the status under Phase 0 in ROADMAP. `main` still has only these
   documents and `CLAUDE.md` on top of the 2026-07-17 app code.
 - **Dependencies are installed** (`node_modules`, via `npm ci`, Node 18).

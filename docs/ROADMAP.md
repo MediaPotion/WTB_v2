@@ -37,7 +37,8 @@ Small fixes that unblock later phases.
   Hostinger. Not run — there is no PHP on the dev machine.
 - 0.3 done. Old names now appear in `src/` only in the rename table
   `src/lib/renamedEvents.js`, which maps them on load; tested.
-- 0.4 half done — the script is removed; the lockfile waits on D4.
+- 0.4 done. D4 taken as recommended (npm): `pnpm-lock.yaml` removed and the
+  CodeSandbox tasks switched to npm; `npm ci && npm run build` succeeds.
 
 ---
 
