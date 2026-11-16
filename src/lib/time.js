@@ -184,7 +184,15 @@ function CoverageTimeLine({ label, coverage }) {
   );
 }
 
-function TimelineCoverageCounter({ photoCoverage, videoCoverage, coverage, style }) {
+function TimelineCoverageCounter({ photoCoverage, videoCoverage, coverage, style, compact = false }) {
+  if (compact) {
+    // One short inline phrase for the phone header, e.g. "Photo 8 hrs · Video 8 hrs".
+    const parts = [];
+    if (photoCoverage) parts.push(`Photo ${formatDurationSpan(photoCoverage.totalMinutes)}`);
+    if (videoCoverage) parts.push(`Video ${formatDurationSpan(videoCoverage.totalMinutes)}`);
+    if (parts.length === 0) return null;
+    return <span style={{ color: "var(--wtb-accent)", ...style }}>{parts.join(" · ")}</span>;
+  }
   if (coverage) {
     return (
       <div style={{ marginTop: 6, ...style }}>

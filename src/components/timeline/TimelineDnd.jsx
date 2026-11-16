@@ -21,8 +21,7 @@ function timelineCollisionDetection(args) {
   const activeType = args.active?.data?.current?.type;
   const filtered = args.droppableContainers.filter((container) => {
     const id = String(container.id);
-    if (activeType === "sidebar-block") return id.startsWith("row-");
-    if (activeType === "timeline-row") {
+    if (activeType === "sidebar-block" || activeType === "timeline-row") {
       return id.startsWith("between-") || id.startsWith("row-");
     }
     return true;
