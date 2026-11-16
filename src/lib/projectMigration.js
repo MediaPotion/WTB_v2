@@ -2,7 +2,7 @@ import { COVERAGE_START_EVENT } from "./coverageStartBlocks";
 
 // Event names that are always pinned when an old file is migrated.
 // (Event names are lookup keys — see NOTES "Gotchas".)
-const CEREMONY_EVENTS = ["Ceremony: Average", "Ceremony: Catholic"];
+const CEREMONY_EVENTS = ["Ceremony: About 30 min", "Ceremony: Catholic Mass, about 1 hr"];
 
 const durationOf = (row) => Math.max(0, parseInt(row.duration, 10) || 0);
 

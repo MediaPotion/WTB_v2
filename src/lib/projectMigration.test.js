@@ -11,7 +11,7 @@ const v2Rows = [
   r(2, 720, 20, "Details: Rings, Invitations, & Accessories"),
   r(3, 740, 30),
   r(4, 770, 30),
-  r(6, 900, 30, "Ceremony: Average"),
+  r(6, 900, 30, "Ceremony: About 30 min"),
   r(7, 930, 20),
 ];
 

@@ -1,10 +1,10 @@
 const COLOR_BUCKETS = {
   Details: "#FFE5B4",
-  "Bride (Pre-Dress)": "#FFB6C1",
-  "Bride (Dress On)": "#FF69B4",
+  "Bride getting ready": "#FFB6C1",
+  "Bride dressed": "#FF69B4",
   "First Look": "#20B2AA",
   "Bride & Groom:": "#DA70D6",
-  "Narration:": "#FFA07A",
+  "Video messages:": "#FFA07A",
   "Groom:": "#98FB98",
   "Ceremony:": "#FFD700",
   "Reception:": "#87CEEB",
@@ -29,7 +29,7 @@ function getEventColor(label, fallback = "#ffffff") {
 }
 
 function isBridePreDressEvent(eventName) {
-  return String(eventName || "").startsWith("Bride (Pre-Dress):");
+  return String(eventName || "").startsWith("Bride getting ready:");
 }
 
 function defaultIsOutdoorForEvent(eventName) {

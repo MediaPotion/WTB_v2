@@ -33,6 +33,10 @@ Create React App, React 18, plain JavaScript, `@dnd-kit` for drag and drop,
 | `src/hooks/useProjectStorage.js` | Save to file, load from file, autosave to the browser. |
 | `src/lib/exportPdf.js`, `exportTxt.js` | PDF / print / preview and text export. |
 | `src/lib/sendToMediaPotion.js` + `hostinger/send-timeline.php` | Emails the PDF and JSON to the studio. |
+| `src/screens/QuickStartScreen.jsx`, `src/lib/quickStart.js` | Phase 3 quick start: one screen of pre-filled questions → `generateTimeline` with defaults → a version-3 draft. Tested. |
+| `hostinger/timeline-api.php` (+ `timeline-config.example.php`) | Phase 4 server: create / load / save (version-checked) / comment. Edit keys stored only as hashes. Not deployed, not run. |
+| `scripts/dev-timeline-api.js` | Node stand-in for the PHP API (`npm run dev:api`, port 3001, in memory). Keep in step with the PHP. |
+| `src/lib/sharing.js`, `src/hooks/useSharedTimeline.js`, `src/components/sharing/SharingUI.jsx` | Phase 4 client: API calls, links in the URL hash, auto create/save, conflict, comments, read-only view. Sharing is on only if `REACT_APP_TIMELINE_API` is set at build time. |
 | `src/lib/flow.js` | The timing model: `flowTimes` (row order → start times, honouring pins and "same time as above") and `pinnedNotices` (overrun / free minutes before pinned rows). Tested. |
 | `src/lib/projectMigration.js` | Version 2 → 3 save-file migration (sort once, pin rows that don't follow on). Tested. |
 | `src/lib/generateTimeline.js` | Builds a full day from wizard answers (694 lines). Currently crashes — see below. |
@@ -76,6 +80,7 @@ version 3), color, tier, flexibilityMinutes
 | 12 | Delete starts a 2-second countdown that cannot be cancelled (Undo works afterwards). **Fixed in Phase 2.** | read | `TimelineRow.jsx:375-383` |
 | 17 | Picking any event in the list also set the row's start time from the dialog, rounded to 5 minutes, so a 12:22 row moved to 12:20. Phase 2 sends a time only when it is changed in the dialog. | read | `EventBlockSelector.jsx` (before Phase 2) |
 | 18 | Typing a name in the last row, or dropping a block on it, added an empty row below. Phase 2 removes this; rows are added with "+" instead. | read | `MobileApp.jsx` `handleEventBlur` (before Phase 2) |
+| 20 | Given a coverage start, `generateTimeline` slides every block (ceremony included) earlier so the first block starts at it — the ceremony no longer matches the time entered. The quick start avoids it by not passing a coverage start. | test run | `generateTimeline.js` "coverageStartTargets" |
 | 19 | The preview's fit-to-width subtracted the panel padding twice, so pages were drawn narrower than the panel. Fixed in Phase 2. | read | `exportPdf.js` `TimelinePreview` |
 | 13 | No sharing: Save downloads a `.json`; others must load that file. | seen | `useProjectStorage.js` |
 | 14 | Draft generator throws `ReferenceError: photoCoverageHours is not defined`; 2 of 7 tests fail because of it. **Fixed in Phase 0.** | test run | `generateTimeline.js:653-654` |
@@ -85,11 +90,13 @@ version 3), color, tier, flexibilityMinutes
 ## Gotchas
 
 - **Event names are keys.** Colour comes from the name's prefix (`colors.js`),
-  "hard/soft" from the full name (`tiers.js`), the ceremony anchor from two exact
-  names (`MobileApp.jsx:598`), and `generateTimeline.js` builds rows by name.
+  "hard/soft" from the full name (`tiers.js`), ceremonies are pinned on
+  migration by exact name (`CEREMONY_EVENTS` in `projectMigration.js`), and
+  `generateTimeline.js` builds rows by name.
   Saved files store names. Renaming a block needs a search across `src/` and an
-  entry in `src/lib/renamedEvents.js`, which maps old names when a file or
-  autosave loads.
+  entry in `src/lib/renamedEvents.js` (exact names, or a category prefix),
+  which maps old names when a file or autosave loads — before the version
+  migration, so it sees current names. Keep the "Category: name" form.
 - **Desktop vs phone is one breakpoint:** 901 px (`constants/wizard.js`,
   `styles.js`). Below it: no sidebar, no drag, arrows instead.
 - **Styles live in three places:** inline `style={{…}}` on almost everything,
@@ -120,6 +127,15 @@ version 3), color, tier, flexibilityMinutes
 - **Scripted tests in the preview browser:** when the page doesn't have
   focus, `blur` never fires, so typed edits don't reach Undo history. Use
   real clicks and typing to check history.
+- **Share links keep the key in the URL hash** (`#edit=…`, `#view=…`), so the
+  web server hosting the app never sees it. Anyone with the edit link can
+  change the timeline; treat it like a password.
+- **Local autosave still runs for shared timelines.** It also stores which
+  link it belongs to (`wtb_autosave_share`), so "Restore" reopens that
+  link instead of making a second online copy.
+- **Testing sharing locally:** `npm run dev:api`, then
+  `REACT_APP_TIMELINE_API=http://localhost:3001/timeline-api.php npm start`
+  (or the `dev-api` and `wtb-shared` entries in `.claude/launch.json`).
 - **Undo for a delete** is the normal undo; the message's Undo only acts while
   the delete is still the latest change.
 
@@ -130,8 +146,9 @@ Candidates for plainer labels (Phase 2.7): "Project Settings", "Save Project",
 "Bride (Pre-Dress)", "Bride (Dress On)", "Narration", "Audio/Video Setup",
 "Ceremony: Average", "Location / Travel".
 
-**Proposed labels — for the owner to approve, change or reject (2.7).** Not
-applied. Rows marked *key* are event names or name prefixes: renaming them
+**Labels for 2.7 — applied on branch `phase-2.7/labels`; merging that branch
+is the owner's approval.** The ceremony rows below were changed from the first
+proposal ("Ceremony (about 30 min)") to keep the "Ceremony: …" form. Rows marked *key* are event names or name prefixes: renaming them
 also needs entries in `src/lib/renamedEvents.js` and updates to `colors.js`,
 `tiers.js` and `generateTimeline.js` (see Gotchas).
 
@@ -146,8 +163,8 @@ also needs entries in `src/lib/renamedEvents.js` and updates to `colors.js`,
 | Bride (Dress On): … | Bride dressed: … | *key* — block category |
 | Narration: … | Video messages: … | *key* — block category |
 | Ceremony: Audio/Video Setup, Reception: Audio/Video Setup | Ceremony: Sound and camera setup, Reception: Sound and camera setup | *key* — block names |
-| Ceremony: Average | Ceremony (about 30 min) | *key* — block name; also a ceremony anchor in `MobileApp.jsx` |
-| Ceremony: Catholic | Ceremony, Catholic Mass (about 1 hr) | *key* — as above |
+| Ceremony: Average | Ceremony: About 30 min | *key* — block name; also `CEREMONY_EVENTS` in `projectMigration.js` |
+| Ceremony: Catholic | Ceremony: Catholic Mass, about 1 hr | *key* — as above |
 | Location / Travel | Travel to another place | Sidebar and event list |
 | Use Custom Event | Use this name | Event list |
 | Create Custom Event | Your own event | Event list |
@@ -161,6 +178,7 @@ also needs entries in `src/lib/renamedEvents.js` and updates to `colors.js`,
 - Remote branch `Mobile+Desktopv2` has one old commit not in main
   ("remove time arrows", 2025-08). The other remote branches are fully merged
   or older.
+- `hostinger/timeline-config.php` (database password) is in `.gitignore`.
 - No pull requests exist. The GitHub command-line tool (`gh`) is not installed
   on this machine.
 

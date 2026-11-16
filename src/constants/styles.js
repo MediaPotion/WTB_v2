@@ -617,6 +617,115 @@ const MOBILE_TWEAKS = `
   .wtb-row-notice--overrun { color: #e05252; background: rgba(204,34,34,0.10); }
   .wtb-row-notice--free { color: var(--wtb-text-muted); }
 
+  /* Quick start (Phase 3) */
+  .wtb-qs { max-width: 620px; margin: 0 auto; padding: 24px 16px 48px; font-family: 'Jost', sans-serif; }
+  .wtb-qs h1 { margin: 8px 0 6px; text-align: center; font-size: clamp(26px, 6vw, 34px); font-weight: 300; color: var(--wtb-text); font-family: 'Cormorant Garamond', serif; }
+  .wtb-qs-lead { margin: 0 auto 18px; max-width: 520px; text-align: center; font-size: 14px; line-height: 1.5; color: var(--wtb-text-muted); }
+  .wtb-qs-card { background: var(--wtb-surface); border: 1px solid var(--wtb-surface-raised); border-radius: 10px; padding: 8px 18px 18px; }
+  .wtb-qs-row { display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-bottom: 1px solid var(--wtb-border-subtle); }
+  .wtb-qs-label { font-size: 14px; color: var(--wtb-text); }
+  .wtb-qs-label em { font-style: normal; color: var(--wtb-text-muted); font-size: 12px; }
+  .wtb-qs input, .wtb-qs select { font-size: 16px; padding: 6px 8px; border-radius: 4px; }
+  .wtb-qs input[type="date"] { max-width: 220px; }
+  .wtb-qs-names { display: flex; align-items: center; gap: 8px; color: var(--wtb-text-muted); }
+  .wtb-qs-names input { flex: 1; min-width: 0; }
+  .wtb-qs-time { display: inline-flex; align-items: center; gap: 4px; color: var(--wtb-text); }
+  .wtb-qs-coverage { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 14px; color: var(--wtb-text-muted); }
+  .wtb-qs-choice { display: flex; flex-wrap: wrap; gap: 8px; }
+  .wtb-qs-choice button {
+    padding: 8px 14px; min-height: 40px; font-size: 14px; font-family: 'Jost', sans-serif;
+    border: 1px solid var(--wtb-border); border-radius: 20px; background: transparent; color: var(--wtb-text); cursor: pointer;
+  }
+  .wtb-qs-choice button.is-on { background: var(--wtb-accent); border-color: var(--wtb-accent); color: var(--wtb-on-accent); }
+  .wtb-qs-build {
+    display: block; width: 100%; margin-top: 18px; padding: 14px 20px; border: none; border-radius: 8px;
+    background: var(--wtb-accent); color: var(--wtb-on-accent); font-size: 17px; font-weight: 300;
+    font-family: 'Jost', sans-serif; letter-spacing: 0.04em; cursor: pointer;
+  }
+  .wtb-qs-alt { display: flex; justify-content: center; flex-wrap: wrap; gap: 18px; margin-top: 16px; }
+  .wtb-qs-alt button { background: none; border: none; color: var(--wtb-accent); font-size: 14px; font-family: 'Jost', sans-serif; text-decoration: underline; cursor: pointer; }
+
+  /* Sharing (Phase 4) */
+  .wtb-readonly .wtb-edit-only { display: none !important; }
+  @media (min-width: 901px) {
+    .wtb-shell.wtb-shell--single { grid-template-columns: minmax(0, 860px); justify-content: center; }
+  }
+  .wtb-share-banner {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-family: 'Jost', sans-serif;
+    color: var(--wtb-text-muted);
+    background: var(--wtb-surface);
+    border-bottom: 1px solid var(--wtb-border-subtle);
+    text-align: center;
+  }
+  .wtb-share-banner button {
+    flex-shrink: 0;
+    padding: 3px 12px;
+    font-size: 12px;
+    font-family: 'Jost', sans-serif;
+    border: 1px solid var(--wtb-accent);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--wtb-accent);
+    cursor: pointer;
+  }
+  .wtb-share-banner--warn { color: #c96a20; }
+  .wtb-share-banner--conflict { color: #e05252; background: rgba(204,34,34,0.10); font-size: 13px; }
+  .wtb-share-banner--conflict button { border-color: #e05252; background: #e05252; color: #fff; }
+  .wtb-share-dialog {
+    width: min(560px, 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    background: var(--wtb-surface);
+    border: 1px solid var(--wtb-border);
+    border-radius: 10px;
+    padding: 12px 18px 18px;
+    font-family: 'Jost', sans-serif;
+  }
+  .wtb-share-name { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 14px; font-size: 13px; color: var(--wtb-text-muted); }
+  .wtb-share-name input { font-size: 16px; padding: 6px 8px; border-radius: 4px; }
+  .wtb-share-link { margin-bottom: 14px; }
+  .wtb-share-link-label { font-size: 14px; color: var(--wtb-text); }
+  .wtb-share-link-hint { font-size: 12px; color: var(--wtb-text-muted); margin: 2px 0 6px; }
+  .wtb-share-link-row { display: flex; gap: 8px; }
+  .wtb-share-link-row input { flex: 1; min-width: 0; font-size: 13px; padding: 6px 8px; border-radius: 4px; }
+  .wtb-share-link-row button,
+  .wtb-share-done {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 4px;
+    background: var(--wtb-accent);
+    color: var(--wtb-on-accent);
+    font-size: 13px;
+    font-family: 'Jost', sans-serif;
+    cursor: pointer;
+  }
+  .wtb-share-done { display: block; margin: 4px 0 0 auto; padding: 8px 22px; }
+  .wtb-share-note { font-size: 12px; color: var(--wtb-text-muted); margin: 0 0 12px; }
+  .wtb-mark--comments { font-size: 11px; color: var(--wtb-accent); }
+  .wtb-row-comments { display: flex; flex-direction: column; gap: 6px; }
+  .wtb-row-comments-title { font-size: 10px; color: var(--wtb-text-muted); letter-spacing: 0.12em; text-transform: uppercase; }
+  .wtb-row-comment { display: flex; flex-direction: column; padding: 6px 8px; border-left: 2px solid var(--wtb-accent); background: var(--wtb-surface-raised); border-radius: 0 4px 4px 0; }
+  .wtb-row-comment-meta { font-size: 11px; color: var(--wtb-text-muted); }
+  .wtb-row-comment-body { font-size: 13px; color: var(--wtb-text); white-space: pre-wrap; }
+  .wtb-row-comment-form { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-end; }
+  .wtb-row-comment-form input { flex: 1 1 140px; font-size: 14px; padding: 5px 8px; border-radius: 4px; }
+  .wtb-row-comment-form textarea { flex: 1 1 100%; font-size: 14px; padding: 6px 8px; border-radius: 4px; resize: vertical; }
+  .wtb-row-comment-form button {
+    padding: 5px 14px; font-size: 12px; font-family: 'Jost', sans-serif; border: none; border-radius: 4px;
+    background: var(--wtb-accent); color: var(--wtb-on-accent); cursor: pointer;
+  }
+  .wtb-row-comment-form button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .wtb-row-comment-error { font-size: 12px; color: #e05252; }
+  .wtb-row-card--location .wtb-row-comment-body,
+  .wtb-row-card--location .wtb-row-comments-title { color: var(--wtb-location-text); }
+
   /* Desktop preview panel */
   .wtb-preview-overlay {
     position: fixed;

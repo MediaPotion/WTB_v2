@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useDroppable, useDndContext } from "@dnd-kit/core";
 import { getEventColor } from "../../constants/colors";
 import { formatTime, formatDurationSpan } from "../../lib/time";
+import { formatWhen } from "../../lib/sharing";
 import { TimePopover } from "./TimePopover";
 
 // Clicks on these never toggle the row open/closed.
@@ -34,6 +35,12 @@ function TimelineRow({
   onTogglePin,
   onToggleWithPrevious,
   isMobile = false,
+  readOnly = false,
+  commentsEnabled = false,
+  comments = [],
+  onAddComment,
+  myName = "",
+  onSetName,
 }) {
   const t = formatTime(row.time);
   const [timeOpen, setTimeOpen] = useState(false);
@@ -111,7 +118,8 @@ function TimelineRow({
           type="button"
           className="wtb-row-time"
           onClick={() => setTimeOpen(true)}
-          title="Set the start time"
+          disabled={readOnly}
+          title={readOnly ? undefined : "Set the start time"}
         >
           {t.hour}:{t.minute}
           <span className="wtb-row-time-period">{t.period}</span>
@@ -122,6 +130,7 @@ function TimelineRow({
             type="button"
             className={`wtb-row-pin${pinned ? " wtb-row-pin--on" : ""}`}
             onClick={() => onTogglePin?.(index)}
+            disabled={readOnly}
             aria-pressed={pinned}
             aria-label={pinned ? "Pinned to this time" : "Follows the event above"}
             title={
@@ -149,6 +158,7 @@ function TimelineRow({
               aria-label={isLocation ? "Location name" : "Event name"}
               placeholder={isLocation ? "📍 Location name" : "Event name"}
               value={row.event || ""}
+              readOnly={readOnly}
               onChange={(e) => onChange(index, "event", e.target.value)}
               onBlur={() => onBlur(index)}
             />
@@ -170,6 +180,11 @@ function TimelineRow({
             )}
             {withPrevious && mark(true, "At the same time as the event above", "⇉")}
             {hasNotes && mark(true, "Has notes", "📝")}
+            {comments.length > 0 && (
+              <span className="wtb-mark wtb-mark--comments" title={`${comments.length} comment${comments.length === 1 ? "" : "s"}`}>
+                💬{comments.length}
+              </span>
+            )}
           </span>
         )}
 
@@ -180,6 +195,7 @@ function TimelineRow({
             pattern="[0-9]*"
             aria-label={isLocation ? "Travel time in minutes" : "Duration in minutes"}
             value={row.duration}
+            readOnly={readOnly}
             onChange={(e) => setDuration(e.target.value)}
             onBlur={() => onBlur(index)}
           />
@@ -197,6 +213,7 @@ function TimelineRow({
           {expanded ? "▴" : "▾"}
         </button>
 
+        {!readOnly && (
         <button
           type="button"
           className="wtb-row-delete"
@@ -206,12 +223,13 @@ function TimelineRow({
         >
           ×
         </button>
+        )}
       </div>
 
       {/* Expanded: notes and options */}
       {expanded && (
         <div className="wtb-row-panel" id={panelId}>
-          {!isConstraint && !isFirst && (
+          {!readOnly && !isConstraint && !isFirst && (
             <label className="wtb-row-check" title="For two things covered at once, e.g. bride and groom portraits by two shooters">
               <input
                 type="checkbox"
@@ -222,7 +240,7 @@ function TimelineRow({
             </label>
           )}
 
-          {!isConstraint && (
+          {!readOnly && !isConstraint && (
             <div className="wtb-row-options">
               {!isLocation && (
                 <>
@@ -309,6 +327,7 @@ function TimelineRow({
               <span>Address</span>
               <textarea
                 placeholder="Address..."
+                readOnly={readOnly}
                 value={row.address || ""}
                 onChange={(e) => onChange(index, "address", e.target.value)}
                 onBlur={() => onBlur(index)}
@@ -317,9 +336,11 @@ function TimelineRow({
             </label>
           )}
 
+          {(!readOnly || hasNotes) && (
           <label className="wtb-row-field">
             <span>{isConstraint ? "Conflict notes" : "Notes"}</span>
             <textarea
+              readOnly={readOnly}
               placeholder={isLocation ? "Add any notes for this location..." : "Add any notes for this event..."}
               value={row.notes || ""}
               onChange={(e) => onChange(index, "notes", e.target.value)}
@@ -327,8 +348,13 @@ function TimelineRow({
               rows={2}
             />
           </label>
+          )}
 
-          {isConstraint && (
+          {commentsEnabled && (
+            <RowComments comments={comments} onAdd={onAddComment} myName={myName} onSetName={onSetName} />
+          )}
+
+          {!readOnly && isConstraint && (
             <div className="wtb-row-options">
               <button
                 type="button"
@@ -353,6 +379,66 @@ function TimelineRow({
           onClose={() => setTimeOpen(false)}
         />
       )}
+    </div>
+  );
+}
+
+/** Comments on one event (Phase 4): anyone with either link can add one. */
+function RowComments({ comments, onAdd, myName, onSetName }) {
+  const [text, setText] = useState("");
+  const [name, setName] = useState(myName);
+  const [state, setState] = useState(null); // null | "sending" | error message
+
+  const submit = async (e) => {
+    e.preventDefault();
+    const body = text.trim();
+    const who = (myName || name).trim();
+    if (!body || !who) return;
+    if (!myName) onSetName?.(who);
+    setState("sending");
+    try {
+      await onAdd(body);
+      setText("");
+      setState(null);
+    } catch (err) {
+      setState(err.message || "Couldn't add the comment");
+    }
+  };
+
+  return (
+    <div className="wtb-row-comments">
+      <span className="wtb-row-comments-title">Comments</span>
+      {comments.map((c) => (
+        <div key={c.id} className="wtb-row-comment">
+          <span className="wtb-row-comment-meta">
+            {c.author} · {formatWhen(c.createdAt)}
+          </span>
+          <span className="wtb-row-comment-body">{c.body}</span>
+        </div>
+      ))}
+      <form className="wtb-row-comment-form" onSubmit={submit}>
+        {!myName && (
+          <input
+            aria-label="Your name"
+            placeholder="Your name"
+            value={name}
+            maxLength={80}
+            onChange={(e) => setName(e.target.value)}
+          />
+        )}
+        <textarea
+          aria-label="Add a comment"
+          placeholder="Add a comment for everyone on this timeline…"
+          value={text}
+          maxLength={2000}
+          rows={2}
+          onChange={(e) => setText(e.target.value)}
+        />
+        <button type="submit" disabled={!text.trim() || !(myName || name).trim() || state === "sending"}>
+          {state === "sending" ? "Adding…" : "Add comment"}
+        </button>
+        {state && state !== "sending" && <span className="wtb-row-comment-error">{state}</span>}
+      </form>
     </div>
   );
 }

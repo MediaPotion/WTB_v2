@@ -115,7 +115,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
           }}
         >
           <h4 style={{ margin: "0 0 10px 0", color: "var(--wtb-text)", fontFamily: "'Jost', sans-serif", fontWeight: 400, letterSpacing: "0.1em", textTransform: "uppercase", fontSize: 11 }}>
-            Create Custom Event
+            Your own event
           </h4>
           <div style={{ marginBottom: 10 }}>
             <label
@@ -280,7 +280,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                 fontFamily: "'Jost', sans-serif",
               }}
             >
-              Use Custom Event
+              Use this name
             </button>
           </div>
         </div>
@@ -328,7 +328,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
               color: "var(--wtb-text)",
             }}
           >
-            <span>Location / Travel</span>
+            <span>Travel to another place</span>
             <span style={{ fontSize: 12, color: "var(--wtb-text-muted)", fontWeight: "bold", marginLeft: "16px", whiteSpace: "nowrap" }}>
               15 min
             </span>

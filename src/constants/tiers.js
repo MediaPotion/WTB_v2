@@ -13,8 +13,8 @@ export const FLEXIBILITY_OPTIONS = [
 /** Default tier by event name (generated timeline + project fixed events). */
 export const FIXED_EVENT_TIERS = {
   Ceremony: TIER.HARD,
-  "Ceremony: Average": TIER.HARD,
-  "Ceremony: Catholic": TIER.HARD,
+  "Ceremony: About 30 min": TIER.HARD,
+  "Ceremony: Catholic Mass, about 1 hr": TIER.HARD,
   "Reception: Grand Entrances": TIER.HARD,
   "Bride & Groom: Golden Hour Portraits": TIER.HARD,
 

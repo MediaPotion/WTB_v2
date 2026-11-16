@@ -306,26 +306,26 @@ export function generateTimeline(wizardAnswers) {
       if (includeDetailDress) preBlocks.push({ event: "Details: Dress Shots", duration: 10 });
     }
     if (wiz_narration && wiz_narrationBride !== false) {
-      preBlocks.push({ event: "Narration: Bride Record Narration", duration: 15 });
+      preBlocks.push({ event: "Video messages: Bride Record Narration", duration: 15 });
     }
     if (includePreCeremonyPreDress) {
-      preBlocks.push({ event: "Bride (Pre-Dress): Bridesmaids Group Shots", duration: 10, isOutdoor: false });
-      preBlocks.push({ event: "Bride (Pre-Dress): Bridesmaids Individual Shots", duration: 10, isOutdoor: false });
+      preBlocks.push({ event: "Bride getting ready: Bridesmaids Group Shots", duration: 10, isOutdoor: false });
+      preBlocks.push({ event: "Bride getting ready: Bridesmaids Individual Shots", duration: 10, isOutdoor: false });
     }
     if (includePreCeremonyBrideReady) {
-      preBlocks.push({ event: "Bride (Pre-Dress): Hair & Makeup Details", duration: 10, isOutdoor: false });
-      preBlocks.push({ event: "Bride (Pre-Dress): Putting Dress On", duration: 10, isOutdoor: false });
+      preBlocks.push({ event: "Bride getting ready: Hair & Makeup Details", duration: 10, isOutdoor: false });
+      preBlocks.push({ event: "Bride getting ready: Putting Dress On", duration: 10, isOutdoor: false });
     }
     // First looks after Putting Dress On when scheduled; otherwise assume bride is already dressed
     pushFLForPhaseExceptBridesmaids("bride", preBlocks);
     pushBridesmaidsFirstLook(preBlocks);
-    preBlocks.push({ event: "Bride (Dress On): Accessory Shots", duration: 10 });
+    preBlocks.push({ event: "Bride dressed: Accessory Shots", duration: 10 });
     if (includePreCeremonyBrideSolo) {
-      preBlocks.push({ event: "Bride (Dress On): Solo Portraits", duration: 15, isOutdoor: true });
+      preBlocks.push({ event: "Bride dressed: Solo Portraits", duration: 15, isOutdoor: true });
     }
     if (includePreCeremonyBrideParty) {
-      preBlocks.push({ event: "Bride (Dress On): Bridesmaids Group Shots", duration: 10, isOutdoor: true });
-      preBlocks.push({ event: "Bride (Dress On): Bridesmaids Individual Shots", duration: 10, isOutdoor: true });
+      preBlocks.push({ event: "Bride dressed: Bridesmaids Group Shots", duration: 10, isOutdoor: true });
+      preBlocks.push({ event: "Bride dressed: Bridesmaids Individual Shots", duration: 10, isOutdoor: true });
     }
 
     // === Phase 2 / 2b: Groom events ===
@@ -342,7 +342,7 @@ export function generateTimeline(wizardAnswers) {
     }
     if (includePreCeremonyGroomReady || includePreCeremonyGroomParty) {
       if (wiz_narration && wiz_narrationGroom !== false) {
-        preBlocks.push({ event: "Narration: Groom Record Narration", duration: 15 });
+        preBlocks.push({ event: "Video messages: Groom Record Narration", duration: 15 });
       }
       if (includePreCeremonyGroomReady) {
         preBlocks.push({ event: "Groom: Assisted with Tie & Jacket", duration: 10 });
@@ -377,7 +377,7 @@ export function generateTimeline(wizardAnswers) {
     if (weddingPartyPre) preBlocks.push({ event: "Wedding Party: Group Shots", duration: 15, isOutdoor: true });
     if (brideGroomPre) preBlocks.push({ event: "Bride & Groom: Portraits", duration: 20, isOutdoor: true });
     // A/V setup always immediately before ceremony — nothing between them
-    preBlocks.push({ event: "Ceremony: Audio/Video Setup", duration: 20 });
+    preBlocks.push({ event: "Ceremony: Sound and camera setup", duration: 20 });
 
     const hairMakeupDeadlineNote = "All hair and make-up must be finished by this time";
     for (const block of preBlocks) {
@@ -396,7 +396,7 @@ export function generateTimeline(wizardAnswers) {
     for (const block of preBlocks) { block.time = pt; pt += block.duration; }
 
     // ---- Ceremony ----
-    const ceremonyEventName = wiz_ceremonyDuration <= 45 ? "Ceremony: Average" : "Ceremony: Catholic";
+    const ceremonyEventName = wiz_ceremonyDuration <= 45 ? "Ceremony: About 30 min" : "Ceremony: Catholic Mass, about 1 hr";
     const ceremonyNoteParts = [];
     if (wiz_guestCount) ceremonyNoteParts.push(`Guest count: ${wiz_guestCount}`);
     if (wiz_ceremonyNotes) ceremonyNoteParts.push(String(wiz_ceremonyNotes).trim());
@@ -537,7 +537,7 @@ export function generateTimeline(wizardAnswers) {
     if (!wiz_receptionSameAsCeremony && !receptionVenueAlreadyMarked) {
       addRec({ type: "location", event: effectiveReceptionVenue, address: effectiveReceptionAddress, duration: 0, notes: "" });
     }
-    addRec({ event: "Reception: Audio/Video Setup", duration: 20 });
+    addRec({ event: "Reception: Sound and camera setup", duration: 20 });
     if (wiz_grandEntrance) addRec({ event: "Reception: Grand Entrances", duration: 10 });
     if (wiz_cakeCutting) addRec({ event: "Reception: Cake Cutting", duration: 5 });
     if (wiz_firstDance) addRec({ event: "Reception: Bride & Groom Dance", duration: 5 });
@@ -664,7 +664,7 @@ export function generateTimeline(wizardAnswers) {
     const isReceptionStart =
       !receptionStartFlexTagged &&
       block.time === receptionStartTime &&
-      (block.event === "Reception: Audio/Video Setup" ||
+      (block.event === "Reception: Sound and camera setup" ||
         (block.type === "location" && block.event === effectiveReceptionVenue));
     if (isReceptionStart) receptionStartFlexTagged = true;
 
