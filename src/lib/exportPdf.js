@@ -73,11 +73,9 @@ const PREVIEW_NOTE_LINE_H = 11;
 
 /** Sort by time ascending and drop duplicate row ids (keeps first occurrence). */
 function prepareTimelineExportRows(rows) {
-  const sorted = [...(rows || [])].sort((a, b) => {
-    const t = (a.time ?? 0) - (b.time ?? 0);
-    if (t !== 0) return t;
-    return (a.id ?? 0) - (b.id ?? 0);
-  });
+  // Stable sort: rows with the same start (e.g. two things at once) keep the
+  // timeline's own order.
+  const sorted = [...(rows || [])].sort((a, b) => (a.time ?? 0) - (b.time ?? 0));
   const seen = new Set();
   return sorted.filter((row) => {
     if (row.id == null) return true;

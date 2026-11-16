@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDroppable, useDndContext } from "@dnd-kit/core";
 import { getEventColor } from "../../constants/colors";
-import { formatTime } from "../../lib/time";
+import { formatTime, formatDurationSpan } from "../../lib/time";
 import { TimePopover } from "./TimePopover";
 
 // Clicks on these never toggle the row open/closed.
@@ -30,14 +30,14 @@ function TimelineRow({
   dragHandleListeners,
   dragHandleAttributes,
   isDragging = false,
-  overlapWith,
-  onDismissOverlap,
+  notice = null,
+  onTogglePin,
+  onToggleWithPrevious,
   isMobile = false,
 }) {
   const t = formatTime(row.time);
   const [timeOpen, setTimeOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [showOverlapTip, setShowOverlapTip] = useState(false);
   const { active } = useDndContext();
   const isSidebarDrag = active?.data?.current?.type === "sidebar-block";
   const { setNodeRef: setDropRef, isOver: isDropOver } = useDroppable({
@@ -55,6 +55,9 @@ function TimelineRow({
       ? "var(--wtb-accent)"
       : getEventColor(row.event || "", "#ffffff");
   const hasNotes = !!String(row.notes || "").trim();
+  const pinned = !!row.isTimeLocked;
+  const withPrevious = !!row.withPrevious && !isFirst && !pinned;
+  const displayName = String(row.event || "").trim() || "this event";
   const panelId = `wtb-row-panel-${row.id}`;
 
   const toggleFromRowClick = (e) => {
@@ -78,10 +81,19 @@ function TimelineRow({
   return (
     <div
       ref={setDropRef}
-      className={`wtb-row-card${dropping ? " wtb-dropping" : ""}${isDragging ? " wtb-row-dragging" : ""}${expanded ? " wtb-row-card--open" : ""}${isLocation ? " wtb-row-card--location" : ""}${isConstraint ? " wtb-row-card--constraint" : ""}`}
+      className={`wtb-row-card${dropping ? " wtb-dropping" : ""}${isDragging ? " wtb-row-dragging" : ""}${expanded ? " wtb-row-card--open" : ""}${isLocation ? " wtb-row-card--location" : ""}${isConstraint ? " wtb-row-card--constraint" : ""}${withPrevious ? " wtb-row-card--parallel" : ""}`}
       style={{ "--wtb-row-color": rowColor }}
       title={dropping ? (isEmpty ? "Drop to fill this event" : "Drop to add below this event") : ""}
     >
+      {/* How this pinned row meets the rows above it */}
+      {notice && (
+        <div className={`wtb-row-notice wtb-row-notice--${notice.kind}`} role={notice.kind === "overrun" ? "alert" : undefined}>
+          {notice.kind === "overrun"
+            ? `⚠ Runs ${formatDurationSpan(notice.minutes)} into ${displayName}`
+            : `${formatDurationSpan(notice.minutes)} free before ${displayName}`}
+        </div>
+      )}
+
       {/* Collapsed line */}
       <div className="wtb-row-line" onClick={toggleFromRowClick}>
         <div
@@ -105,39 +117,21 @@ function TimelineRow({
           <span className="wtb-row-time-period">{t.period}</span>
         </button>
 
-        {overlapWith && (
-          <span className="wtb-overlap-wrap">
-            <span
-              role="button"
-              tabIndex={0}
-              className="wtb-overlap-badge"
-              onClick={() => setShowOverlapTip((v) => !v)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setShowOverlapTip((v) => !v);
-                }
-              }}
-              title="Overlap warning — click for details"
-            >
-              !
-            </span>
-            {showOverlapTip && (
-              <span className="wtb-overlap-tip">
-                Overlaps with &ldquo;{overlapWith}&rdquo;. Overlapping events are allowed but may indicate a scheduling conflict.
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowOverlapTip(false);
-                    onDismissOverlap?.();
-                  }}
-                >
-                  Dismiss
-                </button>
-              </span>
-            )}
-          </span>
+        {!isConstraint && (
+          <button
+            type="button"
+            className={`wtb-row-pin${pinned ? " wtb-row-pin--on" : ""}`}
+            onClick={() => onTogglePin?.(index)}
+            aria-pressed={pinned}
+            aria-label={pinned ? "Pinned to this time" : "Follows the event above"}
+            title={
+              pinned
+                ? "Pinned to this time — click to let it follow the event above"
+                : "Follows the event above — click to pin it to this time"
+            }
+          >
+            {pinned ? "🔒" : "🔓"}
+          </button>
         )}
 
         {isConstraint ? (
@@ -174,6 +168,7 @@ function TimelineRow({
                 {mark(true, row.isOutdoor ? "Outside" : "Indoors", row.isOutdoor ? "☀️" : "💡")}
               </>
             )}
+            {withPrevious && mark(true, "At the same time as the event above", "⇉")}
             {hasNotes && mark(true, "Has notes", "📝")}
           </span>
         )}
@@ -216,6 +211,17 @@ function TimelineRow({
       {/* Expanded: notes and options */}
       {expanded && (
         <div className="wtb-row-panel" id={panelId}>
+          {!isConstraint && !isFirst && (
+            <label className="wtb-row-check" title="For two things covered at once, e.g. bride and groom portraits by two shooters">
+              <input
+                type="checkbox"
+                checked={withPrevious}
+                onChange={() => onToggleWithPrevious?.(index)}
+              />
+              Same time as the event above
+            </label>
+          )}
+
           {!isConstraint && (
             <div className="wtb-row-options">
               {!isLocation && (
@@ -260,6 +266,14 @@ function TimelineRow({
               )}
               {isMobile && (
                 <>
+                  <button
+                    type="button"
+                    className="wtb-row-option-btn"
+                    onClick={() => onTogglePin?.(index)}
+                    aria-pressed={pinned}
+                  >
+                    {pinned ? "🔓 Unpin time" : "🔒 Pin time"}
+                  </button>
                   <button
                     type="button"
                     className="wtb-row-option-btn"
