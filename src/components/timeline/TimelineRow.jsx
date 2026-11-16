@@ -1,9 +1,17 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { useDroppable, useDndContext } from "@dnd-kit/core";
 import { getEventColor } from "../../constants/colors";
 import { formatTime } from "../../lib/time";
 import { TimePopover } from "./TimePopover";
 
+// Clicks on these never toggle the row open/closed.
+const INTERACTIVE = "input, textarea, button, select, label, a, [role='button']";
+
+/**
+ * One timeline event. Collapsed it is a single line — time, name, duration and
+ * small photo / video / indoors marks. Tap the row (or the arrow) to expand it
+ * for notes and options.
+ */
 function TimelineRow({
   row,
   index,
@@ -15,7 +23,6 @@ function TimelineRow({
   onMoveDown,
   isFirst,
   isLast,
-  onEventBlur,
   onTimeSet,
   photoEnabledGlobal,
   videoEnabledGlobal,
@@ -28,9 +35,9 @@ function TimelineRow({
   isMobile = false,
 }) {
   const t = formatTime(row.time);
-  const timeBtnRef = useRef(null);
-  const cardRef = useRef(null);
   const [timeOpen, setTimeOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [showOverlapTip, setShowOverlapTip] = useState(false);
   const { active } = useDndContext();
   const isSidebarDrag = active?.data?.current?.type === "sidebar-block";
   const { setNodeRef: setDropRef, isOver: isDropOver } = useDroppable({
@@ -38,545 +45,289 @@ function TimelineRow({
     data: { type: "row", rowId: row.id },
   });
   const dropping = isSidebarDrag && isDropOver;
-  const [showOverlapTip, setShowOverlapTip] = useState(false);
-  const [deleteHovered, setDeleteHovered] = useState(false);
-  const [deletePending, setDeletePending] = useState(false);
-  const deleteTimerRef = useRef(null);
-  useEffect(() => () => clearTimeout(deleteTimerRef.current), []);
 
   const isLocation = row.type === "location";
   const isConstraint = row.type === "constraint";
-  // Location blocks are always gray; constraint blocks are transparent with stripe; event blocks use custom or category color
-  const rowBg = isConstraint ? "transparent" : isLocation ? "var(--wtb-accent)" : getEventColor(row.event || "", "#ffffff");
+  const isEmpty = !isLocation && !isConstraint && !String(row.event || "").trim();
+  const rowColor = isConstraint
+    ? "#cc4444"
+    : isLocation
+      ? "var(--wtb-accent)"
+      : getEventColor(row.event || "", "#ffffff");
+  const hasNotes = !!String(row.notes || "").trim();
+  const panelId = `wtb-row-panel-${row.id}`;
+
+  const toggleFromRowClick = (e) => {
+    if (e.target.closest(INTERACTIVE)) return;
+    setExpanded((v) => !v);
+  };
+
+  const setDuration = (raw) => onChange(index, "duration", raw.replace(/[^0-9]/g, ""));
+
+  const mark = (on, label, glyph) => (
+    <span
+      className={`wtb-mark${on ? "" : " wtb-mark--off"}`}
+      title={`${label}: ${on ? "yes" : "no"}`}
+      aria-label={`${label}: ${on ? "yes" : "no"}`}
+      role="img"
+    >
+      {glyph}
+    </span>
+  );
 
   return (
     <div
-      ref={(node) => {
-        cardRef.current = node;
-        setDropRef(node);
-      }}
-      className={`wtb-row-card${dropping ? " wtb-dropping" : ""}${deletePending ? " wtb-deleting" : ""}${isDragging ? " wtb-row-dragging" : ""}`}
-      style={{
-        border: deletePending ? "2px solid #cc4444" : dropping ? "2px dashed var(--wtb-accent)" : isConstraint ? "2px solid #cc4444" : isLocation ? "2px solid var(--wtb-accent)" : `2px solid ${rowBg}`,
-        borderRadius: 8,
-        marginBottom: 12,
-        backgroundColor: isLocation ? "var(--wtb-location-card)" : isConstraint ? "transparent" : (dropping ? "rgba(184,144,106,0.08)" : "var(--wtb-surface)"),
-        backgroundImage: isConstraint ? "repeating-linear-gradient(45deg, #1a0505 0px, #1a0505 10px, #230808 10px, #230808 20px)" : "none",
-        overflow: "hidden",
-        width: "100%",
-        position: "relative",
-        minHeight: "60px",
-        display: "flex",
-      }}
-      title={dropping ? "Drop here to add event" : ""}
+      ref={setDropRef}
+      className={`wtb-row-card${dropping ? " wtb-dropping" : ""}${isDragging ? " wtb-row-dragging" : ""}${expanded ? " wtb-row-card--open" : ""}${isLocation ? " wtb-row-card--location" : ""}${isConstraint ? " wtb-row-card--constraint" : ""}`}
+      style={{ "--wtb-row-color": rowColor }}
+      title={dropping ? (isEmpty ? "Drop to fill this event" : "Drop to add below this event") : ""}
     >
-      {/* Drag handle (desktop) / reorder buttons (mobile) */}
-      <div
-        ref={dragHandleRef}
-        className="wtb-drag-handle"
-        {...(dragHandleListeners || {})}
-        {...(dragHandleAttributes || {})}
-        style={{
-          width: 36,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: dragHandleListeners ? "grab" : "default",
-          touchAction: dragHandleListeners ? "none" : undefined,
-          borderRight: isLocation ? "1px solid var(--wtb-location-border)" : "1px solid var(--wtb-border)",
-          background: isLocation ? "var(--wtb-location-handle)" : "var(--wtb-row-reorder-bg)",
-          color: isLocation ? "var(--wtb-location-muted)" : "var(--wtb-text-muted)",
-          fontSize: 22,
-          userSelect: "none",
-          lineHeight: 1,
-        }}
-        title="Drag to reorder"
-      >
-        ⠿
-      </div>
-      <div className="wtb-row-reorder" aria-label="Reorder row">
-        <button
-          type="button"
-          disabled={isFirst}
-          onClick={() => onMoveUp?.(index)}
-          title="Move up"
-          aria-label="Move up"
-        >
-          ↑
-        </button>
-        <button
-          type="button"
-          disabled={isLast}
-          onClick={() => onMoveDown?.(index)}
-          title="Move down"
-          aria-label="Move down"
-        >
-          ↓
-        </button>
-      </div>
-
-      {/* Card content wrapper */}
-      <div style={{ flex: 1, minWidth: 0, overflow: "hidden", position: "relative" }}>
-
-      {/* Overlap warning badge — centered at top of card */}
-      {overlapWith && (
+      {/* Collapsed line */}
+      <div className="wtb-row-line" onClick={toggleFromRowClick}>
         <div
-          style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", zIndex: 20 }}
+          ref={dragHandleRef}
+          className="wtb-drag-handle"
+          {...(dragHandleListeners || {})}
+          {...(dragHandleAttributes || {})}
+          style={{ cursor: dragHandleListeners ? "grab" : "default", touchAction: dragHandleListeners ? "none" : undefined }}
+          title="Drag to reorder"
         >
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => setShowOverlapTip((v) => !v)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                setShowOverlapTip((v) => !v);
-              }
-            }}
-            title="Overlap warning — click for details"
-            style={{
-              width: 36, height: 36, borderRadius: "50%",
-              background: "#cc2222", color: "#fff",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 22, fontWeight: "bold", cursor: "pointer",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.45)",
-              userSelect: "none", lineHeight: 1,
-            }}>!</div>
-          {showOverlapTip && (
-            <div style={{
-              position: "absolute", top: 40, left: "50%", transform: "translateX(-50%)",
-              background: "var(--wtb-surface-alt)", color: "var(--wtb-text)",
-              fontSize: 11, padding: "8px 9px", borderRadius: 4,
-              width: 210, lineHeight: 1.5,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.55)",
-              border: "1px solid #cc4444",
-              whiteSpace: "normal",
-            }}>
-              <div>
-                Overlaps with &ldquo;{overlapWith}&rdquo;. Overlapping events are allowed but may indicate a scheduling conflict.
-              </div>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowOverlapTip(false);
-                  onDismissOverlap?.();
-                }}
-                style={{
-                  marginTop: 7,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: "#cc4444",
-                  background: "none",
-                  border: "1px solid #cc4444",
-                  borderRadius: 4,
-                  padding: "3px 8px",
-                  cursor: "pointer",
-                }}
-              >
-                Dismiss
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-      {/* TOP row: Time | Event (+photo/video) */}
-      <div
-        className="wtb-row-top"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "auto 1fr",
-          padding: 6,
-          backgroundColor: isConstraint ? "rgba(180,0,0,0.12)" : isLocation ? "var(--wtb-location-panel)" : "var(--wtb-surface)",
-          borderBottom: isLocation ? "1px solid var(--wtb-location-border)" : "1px solid var(--wtb-border-subtle)",
-          gap: 9,
-          alignItems: "center",
-        }}
-      >
-        <div className="wtb-row-time-col">
-          <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
-            <label
-              style={{
-                fontSize: 10,
-                color: isLocation ? "var(--wtb-location-muted)" : "var(--wtb-text-muted)",
-                fontFamily: "'Jost', sans-serif",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-              }}
-            >
-              Time
-            </label>
-          </div>
-          <button
-            ref={timeBtnRef}
-            onClick={() => setTimeOpen(true)}
-            style={{
-              width: 88,
-              padding: "4px 6px",
-              textAlign: "center",
-              border: isLocation ? "1px solid var(--wtb-location-border)" : "1px solid var(--wtb-border)",
-              background: "transparent",
-              color: isLocation ? "var(--wtb-location-text)" : "var(--wtb-text)",
-              borderRadius: 4,
-              cursor: "pointer",
-              fontFamily: "'Cormorant Garamond', serif",
-              lineHeight: 1,
-            }}
-            title="Click to set time"
-          >
-            <span style={{ fontSize: 26, fontWeight: 300, display: "block" }}>{t.hour}:{t.minute}</span>
-            <span style={{ fontSize: 11, letterSpacing: "0.1em", opacity: 0.75 }}>{t.period}</span>
-          </button>
+          ⠿
         </div>
 
-        <div>
-          {isConstraint ? (
-            <div style={{ fontSize: 14, fontWeight: "bold", color: "#ff6b6b", padding: "8px 0" }}>
-              ⚠️ TIME CONSTRAINT
-            </div>
-          ) : isLocation ? (
-            <>
-              <label style={{ fontSize: 10, color: "var(--wtb-location-muted)", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>📍 Location Name</label>
-              <input
-                type="text"
-                placeholder="Location name..."
-                value={row.event || ""}
-                onChange={(e) => onChange(index, "event", e.target.value)}
-                onBlur={() => onBlur(index)}
-                style={{
-                  width: "100%",
-                  fontSize: 14,
-                  padding: 8,
-                  background: "transparent",
-                  border: "1px solid var(--wtb-location-border)",
-                  color: "var(--wtb-location-text)",
-                  borderRadius: 4,
-                  fontFamily: "'Jost', sans-serif",
-                }}
-              />
-            </>
-          ) : (
-            <>
-              <div
-                className="wtb-event-meta"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  marginBottom: 4,
-                }}
-              >
-                <label style={{ fontSize: 10, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Event</label>
-                <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-                  <label
-                    style={{
-                      fontSize: 12,
-                      display: "flex",
-                      gap: 5,
-                      alignItems: "center",
-                      color: photoEnabledGlobal ? "var(--wtb-text)" : "var(--wtb-text-muted)",
-                      opacity: photoEnabledGlobal ? 1 : 0.5,
-                      cursor: photoEnabledGlobal ? "pointer" : "default",
-                    }}
-                  >
+        <button
+          type="button"
+          className="wtb-row-time"
+          onClick={() => setTimeOpen(true)}
+          title="Set the start time"
+        >
+          {t.hour}:{t.minute}
+          <span className="wtb-row-time-period">{t.period}</span>
+        </button>
+
+        {overlapWith && (
+          <span className="wtb-overlap-wrap">
+            <span
+              role="button"
+              tabIndex={0}
+              className="wtb-overlap-badge"
+              onClick={() => setShowOverlapTip((v) => !v)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setShowOverlapTip((v) => !v);
+                }
+              }}
+              title="Overlap warning — click for details"
+            >
+              !
+            </span>
+            {showOverlapTip && (
+              <span className="wtb-overlap-tip">
+                Overlaps with &ldquo;{overlapWith}&rdquo;. Overlapping events are allowed but may indicate a scheduling conflict.
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowOverlapTip(false);
+                    onDismissOverlap?.();
+                  }}
+                >
+                  Dismiss
+                </button>
+              </span>
+            )}
+          </span>
+        )}
+
+        {isConstraint ? (
+          <span className="wtb-row-name wtb-row-name--static">⚠️ Time constraint</span>
+        ) : (
+          // The wrapper sizes the field to its text, so the rest of the line
+          // stays free to tap (which expands the row).
+          <span
+            className="wtb-row-name-wrap"
+            data-value={`${row.event || (isLocation ? "📍 Location name" : "Event name")} `}
+          >
+            <input
+              type="text"
+              className="wtb-row-name"
+              aria-label={isLocation ? "Location name" : "Event name"}
+              placeholder={isLocation ? "📍 Location name" : "Event name"}
+              value={row.event || ""}
+              onChange={(e) => onChange(index, "event", e.target.value)}
+              onBlur={() => onBlur(index)}
+            />
+          </span>
+        )}
+
+        <span className="wtb-row-spacer" aria-hidden />
+
+        {!isConstraint && (
+          <span className="wtb-row-marks" aria-label="Coverage">
+            {isLocation ? (
+              mark(true, "Travel", "🚗")
+            ) : (
+              <>
+                {photoEnabledGlobal && mark(!!row.photo, "Photo", "📷")}
+                {videoEnabledGlobal && mark(!!row.video, "Video", "🎥")}
+                {mark(true, row.isOutdoor ? "Outside" : "Indoors", row.isOutdoor ? "☀️" : "💡")}
+              </>
+            )}
+            {hasNotes && mark(true, "Has notes", "📝")}
+          </span>
+        )}
+
+        <label className="wtb-row-duration" title={isLocation ? "Travel time in minutes" : "Duration in minutes"}>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            aria-label={isLocation ? "Travel time in minutes" : "Duration in minutes"}
+            value={row.duration}
+            onChange={(e) => setDuration(e.target.value)}
+            onBlur={() => onBlur(index)}
+          />
+          <span>min</span>
+        </label>
+
+        <button
+          type="button"
+          className="wtb-row-expand"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          aria-controls={panelId}
+          title={expanded ? "Hide notes and options" : "Show notes and options"}
+        >
+          {expanded ? "▴" : "▾"}
+        </button>
+
+        <button
+          type="button"
+          className="wtb-row-delete"
+          onClick={() => onDelete(index)}
+          title="Delete this event"
+          aria-label="Delete this event"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Expanded: notes and options */}
+      {expanded && (
+        <div className="wtb-row-panel" id={panelId}>
+          {!isConstraint && (
+            <div className="wtb-row-options">
+              {!isLocation && (
+                <>
+                  <label className={`wtb-row-check${photoEnabledGlobal ? "" : " wtb-row-check--off"}`}>
                     <input
                       type="checkbox"
                       checked={!!row.photo}
-                      onChange={(e) => onChange(index, "photo", e.target.checked)}
-                      onBlur={() => onBlur(index)}
+                      onChange={(e) => { onChange(index, "photo", e.target.checked); onBlur(index); }}
                       disabled={!photoEnabledGlobal}
                     />
                     Photo
                   </label>
-                  <label
-                    style={{
-                      fontSize: 12,
-                      display: "flex",
-                      gap: 5,
-                      alignItems: "center",
-                      color: videoEnabledGlobal ? "var(--wtb-text)" : "var(--wtb-text-muted)",
-                      opacity: videoEnabledGlobal ? 1 : 0.5,
-                      cursor: videoEnabledGlobal ? "pointer" : "default",
-                    }}
-                  >
+                  <label className={`wtb-row-check${videoEnabledGlobal ? "" : " wtb-row-check--off"}`}>
                     <input
                       type="checkbox"
                       checked={!!row.video}
-                      onChange={(e) => onChange(index, "video", e.target.checked)}
-                      onBlur={() => onBlur(index)}
+                      onChange={(e) => { onChange(index, "video", e.target.checked); onBlur(index); }}
                       disabled={!videoEnabledGlobal}
                     />
                     Video
                   </label>
                   <button
                     type="button"
-                    className="wtb-setting-btn--meta"
+                    className="wtb-row-option-btn"
                     onClick={() => { onChange(index, "isOutdoor", !row.isOutdoor); onBlur(index); }}
-                    aria-pressed={row.isOutdoor}
+                    aria-pressed={!!row.isOutdoor}
                     title={row.isOutdoor ? "Outside — click for Indoors" : "Indoors — click for Outside"}
-                    style={{
-                      background: row.isOutdoor ? "#2a6fd4" : "#c96a20",
-                      color: "#f0ece6",
-                    }}
+                    style={{ background: row.isOutdoor ? "#2a6fd4" : "#c96a20", color: "#f0ece6", borderColor: "transparent" }}
                   >
-                    <span aria-hidden style={{ fontSize: 13, lineHeight: 1 }}>{row.isOutdoor ? "☀️" : "💡"}</span>
-                    <span>{row.isOutdoor ? "Outside" : "Indoors"}</span>
+                    {row.isOutdoor ? "☀️ Outside" : "💡 Indoors"}
                   </button>
-                </div>
-              </div>
-              <div className="wtb-event-input-row" style={{ display: "flex", gap: 6, alignItems: "stretch" }}>
-                <input
-                  type="text"
-                  placeholder={isMobile ? "Tap to select an event…" : "Click to select or drop an event..."}
-                  value={row.event}
-                  onChange={(e) => onChange(index, "event", e.target.value)}
-                  onBlur={() => {
-                    onBlur(index);
-                    onEventBlur && onEventBlur(index);
-                  }}
-                  onClick={() => onEventClick(index)}
-                  style={{
-                    flex: 1,
-                    fontSize: 14,
-                    padding: 8,
-                    background: "transparent",
-                    border: "1px solid var(--wtb-border)",
-                    color: rowBg && rowBg !== "#ffffff" ? rowBg : "var(--wtb-text)",
-                    borderRadius: 4,
-                    cursor: "pointer",
-                    fontFamily: "'Jost', sans-serif",
-                  }}
-                />
-                <button
-                  type="button"
-                  className="wtb-setting-btn--inline"
-                  onClick={() => { onChange(index, "isOutdoor", !row.isOutdoor); onBlur(index); }}
-                  aria-pressed={row.isOutdoor}
-                  title={row.isOutdoor ? "Outside — click for Indoors" : "Indoors — click for Outside"}
-                  style={{
-                    width: 80,
-                    border: "1px solid var(--wtb-border)",
-                    background: row.isOutdoor ? "#2a6fd4" : "#c96a20",
-                    color: "#f0ece6",
-                    alignSelf: "stretch",
-                  }}
-                >
-                  <span aria-hidden style={{ fontSize: 13, lineHeight: 1 }}>{row.isOutdoor ? "☀️" : "💡"}</span>
-                  <span>{row.isOutdoor ? "Outside" : "Indoors"}</span>
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-        <button
-          onClick={() => {
-            if (!deletePending) {
-              setDeletePending(true);
-              if (cardRef.current) {
-                cardRef.current.style.animation = "none";
-                void cardRef.current.offsetHeight;
-                cardRef.current.style.animation = "wtb-delete 2s ease-in forwards";
-              }
-              deleteTimerRef.current = setTimeout(() => onDelete(index), 2000);
-            }
-          }}
-          onMouseEnter={() => setDeleteHovered(true)}
-          onMouseLeave={() => setDeleteHovered(false)}
-          style={{
-            position: "absolute",
-            top: 4,
-            right: 4,
-            width: 22,
-            height: 22,
-            padding: 0,
-            fontSize: 18,
-            border: deleteHovered ? "1px solid #e05252" : "1px solid transparent",
-            background: "none",
-            color: "#e05252",
-            cursor: deletePending ? "default" : "pointer",
-            borderRadius: 4,
-            lineHeight: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "color 0.15s",
-            zIndex: 1,
-          }}
-          title="Delete"
-        >
-          ×
-        </button>
-
-      {isConstraint ? (
-        /* BOTTOM: Constraint block — notes only */
-        <div style={{ padding: 8, backgroundColor: "rgba(180,0,0,0.08)" }}>
-          <label style={{ fontSize: 10, color: "#ff6b6b", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Conflict Notes</label>
-          <textarea
-            value={row.notes || ""}
-            onChange={(e) => onChange(index, "notes", e.target.value)}
-            onBlur={() => onBlur(index)}
-            rows={3}
-            style={{ width: "100%", boxSizing: "border-box", fontSize: 13, padding: 8, resize: "vertical", background: "transparent", border: "1px solid #cc4444", borderRadius: 4, color: "#ff6b6b" }}
-          />
-        </div>
-      ) : isLocation ? (
-        /* BOTTOM: Location block — Travel time | Address | Notes */
-        <div
-          className="wtb-location-grid"
-          style={{
-            padding: "8px 8px 8px 6px",
-            background: "var(--wtb-location-card)",
-          }}
-        >
-          <div className="wtb-location-travel">
-            <label style={{ fontSize: 10, color: "var(--wtb-location-muted)", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "100%", textAlign: "center" }}>Travel time</label>
-            <div style={{ position: "relative", width: 65 }}>
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={row.duration}
-                onChange={(e) => { const val = e.target.value.replace(/[^0-9]/g, ""); onChange(index, "duration", val); }}
-                onBlur={() => onBlur(index)}
-                style={{ width: "100%", fontSize: 14, padding: "6px 34px 6px 12px", textAlign: "left", border: "1px solid var(--wtb-location-border)", borderRadius: 6, boxSizing: "border-box", background: "rgba(255,255,255,0.5)", color: "var(--wtb-location-text)" }}
-              />
-              <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "var(--wtb-location-muted)", pointerEvents: "none" }}>min</span>
+                  <button
+                    type="button"
+                    className="wtb-row-option-btn"
+                    onClick={() => onEventClick(index)}
+                    title="Pick a different event from the list"
+                  >
+                    Change event…
+                  </button>
+                </>
+              )}
+              {isMobile && (
+                <>
+                  <button
+                    type="button"
+                    className="wtb-row-option-btn"
+                    disabled={isFirst}
+                    onClick={() => onMoveUp?.(index)}
+                    aria-label="Move up"
+                  >
+                    ↑ Up
+                  </button>
+                  <button
+                    type="button"
+                    className="wtb-row-option-btn"
+                    disabled={isLast}
+                    onClick={() => onMoveDown?.(index)}
+                    aria-label="Move down"
+                  >
+                    ↓ Down
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                className="wtb-row-option-btn wtb-row-option-btn--danger"
+                onClick={() => onDelete(index)}
+              >
+                Delete
+              </button>
             </div>
-          </div>
+          )}
 
-          <div className="wtb-location-field">
-            <label style={{ fontSize: 10, color: "var(--wtb-location-muted)", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Address</label>
-            <textarea
-              placeholder="Address..."
-              value={row.address || ""}
-              onChange={(e) => onChange(index, "address", e.target.value)}
-              onBlur={(e) => { onBlur(index); e.target.scrollTop = 0; }}
-              rows={3}
-              style={{ fontSize: 14, padding: 8, resize: "vertical", background: "rgba(255,255,255,0.5)", border: "1px solid var(--wtb-location-border)", borderRadius: 4, color: "var(--wtb-location-text)" }}
-            />
-          </div>
+          {isLocation && (
+            <label className="wtb-row-field">
+              <span>Address</span>
+              <textarea
+                placeholder="Address..."
+                value={row.address || ""}
+                onChange={(e) => onChange(index, "address", e.target.value)}
+                onBlur={() => onBlur(index)}
+                rows={2}
+              />
+            </label>
+          )}
 
-          <div className="wtb-location-field">
-            <label style={{ fontSize: 10, color: "var(--wtb-location-muted)", display: "block", marginBottom: 4, fontFamily: "'Jost', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Notes</label>
+          <label className="wtb-row-field">
+            <span>{isConstraint ? "Conflict notes" : "Notes"}</span>
             <textarea
-              placeholder="Add any notes for this location..."
+              placeholder={isLocation ? "Add any notes for this location..." : "Add any notes for this event..."}
               value={row.notes || ""}
               onChange={(e) => onChange(index, "notes", e.target.value)}
               onBlur={() => onBlur(index)}
-              rows={3}
-              style={{ fontSize: 13, padding: 8, resize: "vertical", background: "rgba(255,255,255,0.5)", border: "1px solid var(--wtb-location-border)", borderRadius: 4, color: "var(--wtb-location-text)" }}
+              rows={2}
             />
-          </div>
-        </div>
-      ) : (
-        /* BOTTOM: Event block — Duration | Notes */
-        <div
-          className="wtb-bottom"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "auto 1fr",
-            padding: "8px 8px 8px 6px",
-            gap: 9,
-            alignItems: "start",
-          }}
-        >
-          <div style={{ width: 88, display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <label
-              style={{
-                fontSize: 10,
-                color: "var(--wtb-text-muted)",
-                display: "block",
-                marginBottom: 4,
-                fontFamily: "'Jost', sans-serif",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-              }}
-            >
-              Duration
-            </label>
-            <div style={{ position: "relative", width: 65 }}>
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={row.duration}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/[^0-9]/g, "");
-                  onChange(index, "duration", val);
-                }}
-                onBlur={() => onBlur(index)}
-                style={{
-                  width: "100%",
-                  fontSize: 14,
-                  padding: "6px 34px 6px 12px",
-                  textAlign: "left",
-                  border: "1px solid var(--wtb-border)",
-                  borderRadius: 4,
-                  boxSizing: "border-box",
-                  background: "transparent",
-                  color: "var(--wtb-text)",
-                }}
-              />
-              <span
-                style={{
-                  position: "absolute",
-                  right: 8,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  fontSize: 12,
-                  color: "var(--wtb-text-muted)",
-                  pointerEvents: "none",
-                }}
-              >
-                mins
-              </span>
-            </div>
-          </div>
+          </label>
 
-          <div className="wtb-location">
-            <label
-              style={{
-                fontSize: 10,
-                color: "var(--wtb-text-muted)",
-                display: "block",
-                marginBottom: 4,
-                fontFamily: "'Jost', sans-serif",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-              }}
-            >
-              Notes
-            </label>
-            <div style={{ display: "flex", gap: 6 }}>
-              <textarea
-                placeholder="Add any notes for this event... (drag corner to expand)"
-                value={row.notes || ""}
-                onChange={(e) => onChange(index, "notes", e.target.value)}
-                onBlur={() => onBlur(index)}
-                rows={2}
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  fontSize: 14,
-                  padding: 8,
-                  resize: "vertical",
-                  background: "transparent",
-                  border: "1px solid var(--wtb-border)",
-                  borderRadius: 4,
-                  color: "var(--wtb-text)",
-                  fontFamily: "'Jost', sans-serif",
-                }}
-              />
-              <div className="wtb-notes-spacer" style={{ width: 80, flexShrink: 0 }} />
+          {isConstraint && (
+            <div className="wtb-row-options">
+              <button
+                type="button"
+                className="wtb-row-option-btn wtb-row-option-btn--danger"
+                onClick={() => onDelete(index)}
+              >
+                Delete
+              </button>
             </div>
-          </div>
+          )}
         </div>
       )}
 
-      {/* Time popover */}
       {timeOpen && (
         <TimePopover
           open={timeOpen}
@@ -588,7 +339,6 @@ function TimelineRow({
           onClose={() => setTimeOpen(false)}
         />
       )}
-      </div>{/* end content wrapper */}
     </div>
   );
 }

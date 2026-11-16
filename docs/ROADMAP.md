@@ -79,6 +79,30 @@ name; three events fill a desktop screen; phone layout is clipped.
 | 2.6 | Preview fits its panel width by default and no longer replaces the block list on desktop. | Preview text is readable without zooming at 1366×800. |
 | 2.7 | Plain-language labels (see NOTES "Wording"). | Owner approves the label list before it is applied. |
 
+**Status (branch `phase-2/adding-editing`, stacked on Phase 0):**
+
+- 2.1 done. "+" between rows (it shows on hover on desktop and is always
+  shown on phones) and the "+ Add Event" button open the list and insert. A
+  sidebar block goes between rows, fills an empty row, or goes below a filled
+  row. Logic is in `src/lib/rowInsert.js`, with tests. Seen: dropping on
+  "Coverage Start" leaves it intact.
+- 2.2 done. The name is a text field; "Change event…" (in the expanded row)
+  opens the list, which now starts from the row's own duration. Seen:
+  renaming keeps the duration, and "Use Custom Event" keeps time and duration.
+- 2.3 done. Seen: 10 rows visible at 1366×800, 11 at 375×812.
+- 2.4 done. Delete removes the row at once; a "Deleted … Undo" message shows
+  for 6 seconds. Seen: Undo restores the row and its times.
+- 2.5 done. Duration wraps under the time in the event list; Save is in the
+  phone's bottom bar; the phone header is two short lines (102 px, was 192).
+  Seen: no sideways scrolling at 375 px.
+- 2.6 done. Desktop has a Preview button that opens a wide panel; the
+  sidebar is the block list only. Seen: page shown at about 1.5×, readable.
+- 2.7 **waiting on the owner** — the proposed list is in NOTES "Wording".
+
+Not changed (Phase 1): times still don't flow, so inserting can create an
+overlap "!", dragging still re-times the day, and the phone arrows still swap
+times.
+
 ---
 
 ## Phase 3 — Quick-start draft

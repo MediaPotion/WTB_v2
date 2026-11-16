@@ -1,23 +1,16 @@
-import React, { useState } from "react";
+import React from "react";
 import { EVENT_BLOCKS } from "../../constants/events";
 import { getEventColor } from "../../constants/colors";
-import { TimelinePreview } from "../../lib/exportPdf";
 import { DraggableSidebarBlock } from "./DraggableSidebarBlock";
 
-function EventSidebar({ rows, bride, groom, date, photoStartHour, photoStartMinute, photoStartPeriod, photoEndHour, photoEndMinute, photoEndPeriod, videoStartHour, videoStartMinute, videoStartPeriod, videoEndHour, videoEndMinute, videoEndPeriod, photoEnabled, videoEnabled }) {
-  const [activeTab, setActiveTab] = useState('blocks');
-  const previewProps = { rows, bride, groom, date, photoStartHour, photoStartMinute, photoStartPeriod, photoEndHour, photoEndMinute, photoEndPeriod, videoStartHour, videoStartMinute, videoStartPeriod, videoEndHour, videoEndMinute, videoEndPeriod, photoEnabled, videoEnabled };
+// Desktop block palette. (The preview opens in its own panel from the toolbar.)
+function EventSidebar() {
   return (
     <div className="wtb-sidebar-wrap">
-      <aside className="wtb-sidebar" style={{ overflow: activeTab === 'preview' ? 'hidden' : 'auto', display: 'flex', flexDirection: 'column' }}>
-        <div className="wtb-tabs">
-          <button className={`wtb-tab-btn${activeTab === 'blocks' ? ' active' : ''}`} onClick={() => setActiveTab('blocks')}>Event Blocks</button>
-          <button className={`wtb-tab-btn${activeTab === 'preview' ? ' active' : ''}`} onClick={() => setActiveTab('preview')}>Preview</button>
-        </div>
-
-        {activeTab === 'blocks' ? (
-          <>
-            <div className="wtb-side-note">Drag a block onto a row</div>
+      <aside className="wtb-sidebar" style={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+        <h2 className="wtb-side-title">Event Blocks</h2>
+        <div className="wtb-side-note">Drag a block between two events to add it there</div>
+        <>
             <div className="wtb-palette">
               {/* Location / Travel block */}
               <div style={{ fontSize: 10, color: "#ffffff", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 4, fontFamily: "'Jost', sans-serif", fontWeight: 400 }}>Travel</div>
@@ -63,10 +56,7 @@ function EventSidebar({ rows, bride, groom, date, photoStartHour, photoStartMinu
                 });
               })()}
             </div>
-          </>
-        ) : (
-          <TimelinePreview {...previewProps} />
-        )}
+        </>
       </aside>
     </div>
   );

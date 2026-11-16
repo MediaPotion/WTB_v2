@@ -19,12 +19,14 @@ Create React App, React 18, plain JavaScript, `@dnd-kit` for drag and drop,
 |---|---|
 | `src/screens/MobileApp.jsx` | The whole app shell, desktop and phone (2,523 lines, 165 `useState` calls). Welcome → settings → timeline screens, all row logic, menus, modals. |
 | `src/screens/WelcomeScreen.jsx` | First screen: Create / Load, autosave banner. |
-| `src/components/timeline/TimelineRow.jsx` | One event card (596 lines): time, name, duration, notes, photo/video, indoor/outdoor, delete, overlap badge. |
+| `src/components/timeline/TimelineRow.jsx` | One event row. Since Phase 2: a one-line row (time, name field, marks, duration, expand, delete) that expands for photo/video, indoors, "Change event…", phone up/down, notes, address. |
 | `src/components/timeline/TimelineDnd.jsx` | Drag-and-drop setup and the rule for where things may drop. |
-| `src/components/timeline/RowDropZone.jsx`, `AddRowButton.jsx` | The gap between rows: "+ Add Event" and the reorder drop target. |
-| `src/components/timeline/EventBlockSelector.jsx` | The "Select or Create Event" dialog. |
+| `src/components/timeline/RowDropZone.jsx`, `AddRowButton.jsx` | The gap between rows: "+" to insert, and the drop target for reordering and for sidebar blocks. |
+| `src/lib/rowInsert.js` | Where new rows go: start time for an inserted row, array position, and what a sidebar drop does (fill / insert). Tested. |
+| `src/lib/renamedEvents.js` | Old block name → new name, applied when a file or autosave loads. |
+| `src/components/timeline/EventBlockSelector.jsx` | The event list dialog: "Add Event" (insert) or "Change Event" (replace). |
 | `src/components/timeline/TimePopover.jsx` | Hour / minute / AM-PM picker. |
-| `src/components/sidebar/EventSidebar.jsx` | Desktop right panel: block palette and Preview tab. |
+| `src/components/sidebar/EventSidebar.jsx` | Desktop right panel: block palette only. The desktop preview is a panel opened from the toolbar (in `MobileApp.jsx`). |
 | `src/constants/events.js` | The 42 template blocks as `"Category: Name::minutes"` strings. |
 | `src/constants/colors.js`, `tiers.js` | Colour by name prefix; "hard / soft / flexible" by full name. |
 | `src/constants/styles.js`, `theme.js` | All CSS, as JavaScript strings injected in a `<style>` tag. |
@@ -57,17 +59,20 @@ isOutdoor, isTimeLocked, color, tier, flexibilityMinutes
 | # | Problem | Evidence | Where |
 |---|---|---|---|
 | 1 | No rough draft: a new timeline is one "Coverage Start" block. | seen | `MobileApp.jsx:1043` |
-| 2 | A sidebar block can only drop on an existing row, snaps to the nearest one, and replaces it. First drop replaced "Coverage Start" and kept its note. No drop between rows. | seen | `TimelineDnd.jsx:24`, `MobileApp.jsx:854` |
-| 3 | Hint says "Drag a block onto a row" when there may be no empty row. | seen | `EventSidebar.jsx:20` |
+| 2 | A sidebar block can only drop on an existing row, snaps to the nearest one, and replaces it. First drop replaced "Coverage Start" and kept its note. No drop between rows. **Fixed in Phase 2.** | seen | `TimelineDnd.jsx:24`, `MobileApp.jsx:854` |
+| 3 | Hint says "Drag a block onto a row" when there may be no empty row. **Fixed in Phase 2.** | seen | `EventSidebar.jsx:20` |
 | 4 | Changing a duration moves nothing; both rows get a red "!". | seen | `MobileApp.jsx:521` (function returns its input unchanged) |
 | 5 | Dragging a row re-times everything from the moved row's old time; the day start went from 12:00 to 12:20. | seen | `MobileApp.jsx:902`, `:597` |
 | 6 | Phone up/down arrows swap the two rows' times. | read | `MobileApp.jsx:669`, `:693` |
 | 7 | "Lock time" and "snap to previous event" exist in logic with no button. | read | `isTimeLocked`; `MobileApp.jsx:642` has no caller |
-| 8 | Clicking the event name opens a dialog; its duration box is always 30. "Use Custom Event" would save 30 over the row's duration. | dialog seen; overwrite read, not clicked | `TimelineRow.jsx:338`, `EventBlockSelector.jsx:8` |
-| 9 | About 3 rows per desktop screen and 1.5 per phone screen. | seen | `TimelineRow.jsx` layout |
-| 10 | Preview is unreadable at its default size and replaces the block palette. | seen | `EventSidebar.jsx` tabs |
-| 11 | Phone: event names cut off; Duration field clipped in the dialog; Save is inside the gear menu. | seen | `EventBlockSelector.jsx:230`, `MobileApp.jsx:1776` |
-| 12 | Delete starts a 2-second countdown that cannot be cancelled (Undo works afterwards). | read | `TimelineRow.jsx:375-383` |
+| 8 | Clicking the event name opens a dialog; its duration box is always 30. "Use Custom Event" would save 30 over the row's duration. **Fixed in Phase 2.** | dialog seen; overwrite read, not clicked | `TimelineRow.jsx:338`, `EventBlockSelector.jsx:8` |
+| 9 | About 3 rows per desktop screen and 1.5 per phone screen. **Phase 2: 10 and 11.** | seen | `TimelineRow.jsx` layout |
+| 10 | Preview is unreadable at its default size and replaces the block palette. **Fixed in Phase 2.** | seen | `EventSidebar.jsx` tabs |
+| 11 | Phone: event names cut off; Duration field clipped in the dialog; Save is inside the gear menu. **Phase 2 fixes the dialog and Save. Long names still end in "…" on a phone row; the whole name shows while editing it.** | seen | `EventBlockSelector.jsx:230`, `MobileApp.jsx:1776` |
+| 12 | Delete starts a 2-second countdown that cannot be cancelled (Undo works afterwards). **Fixed in Phase 2.** | read | `TimelineRow.jsx:375-383` |
+| 17 | Picking any event in the list also set the row's start time from the dialog, rounded to 5 minutes, so a 12:22 row moved to 12:20. Phase 2 sends a time only when it is changed in the dialog. | read | `EventBlockSelector.jsx` (before Phase 2) |
+| 18 | Typing a name in the last row, or dropping a block on it, added an empty row below. Phase 2 removes this; rows are added with "+" instead. | read | `MobileApp.jsx` `handleEventBlur` (before Phase 2) |
+| 19 | The preview's fit-to-width subtracted the panel padding twice, so pages were drawn narrower than the panel. Fixed in Phase 2. | read | `exportPdf.js` `TimelinePreview` |
 | 13 | No sharing: Save downloads a `.json`; others must load that file. | seen | `useProjectStorage.js` |
 | 14 | Draft generator throws `ReferenceError: photoCoverageHours is not defined`; 2 of 7 tests fail because of it. **Fixed in Phase 0.** | test run | `generateTimeline.js:653-654` |
 | 15 | The send secret is in the public JavaScript and the endpoint allows any origin. **Phase 0 adds a rate limit, content checks and an origin list (empty until D5); not uploaded.** | read | `sendToMediaPotion.js:8`, `send-timeline.php:27` |
@@ -97,6 +102,15 @@ isOutdoor, isTimeLocked, color, tier, flexibilityMinutes
 - **`build/` is ignored by git** (it used to be committed).
 - **Not part of the app:** `Claude Code.command` in the repo root is untracked
   and opens a different project.
+- **The time picker is `position: fixed` inside the row.** Don't put a CSS
+  `transform` on `.wtb-row-card` (for example a hover lift); that would make the
+  picker position itself relative to the row.
+- **`.claude/launch.json`** (untracked) starts `npm start` for the Claude Code
+  browser preview.
+- **Testing in the browser:** put a timeline in `localStorage` key
+  `wtb_autosave`, reload, then click "Restore Timeline".
+- **Undo for a delete** is the normal undo; the message's Undo only acts while
+  the delete is still the latest change.
 
 ## Wording clients see today
 
@@ -104,6 +118,28 @@ Candidates for plainer labels (Phase 2.7): "Project Settings", "Save Project",
 "Load Project" / "Load Existing Timeline", "Coverage", "Event Blocks",
 "Bride (Pre-Dress)", "Bride (Dress On)", "Narration", "Audio/Video Setup",
 "Ceremony: Average", "Location / Travel".
+
+**Proposed labels — for the owner to approve, change or reject (2.7).** Not
+applied. Rows marked *key* are event names or name prefixes: renaming them
+also needs entries in `src/lib/renamedEvents.js` and updates to `colors.js`,
+`tiers.js` and `generateTimeline.js` (see Gotchas).
+
+| Today | Proposed | Where |
+|---|---|---|
+| Project Settings | Wedding details | Toolbar, phone menu, dialog title |
+| Save Project | Save a copy | Toolbar, phone menu |
+| Load Project / Load Existing Timeline | Open a saved timeline | Toolbar, phone menu, welcome screen |
+| Photography / Videography Coverage Time | Photo hours / Video hours | Header |
+| Event Blocks | Add events | Desktop sidebar title |
+| Bride (Pre-Dress): … | Bride getting ready: … | *key* — block category |
+| Bride (Dress On): … | Bride dressed: … | *key* — block category |
+| Narration: … | Video messages: … | *key* — block category |
+| Ceremony: Audio/Video Setup, Reception: Audio/Video Setup | Ceremony: Sound and camera setup, Reception: Sound and camera setup | *key* — block names |
+| Ceremony: Average | Ceremony (about 30 min) | *key* — block name; also a ceremony anchor in `MobileApp.jsx` |
+| Ceremony: Catholic | Ceremony, Catholic Mass (about 1 hr) | *key* — as above |
+| Location / Travel | Travel to another place | Sidebar and event list |
+| Use Custom Event | Use this name | Event list |
+| Create Custom Event | Your own event | Event list |
 
 ## Repository state
 
