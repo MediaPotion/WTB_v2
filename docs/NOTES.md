@@ -69,17 +69,18 @@ isOutdoor, isTimeLocked, color, tier, flexibilityMinutes
 | 11 | Phone: event names cut off; Duration field clipped in the dialog; Save is inside the gear menu. | seen | `EventBlockSelector.jsx:230`, `MobileApp.jsx:1776` |
 | 12 | Delete starts a 2-second countdown that cannot be cancelled (Undo works afterwards). | read | `TimelineRow.jsx:375-383` |
 | 13 | No sharing: Save downloads a `.json`; others must load that file. | seen | `useProjectStorage.js` |
-| 14 | Draft generator throws `ReferenceError: photoCoverageHours is not defined`; 2 of 7 tests fail because of it. | test run | `generateTimeline.js:653-654` |
-| 15 | The send secret is in the public JavaScript and the endpoint allows any origin. | read | `sendToMediaPotion.js:8`, `send-timeline.php:27` |
-| 16 | Typos in block names. | seen | `events.js:3`, `:42` |
+| 14 | Draft generator throws `ReferenceError: photoCoverageHours is not defined`; 2 of 7 tests fail because of it. **Fixed in Phase 0.** | test run | `generateTimeline.js:653-654` |
+| 15 | The send secret is in the public JavaScript and the endpoint allows any origin. **Phase 0 adds a rate limit, content checks and an origin list (empty until D5); not uploaded.** | read | `sendToMediaPotion.js:8`, `send-timeline.php:27` |
+| 16 | Typos in block names. **Fixed in Phase 0.** | seen | `events.js:3`, `:42` |
 
 ## Gotchas
 
 - **Event names are keys.** Colour comes from the name's prefix (`colors.js`),
   "hard/soft" from the full name (`tiers.js`), the ceremony anchor from two exact
   names (`MobileApp.jsx:598`), and `generateTimeline.js` builds rows by name.
-  Saved files store names. Renaming a block needs a search across `src/` and a
-  thought about old files.
+  Saved files store names. Renaming a block needs a search across `src/` and an
+  entry in `src/lib/renamedEvents.js`, which maps old names when a file or
+  autosave loads.
 - **Desktop vs phone is one breakpoint:** 901 px (`constants/wizard.js`,
   `styles.js`). Below it: no sidebar, no drag, arrows instead.
 - **Styles live in three places:** inline `style={{…}}` on almost everything,
@@ -90,7 +91,9 @@ isOutdoor, isTimeLocked, color, tier, flexibilityMinutes
 - **Two undo implementations:** `hooks/useUndoRedo.js` is unused; the live one is
   inline in `MobileApp.jsx`. History keeps 12 steps.
 - **The PHP file is not deployed by git.** `hostinger/send-timeline.php` is
-  uploaded by hand; its secret must match the one in the app.
+  uploaded by hand; its secret must match the one in the app. Its rate limit
+  keeps a small file in the server's temp folder (`wtb_send_rate.json`).
+- **No PHP on the dev machine,** so the endpoint can't be run locally.
 - **`build/` is ignored by git** (it used to be committed).
 - **Not part of the app:** `Claude Code.command` in the repo root is untracked
   and opens a different project.

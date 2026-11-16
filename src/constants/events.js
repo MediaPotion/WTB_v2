@@ -1,6 +1,6 @@
 const EVENT_BLOCKS = [
   "Details: Drone & Venue Shots::30",
-  "Details: Rings,Invitations, & Accessories::20",
+  "Details: Rings, Invitations, & Accessories::20",
   "Details: Dress Shots::10",
   "Bride (Pre-Dress): Bridesmaids Group Shots::10",
   "Bride (Pre-Dress): Bridesmaids Individual Shots::10",
@@ -39,7 +39,7 @@ const EVENT_BLOCKS = [
   "Reception: Dinner::60",
   "Reception: Speeches (Per Speaker)::10",
   "Reception: Open Dance Floor::20",
-  "Reception: Garder Belt Toss::15",
+  "Reception: Garter Belt Toss::15",
   "Reception: Bouquet Toss::15",
 ];
 

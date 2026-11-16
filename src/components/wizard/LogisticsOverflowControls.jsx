@@ -95,7 +95,7 @@ function LogisticsOverflowControls({ window: w, rows = [], logisticsPending, onL
 
   const receptionFlagPatch = (eventName, removed) => {
     if (eventName.includes("Open Dance")) patch({ wiz_openDanceFloor: !removed });
-    else if (eventName.includes("Garder") || eventName.includes("Garter")) {
+    else if (eventName.includes("Garter")) {
       patch({ wiz_garterToss: !removed });
     } else if (eventName.includes("Bouquet")) patch({ wiz_bouquetToss: !removed });
     else if (eventName.includes("Speeches")) patch({ wiz_speeches: !removed });
@@ -118,7 +118,7 @@ function LogisticsOverflowControls({ window: w, rows = [], logisticsPending, onL
     const adj = { ...committedAdj[eventName], ...draftAdj[eventName] };
     if (adj.removed) return false;
     if (eventName.includes("Open Dance")) return draft.wiz_openDanceFloor !== false;
-    if (eventName.includes("Garder") || eventName.includes("Garter")) {
+    if (eventName.includes("Garter")) {
       return draft.wiz_garterToss !== false;
     }
     if (eventName.includes("Bouquet")) return draft.wiz_bouquetToss !== false;

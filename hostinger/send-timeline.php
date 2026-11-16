@@ -12,6 +12,11 @@
  *    weddingpotion.com matching FROM_ADDRESS below (timeline@weddingpotion.com)
  *    so mail passes SPF and lands in your inbox, not spam.
  * 3. The SECRET below must match the one in the app (src/lib/sendToMediaPotion.js).
+ *    The secret ships in the app's public JavaScript, so it is not real
+ *    protection; the origin check, rate limit and file checks below are.
+ * 4. Once the live site's address is known, list it in ALLOWED_ORIGINS
+ *    (scheme + host, no trailing slash). While the list is empty, any site
+ *    may send, as before.
  */
 
 const RECIPIENT    = 'info@mediapotion.net';
@@ -20,19 +25,16 @@ const FROM_NAME    = 'Wedding Timeline Builder';
 const SECRET       = '46b8dc32b9ba8c17ad96c7237d352b0b953cd06ea8f8fb57';
 const MAX_BYTES    = 15728640; // 15 MB per file
 
+// Sites allowed to send, e.g. ['https://weddingpotion.com', 'https://www.weddingpotion.com'].
+// Empty = allow any origin (the old behaviour).
+const ALLOWED_ORIGINS = [];
+
+// Per-IP rate limit: at most RATE_LIMIT sends in RATE_WINDOW seconds.
+const RATE_LIMIT  = 3;
+const RATE_WINDOW = 60;
+
 // Timestamps in the email body use Eastern time (handles EST/EDT automatically).
 date_default_timezone_set('America/New_York');
-
-// ---- CORS (allows the app to call this from localhost or any domain) ----
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-header('Content-Type: application/json; charset=utf-8');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-  http_response_code(204);
-  exit;
-}
 
 function fail($code, $msg) {
   http_response_code($code);
@@ -40,7 +42,62 @@ function fail($code, $msg) {
   exit;
 }
 
+// ---- CORS + origin check ----
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$originAllowed = empty(ALLOWED_ORIGINS) || in_array($origin, ALLOWED_ORIGINS, true);
+
+header('Content-Type: application/json; charset=utf-8');
+header('Vary: Origin');
+if (empty(ALLOWED_ORIGINS)) {
+  header('Access-Control-Allow-Origin: *');
+} elseif ($originAllowed) {
+  header('Access-Control-Allow-Origin: ' . $origin);
+}
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+if (!$originAllowed) fail(403, 'This site is not allowed to send timelines');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+  http_response_code(204);
+  exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') fail(405, 'POST only');
+
+// ---- Rate limit (per IP, stored in a temp file) ----
+function rate_limited($ip) {
+  $file = sys_get_temp_dir() . '/wtb_send_rate.json';
+  $fh = @fopen($file, 'c+');
+  if (!$fh) return false; // can't track; don't block real clients
+  flock($fh, LOCK_EX);
+  $raw = stream_get_contents($fh);
+  $log = json_decode($raw ?: '{}', true);
+  if (!is_array($log)) $log = [];
+  $now = time();
+  // Drop timestamps outside the window, for every IP, so the file stays small.
+  foreach ($log as $k => $times) {
+    $log[$k] = array_values(array_filter((array)$times, function ($t) use ($now) {
+      return $t > $now - RATE_WINDOW;
+    }));
+    if (empty($log[$k])) unset($log[$k]);
+  }
+  $key = hash('sha256', $ip);
+  $limited = count($log[$key] ?? []) >= RATE_LIMIT;
+  if (!$limited) $log[$key][] = $now;
+  ftruncate($fh, 0);
+  rewind($fh);
+  fwrite($fh, json_encode($log));
+  fflush($fh);
+  flock($fh, LOCK_UN);
+  fclose($fh);
+  return $limited;
+}
+
+if (rate_limited($_SERVER['REMOTE_ADDR'] ?? 'unknown')) {
+  header('Retry-After: ' . RATE_WINDOW);
+  fail(429, 'Too many sends. Please wait a minute and try again.');
+}
 
 // ---- Auth ----
 $secret = $_POST['secret'] ?? '';
@@ -65,6 +122,16 @@ foreach (['pdf' => 'application/pdf', 'json' => 'application/json'] as $key => $
   $f = $_FILES[$key];
   if ($f['error'] !== UPLOAD_ERR_OK) fail(400, "Upload error for $key");
   if ($f['size'] <= 0 || $f['size'] > MAX_BYTES) fail(400, "Bad file size for $key");
+  $data = file_get_contents($f['tmp_name']);
+  if ($data === false) fail(400, "Could not read $key");
+  // Check the contents, not the name or the browser-supplied type.
+  if ($key === 'pdf' && strncmp($data, '%PDF-', 5) !== 0) fail(400, 'The PDF file is not a PDF');
+  if ($key === 'json') {
+    $decoded = json_decode($data, true);
+    if (!is_array($decoded) || !isset($decoded['userRows']) || !is_array($decoded['userRows'])) {
+      fail(400, 'The timeline file is not a timeline');
+    }
+  }
   $name = preg_replace('/[^a-zA-Z0-9._()&-]/', '_', basename($f['name']));
   if ($name === '') $name = "timeline.$key";
   // Force the expected extension regardless of what was sent
@@ -73,7 +140,7 @@ foreach (['pdf' => 'application/pdf', 'json' => 'application/json'] as $key => $
   $attachments[] = [
     'name' => $name,
     'mime' => $mime,
-    'data' => file_get_contents($f['tmp_name']),
+    'data' => $data,
   ];
 }
 
