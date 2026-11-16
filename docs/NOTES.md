@@ -90,11 +90,13 @@ version 3), color, tier, flexibilityMinutes
 ## Gotchas
 
 - **Event names are keys.** Colour comes from the name's prefix (`colors.js`),
-  "hard/soft" from the full name (`tiers.js`), the ceremony anchor from two exact
-  names (`MobileApp.jsx:598`), and `generateTimeline.js` builds rows by name.
+  "hard/soft" from the full name (`tiers.js`), ceremonies are pinned on
+  migration by exact name (`CEREMONY_EVENTS` in `projectMigration.js`), and
+  `generateTimeline.js` builds rows by name.
   Saved files store names. Renaming a block needs a search across `src/` and an
-  entry in `src/lib/renamedEvents.js`, which maps old names when a file or
-  autosave loads.
+  entry in `src/lib/renamedEvents.js` (exact names, or a category prefix),
+  which maps old names when a file or autosave loads — before the version
+  migration, so it sees current names. Keep the "Category: name" form.
 - **Desktop vs phone is one breakpoint:** 901 px (`constants/wizard.js`,
   `styles.js`). Below it: no sidebar, no drag, arrows instead.
 - **Styles live in three places:** inline `style={{…}}` on almost everything,
@@ -144,8 +146,9 @@ Candidates for plainer labels (Phase 2.7): "Project Settings", "Save Project",
 "Bride (Pre-Dress)", "Bride (Dress On)", "Narration", "Audio/Video Setup",
 "Ceremony: Average", "Location / Travel".
 
-**Proposed labels — for the owner to approve, change or reject (2.7).** Not
-applied. Rows marked *key* are event names or name prefixes: renaming them
+**Labels for 2.7 — applied on branch `phase-2.7/labels`; merging that branch
+is the owner's approval.** The ceremony rows below were changed from the first
+proposal ("Ceremony (about 30 min)") to keep the "Ceremony: …" form. Rows marked *key* are event names or name prefixes: renaming them
 also needs entries in `src/lib/renamedEvents.js` and updates to `colors.js`,
 `tiers.js` and `generateTimeline.js` (see Gotchas).
 
@@ -160,8 +163,8 @@ also needs entries in `src/lib/renamedEvents.js` and updates to `colors.js`,
 | Bride (Dress On): … | Bride dressed: … | *key* — block category |
 | Narration: … | Video messages: … | *key* — block category |
 | Ceremony: Audio/Video Setup, Reception: Audio/Video Setup | Ceremony: Sound and camera setup, Reception: Sound and camera setup | *key* — block names |
-| Ceremony: Average | Ceremony (about 30 min) | *key* — block name; also a ceremony anchor in `MobileApp.jsx` |
-| Ceremony: Catholic | Ceremony, Catholic Mass (about 1 hr) | *key* — as above |
+| Ceremony: Average | Ceremony: About 30 min | *key* — block name; also `CEREMONY_EVENTS` in `projectMigration.js` |
+| Ceremony: Catholic | Ceremony: Catholic Mass, about 1 hr | *key* — as above |
 | Location / Travel | Travel to another place | Sidebar and event list |
 | Use Custom Event | Use this name | Event list |
 | Create Custom Event | Your own event | Event list |

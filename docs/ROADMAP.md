@@ -120,7 +120,13 @@ name; three events fill a desktop screen; phone layout is clipped.
   Seen: no sideways scrolling at 375 px.
 - 2.6 done. Desktop has a Preview button that opens a wide panel; the
   sidebar is the block list only. Seen: page shown at about 1.5×, readable.
-- 2.7 **waiting on the owner** — the proposed list is in NOTES "Wording".
+- 2.7 **applied on its own branch, `phase-2.7/labels` (stacked on Phase 4),
+  so the owner approves by merging it** (or drops the branch). Uses the list
+  in NOTES "Wording", with one change: the ceremony names keep the
+  "Ceremony: …" form, because colour, tier and sidebar grouping read the part
+  before ": ". Old files map to the new names on load (tested). Seen: a
+  version-2 file with old names opened with new names, same colours, the
+  ceremony still pinned.
 
 Not changed (Phase 1): times still don't flow, so inserting can create an
 overlap "!", dragging still re-times the day, and the phone arrows still swap

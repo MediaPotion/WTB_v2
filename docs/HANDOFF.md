@@ -1,6 +1,6 @@
 # Handoff
 
-Last updated 2026-11-15, after Phase 0 and Phase 2 were built. Read this first, then
+Last updated 2026-11-16, after all roadmap phases were built. Read this first, then
 [ROADMAP.md](ROADMAP.md) for what to build and [NOTES.md](NOTES.md) for evidence
 and code references.
 
@@ -18,25 +18,33 @@ arithmetic to the client, and nothing is shared.
 
 ## Where things stand
 
-- **Code:** local `main` matches GitHub (`MediaPotion/WTB_v2`). The app code is
-  the 2026-07-17 version (commit `7d4aed6`); nothing newer exists on GitHub.
-- **Phase 0 is on branch `phase-0/housekeeping`; Phase 2 is on
-  `phase-2/adding-editing`, built on top of Phase 0.** Neither is merged or
-  pushed. Merge Phase 0 first. See the status under each phase in ROADMAP.
-  `main` still has only these documents and `CLAUDE.md` on top of the
-  2026-07-17 app code. D4 was taken as recommended: npm only.
-- **Phase 1 is on `phase-1/timing`, built on top of Phase 2**, with D1 taken
-  as recommended (the owner asked for everything to be built; confirm D1).
-- **Phase 3 is on `phase-3/quick-start`, built on top of Phase 1**, with D2
-  taken as recommended (confirm D2).
-- **Phase 4 is on `phase-4/sharing`, built on top of Phase 3**, with D3 taken
-  as recommended (confirm D3). It is switched off until set up — see
-  "Setting up sharing" below. 0.2's origin list waits on D5; 2.7 waits on approval of the proposed labels
-  in NOTES "Wording".
+- **Code:** local `main` matches GitHub (`MediaPotion/WTB_v2`): the 2026-07-17
+  app code plus these documents. **All roadmap work is on local branches,
+  not pushed and not merged.** Each is built on the one before, so merge
+  them in this order:
+
+| Order | Branch | What | Tests |
+|---|---|---|---|
+| 1 | `phase-0/housekeeping` | 0.1–0.4 (D4: npm only) | 10 |
+| 2 | `phase-2/adding-editing` | 2.1–2.6, proposed labels | 24 |
+| 3 | `phase-1/timing` | 1.1–1.5 (D1 as recommended) | 51 |
+| 4 | `phase-3/quick-start` | 3.1–3.3 (D2 as recommended) | 58 |
+| 5 | `phase-4/sharing` | 4.1–4.5 (D3 as recommended), switched off until set up | 70 |
+| 6 | `phase-2.7/labels` | 2.7 — merging it approves the labels | 71 |
+
+  Phase 2 went before Phase 1 because Phase 1's timing decision (D1) was
+  still open when Phase 2 was built.
+- **Decisions taken without the owner** (the owner asked for everything to be
+  built): D1, D2, D3 as the roadmap recommended, D4 = npm. Each lives on its
+  own branch, so it can be dropped before merging. **D5 (live address) is
+  still open**; it blocks switching on sharing and the send endpoint's
+  origin check.
+- **Not run:** the PHP files (no PHP on this machine). `send-timeline.php`
+  changed in Phases 0 and 4; `timeline-api.php` is new. Sharing was tested
+  against `scripts/dev-timeline-api.js`, a Node stand-in.
 - **Dependencies are installed** (`node_modules`, via `npm ci`, Node 18).
-- **It runs:** `npm start` serves the app; `npm run build` succeeds.
-- **Tests:** on `main`, 5 of 7 pass; on the Phase 0 branch 10 of 10; on the
-  Phase 2 branch 24 of 24.
+- **It runs:** `npm start` serves the app; `npm run build` succeeds on every
+  branch.
 - **Old local prototype** is preserved on the branch
   `backup/codesandbox-prototype`.
 
@@ -61,14 +69,13 @@ To see the phone layout, make the window narrower than 901 px.
 
 ## What to do next
 
-1. **Review and merge** Phase 0, then Phase 2 (`gh` is not installed, so
-   open the pull requests on GitHub or install `gh`). Upload the new
-   `hostinger/send-timeline.php`.
-2. **Phase 1** — timing. This is the core fix. Get the owner's answer on
-   decision D1 (events that happen at the same time) before writing code.
-   Branch it from Phase 2: Phase 1.2 changes the same handlers.
-3. **2.7** once the owner approves labels.
-4. **Phase 3**, then **Phase 4**, each after its open decision is settled.
+1. **Owner review.** Try each branch (`git checkout <branch>`, `npm start`),
+   confirm or change D1–D3 and the labels, then merge in the order above.
+   `gh` is not installed, so push the branches and open the pull requests
+   on GitHub, or install `gh`.
+2. **Decide D5** (where the live site is). Then upload the PHP files and set
+   up sharing (below), and fill in `ALLOWED_ORIGINS` in `send-timeline.php`.
+3. Phase 5 ideas remain unscheduled.
 
 ## Setting up sharing (Phase 4)
 
@@ -91,9 +98,9 @@ REACT_APP_TIMELINE_API=https://weddingpotion.com/wtb/timeline-api.php npm run bu
 
 ## Decisions waiting on the owner
 
-Listed with recommendations at the end of ROADMAP: D1 parallel events,
-D2 wizard or quick-start, D3 where shared timelines live, D4 package manager,
-D5 how the site is deployed.
+Listed at the end of ROADMAP. D1–D3 were built as recommended and need the
+owner's confirmation; D4 is done (npm); D5 (how and where the site is
+deployed) is still open.
 
 ## Working rules for this repo
 
@@ -104,7 +111,7 @@ D5 how the site is deployed.
 - Saved client files must keep loading. If the save format changes, bump
   `PROJECT_VERSION` and migrate old files on load.
 - Event block names are lookup keys — see NOTES "Gotchas" before renaming any.
-- `hostinger/send-timeline.php` only takes effect when the owner uploads it.
+- The `hostinger/` PHP files only take effect when the owner uploads them.
 - Keep these three documents current: tick off roadmap items, add new findings
   to NOTES, update "Where things stand" here.
 

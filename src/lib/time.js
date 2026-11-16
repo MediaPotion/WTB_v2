@@ -172,10 +172,9 @@ const coverageLineStyle = {
 
 function CoverageTimeLine({ label, coverage }) {
   if (!coverage) return null;
-  const prefix = label ? `${label} ` : "";
   return (
     <div style={coverageLineStyle}>
-      {prefix}Coverage Time: {formatDurationSpan(coverage.totalMinutes)}
+      {label ? `${label} hours` : "Coverage"}: {formatDurationSpan(coverage.totalMinutes)}
       <span style={{ color: "var(--wtb-text-muted)", fontWeight: 200 }}>
         {" "}
         ({formatClockLabel(coverage.startMin)} – {formatClockLabel(coverage.endMin)})
@@ -202,8 +201,8 @@ function TimelineCoverageCounter({ photoCoverage, videoCoverage, coverage, style
   }
 
   const lines = [];
-  if (photoCoverage) lines.push({ label: "Photography", coverage: photoCoverage });
-  if (videoCoverage) lines.push({ label: "Videography", coverage: videoCoverage });
+  if (photoCoverage) lines.push({ label: "Photo", coverage: photoCoverage });
+  if (videoCoverage) lines.push({ label: "Video", coverage: videoCoverage });
   if (lines.length === 0) return null;
 
   return (

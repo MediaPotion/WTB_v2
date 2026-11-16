@@ -1,7 +1,7 @@
 import { generateQuickStartRows, quickStartProjectSettings, QUICK_START_DEFAULTS } from "./quickStart";
 import { flowTimes } from "./flow";
 
-const ceremonyOf = (rows) => rows.find((r) => r.event.startsWith("Ceremony: ") && r.event !== "Ceremony: Audio/Video Setup");
+const ceremonyOf = (rows) => rows.find((r) => r.event.startsWith("Ceremony: ") && r.event !== "Ceremony: Sound and camera setup");
 
 describe("generateQuickStartRows", () => {
   test("minimal answers (only a ceremony time): a full day, in order, ceremony pinned at that time", () => {
@@ -9,7 +9,7 @@ describe("generateQuickStartRows", () => {
     expect(rows.length).toBeGreaterThan(20);
     rows.slice(1).forEach((row, i) => expect(row.time).toBeGreaterThanOrEqual(rows[i].time));
     const ceremony = ceremonyOf(rows);
-    expect(ceremony).toMatchObject({ event: "Ceremony: Average", time: 15 * 60 + 30, duration: 30, isTimeLocked: true });
+    expect(ceremony).toMatchObject({ event: "Ceremony: About 30 min", time: 15 * 60 + 30, duration: 30, isTimeLocked: true });
   });
 
   test("no answers at all still gives a draft with the defaults", () => {
@@ -38,7 +38,7 @@ describe("generateQuickStartRows", () => {
     const full = generateQuickStartRows({ firstLook: true, ceremonyLength: 60, twoVenues: true });
     expect(plain.some((r) => r.event === "First Look: with Groom")).toBe(false);
     expect(full.some((r) => r.event === "First Look: with Groom")).toBe(true);
-    expect(ceremonyOf(full)).toMatchObject({ event: "Ceremony: Catholic", duration: 60 });
+    expect(ceremonyOf(full)).toMatchObject({ event: "Ceremony: Catholic Mass, about 1 hr", duration: 60 });
     expect(full.some((r) => r.type === "location" && r.event === "Reception")).toBe(true);
     expect(plain.some((r) => r.type === "location" && r.event === "Reception")).toBe(false);
   });

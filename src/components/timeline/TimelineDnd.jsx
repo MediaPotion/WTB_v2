@@ -82,7 +82,7 @@ function TimelineDndProvider({
       const payload = data.payload;
       const isLocation = payload?.type === "location";
       const label = isLocation
-        ? "Location / Travel"
+        ? "Travel to another place"
         : (payload?.event || "").split(": ").pop() || payload?.event || "Event";
       const borderColor = isLocation ? "#ffffff" : getEventColor(payload?.event || "", "#ffffff");
       return (

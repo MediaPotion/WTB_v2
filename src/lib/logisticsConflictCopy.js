@@ -25,7 +25,7 @@ export function buildLogisticsContext(state, rows = []) {
     ceremonyEnd = ceremonyStart + ceremonyDuration;
   }
 
-  const avRow = rows.find((r) => r.event === "Reception: Audio/Video Setup");
+  const avRow = rows.find((r) => r.event === "Reception: Sound and camera setup");
   const receptionStart = avRow
     ? avRow.time
     : parseTimeInput(

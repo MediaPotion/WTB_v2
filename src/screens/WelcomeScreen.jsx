@@ -56,7 +56,7 @@ function WelcomeScreen({ showAutosaveBanner, restoreAutosave, clearAutosave, onC
           <label
             style={{ padding: "16px 32px", background: "transparent", color: "var(--wtb-accent)", border: "1px solid var(--wtb-accent)", borderRadius: 8, fontSize: 16, fontWeight: 300, cursor: "pointer", width: "100%", boxSizing: "border-box", textAlign: "center", fontFamily: "'Jost', sans-serif" }}
           >
-            Load Existing Timeline
+            Open a saved timeline
             <input type="file" accept=".json" onChange={loadProject} style={{ display: "none" }} />
           </label>
         </div>

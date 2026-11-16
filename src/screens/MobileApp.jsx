@@ -82,7 +82,7 @@ export default function MobileApp() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [settingsTab, setSettingsTab] = useState(0);
 
-  // Fixed-time events (Project Settings)
+  // Fixed-time events (Wedding details)
   const [fixedEvents, setFixedEvents] = useState([
     { id: 1, event: "Ceremony", timeHour: "3", timeMinute: "00", timePeriod: "PM", duration: 30 },
   ]);
@@ -1124,7 +1124,7 @@ export default function MobileApp() {
     );
   };
 
-  // ---- Project Settings helpers ----
+  // ---- Wedding details helpers ----
   const settingsSelectStyle = SETTINGS_SELECT_STYLE;
 
   const addFixedEvent = (eventName = "", h = "12", m = "00", p = "PM", dur = 30) => {
@@ -1644,7 +1644,7 @@ export default function MobileApp() {
           </h1>
 
           <div style={{ background: "var(--wtb-surface)", border: "1px solid var(--wtb-surface-raised)", borderRadius: 10, padding: "24px 24px 8px", marginBottom: 16 }}>
-            <h2 style={{ margin: "0 0 6px 0", fontSize: 20, color: "var(--wtb-text)", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Project Settings</h2>
+            <h2 style={{ margin: "0 0 6px 0", fontSize: 20, color: "var(--wtb-text)", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Wedding details</h2>
             <p style={{ margin: "0 0 20px 0", fontSize: 14, color: "var(--wtb-text-muted)", fontFamily: "'Jost', sans-serif" }}>Set up your wedding details before building the timeline.</p>
             {renderSettingsForm(false)}
           </div>
@@ -1661,7 +1661,7 @@ export default function MobileApp() {
             <label
               style={{ padding: "10px 24px", background: "transparent", color: "var(--wtb-accent)", border: "1px solid var(--wtb-accent)", borderRadius: 6, fontSize: 14, fontWeight: 300, cursor: "pointer", textAlign: "center", width: "100%", maxWidth: 360, boxSizing: "border-box", fontFamily: "'Jost', sans-serif" }}
             >
-              Load Existing Project
+              Open a saved timeline
               <input type="file" accept=".json" onChange={loadProjectFile} style={{ display: "none" }} />
             </label>
           </div>
@@ -1719,7 +1719,7 @@ export default function MobileApp() {
                         New Timeline
                       </button>
                       <label role="menuitem" className="wtb-mobile-gear-menu-item wtb-edit-only" style={{ cursor: "pointer", margin: 0 }}>
-                        Load Project
+                        Open a saved timeline
                         <input
                           type="file"
                           accept=".json"
@@ -1733,7 +1733,7 @@ export default function MobileApp() {
                         className="wtb-mobile-gear-menu-item wtb-mobile-gear-menu-item--primary wtb-edit-only"
                         onClick={() => { saveProject(); closeMobileGearMenu(); }}
                       >
-                        Save Project
+                        Save a copy
                       </button>
                       <button
                         type="button"
@@ -1795,7 +1795,7 @@ export default function MobileApp() {
                         className="wtb-mobile-gear-menu-item wtb-edit-only"
                         onClick={() => { setShowSettingsModal(true); closeMobileGearMenu(); }}
                       >
-                        Project Settings
+                        Wedding details
                       </button>
                     </div>
                     )}
@@ -1847,7 +1847,7 @@ export default function MobileApp() {
                   className="wtb-edit-only"
                   style={{ padding: "6px 14px", background: "transparent", color: "var(--wtb-text)", border: "1px solid var(--wtb-border)", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, display: "inline-block", fontFamily: "'Jost', sans-serif" }}
                 >
-                  Load Project
+                  Open a saved timeline
                   <input type="file" accept=".json" onChange={loadProjectFile} style={{ display: "none" }} />
                 </label>
                 <button
@@ -1855,14 +1855,14 @@ export default function MobileApp() {
                   onClick={saveProject}
                   style={{ padding: "6px 14px", backgroundColor: "var(--wtb-accent)", color: "var(--wtb-on-accent)", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif", letterSpacing: "0.05em" }}
                 >
-                  Save Project
+                  Save a copy
                 </button>
                 <button
                   className="wtb-edit-only"
                   onClick={() => setShowSettingsModal(true)}
                   style={{ padding: "6px 14px", background: "transparent", color: "var(--wtb-text)", border: "1px solid var(--wtb-border)", borderRadius: 4, fontSize: 13, fontWeight: 300, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Jost', sans-serif" }}
                 >
-                  Project Settings
+                  Wedding details
                 </button>
               </div>
               <div
@@ -2243,7 +2243,7 @@ export default function MobileApp() {
             </div>
           )}
 
-          {/* Project Settings Modal */}
+          {/* Wedding details Modal */}
           {showSendReminder && (
             <div
               style={{
@@ -2310,7 +2310,7 @@ export default function MobileApp() {
               <div style={{ background: "var(--wtb-surface)", border: "1px solid var(--wtb-border)", borderRadius: 10, maxWidth: 960, width: "100%", padding: 24, position: "relative" }}>
                 {/* Header */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                  <h2 style={{ margin: 0, fontSize: 20, color: "var(--wtb-text)", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Project Settings</h2>
+                  <h2 style={{ margin: 0, fontSize: 20, color: "var(--wtb-text)", fontWeight: 400, fontFamily: "'Cormorant Garamond', serif" }}>Wedding details</h2>
                   <button
                     onClick={() => setShowSettingsModal(false)}
                     style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--wtb-text-muted)", lineHeight: 1 }}

@@ -8,11 +8,11 @@ function EventSidebar() {
   return (
     <div className="wtb-sidebar-wrap">
       <aside className="wtb-sidebar" style={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-        <h2 className="wtb-side-title">Event Blocks</h2>
+        <h2 className="wtb-side-title">Add events</h2>
         <div className="wtb-side-note">Drag a block between two events to add it there</div>
         <>
             <div className="wtb-palette">
-              {/* Location / Travel block */}
+              {/* Travel to another place block */}
               <div style={{ fontSize: 10, color: "#ffffff", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 4, fontFamily: "'Jost', sans-serif", fontWeight: 400 }}>Travel</div>
               <DraggableSidebarBlock
                 id="sidebar-location"
@@ -20,7 +20,7 @@ function EventSidebar() {
                 style={{ background: "var(--wtb-surface-raised)", border: "2px solid #ffffff", color: "var(--wtb-text)", marginBottom: 8, width: "100%", textAlign: "left" }}
                 title="Drag to add a location / travel block"
               >
-                <span>Location / Travel</span>
+                <span>Travel to another place</span>
                 <span style={{ fontSize: 12, color: "var(--wtb-text-muted)", fontWeight: "bold", marginLeft: "16px", whiteSpace: "nowrap" }}>15 min</span>
               </DraggableSidebarBlock>
               {(() => {

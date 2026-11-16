@@ -15,7 +15,7 @@ describe("formatNotesLines", () => {
 describe("prepareTimelineExportRows", () => {
   it("sorts rows by time ascending", () => {
     const rows = [
-      { id: 2, time: 16 * 60 + 10, event: "Ceremony: Audio/Video Setup" },
+      { id: 2, time: 16 * 60 + 10, event: "Ceremony: Sound and camera setup" },
       { id: 1, time: 15 * 60 + 15, event: "Group Photos: Family" },
     ];
     const out = prepareTimelineExportRows(rows);
@@ -26,7 +26,7 @@ describe("prepareTimelineExportRows", () => {
     const rows = [
       { id: 1, time: 100, event: "Group Photos: Family" },
       { id: 1, time: 100, event: "Group Photos: Family" },
-      { id: 2, time: 200, event: "Ceremony: Audio/Video Setup" },
+      { id: 2, time: 200, event: "Ceremony: Sound and camera setup" },
     ];
     const out = prepareTimelineExportRows(rows);
     expect(out).toHaveLength(2);

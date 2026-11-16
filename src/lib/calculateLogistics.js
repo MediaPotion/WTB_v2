@@ -22,7 +22,7 @@ const DETAIL_EVENTS = [
 ];
 const WEDDING_PARTY_EVENT = "Wedding Party: Group Shots";
 const BRIDE_GROOM_PORTRAITS_EVENT = "Bride & Groom: Portraits";
-const RECEPTION_AV_SETUP = "Reception: Audio/Video Setup";
+const RECEPTION_AV_SETUP = "Reception: Sound and camera setup";
 
 function pick(answers, ...keys) {
   for (const key of keys) {

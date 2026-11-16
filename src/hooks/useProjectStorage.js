@@ -186,13 +186,16 @@ export function useProjectStorage(state) {
     setUserRows(
       loadedRows && loadedRows.length > 0
         ? flowTimes(
-            migrateSavedRows(loadedRows, projectData.version).map((r) =>
+            // Names first: the row migration recognises ceremonies by name.
+            migrateSavedRows(
+              loadedRows.map((r) => ({ ...r, event: migrateEventName(r.event) })),
+              projectData.version
+            ).map((r) =>
               normalizeTimelineRow({
                 photo: true,
                 video: true,
                 notes: "",
                 ...r,
-                event: migrateEventName(r.event),
               })
             )
           )
