@@ -146,8 +146,7 @@ Candidates for plainer labels (Phase 2.7): "Project Settings", "Save Project",
 "Bride (Pre-Dress)", "Bride (Dress On)", "Narration", "Audio/Video Setup",
 "Ceremony: Average", "Location / Travel".
 
-**Labels for 2.7 — applied on branch `phase-2.7/labels`; merging that branch
-is the owner's approval.** The ceremony rows below were changed from the first
+**Labels for 2.7 — applied and approved (the owner merged PR #7).** The ceremony rows below were changed from the first
 proposal ("Ceremony (about 30 min)") to keep the "Ceremony: …" form. Rows marked *key* are event names or name prefixes: renaming them
 also needs entries in `src/lib/renamedEvents.js` and updates to `colors.js`,
 `tiers.js` and `generateTimeline.js` (see Gotchas).
@@ -171,22 +170,30 @@ also needs entries in `src/lib/renamedEvents.js` and updates to `colors.js`,
 
 ## Repository state
 
-- `main` matches `origin/main`. App code is unchanged since `7d4aed6`; later
-  commits only add these documents.
+- `main` has every roadmap phase (pull requests #1–#7, merged 2026-11-16).
+  PR #2 was based on `phase-0/housekeeping` and merged into it instead of
+  `main`; PR #3 brought it into `main`. Base each pull request on `main`.
+- The merged branches `phase-0/housekeeping`, `phase-1/timing`,
+  `phase-3/quick-start`, `phase-4/sharing` and `phase-2.7/labels` are still
+  on GitHub; nothing in them is missing from `main`.
 - `backup/codesandbox-prototype` (local only) holds the two old prototype
   commits that used to be on local `main`. Safe to delete once the owner agrees.
 - Remote branch `Mobile+Desktopv2` has one old commit not in main
   ("remove time arrows", 2025-08). The other remote branches are fully merged
   or older.
 - `hostinger/timeline-config.php` (database password) is in `.gitignore`.
-- No pull requests exist. The GitHub command-line tool (`gh`) is not installed
-  on this machine.
+- The GitHub command-line tool (`gh`) is not installed on this machine.
+- Vercel and CodeSandbox bots comment on every pull request. Vercel builds
+  previews in five projects: `wedding-timeline`, `wtb-v2`, `wtb-v2-4b6h`,
+  `wtb-v2-e5gv`, `wtb-v2-gqrf` (all built successfully for PR #7).
 
 ## Unknowns
 
 - How and where the live site is deployed. The send endpoint is on
   `weddingpotion.com/wtb/`, and the build assumes it is served from `/`, so the
-  app may live elsewhere or need a `homepage` setting.
+  app may live elsewhere or need a `homepage` setting. The five Vercel
+  projects above suggest the app is (or was) hosted on Vercel; which one, if
+  any, is live is not known.
 - Why the wizard was switched off for clients (commit message says only
   "for client-facing builds").
 - The wizard was read but never run during the assessment.

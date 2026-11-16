@@ -27,7 +27,7 @@ Small fixes that unblock later phases.
 | 0.3 | Fix block-name typos: "Garder Belt Toss", "Rings,Invitations, & Accessories". **Event names are lookup keys** (see NOTES "Gotchas") — search the whole `src/` tree for the old string before renaming. | Old strings appear nowhere in `src/`; a file saved before the rename still loads and keeps its colours. |
 | 0.4 | Remove `scripts/split-app.js` (one-time script; reads a file that no longer exists) and keep one lockfile (see open decision D4). | `npm ci && npm run build` still succeeds. |
 
-**Status (branch `phase-0/housekeeping`):**
+**Status (merged, PR #1):**
 
 - 0.1 done — 7 of 7 tests pass.
 - 0.2 done in code, not live. Rate limit (3 sends per minute per IP) and
@@ -62,7 +62,7 @@ Needs decision **D1** (parallel events) before building.
 | 1.4 | Replace the red "!" overlap badge with plain statements on the pinned row: "Runs 20 min into Ceremony" (problem) or "20 min free before Ceremony" (information). | No "!" badge remains; overrun and free-time messages show the right minutes. |
 | 1.5 | Migrate saved files. On load of a version-2 file, sort by time once, then pin any row whose start differs from the previous row's end, so old timelines open looking exactly as saved. Bump `PROJECT_VERSION` to 3. | A version-2 file with gaps and overlaps loads with identical times; a test covers this. |
 
-**Status (branch `phase-1/timing`, stacked on Phase 2).** D1 taken as
+**Status (merged, PR #4).** D1 taken as
 recommended, with this control: "Same time as the event above" in a row's
 options. Such a row starts with the row above, is indented, shows ⇉, gets no
 warning, and the next row waits for whichever of the two ends later.
@@ -102,7 +102,7 @@ name; three events fill a desktop screen; phone layout is clipped.
 | 2.6 | Preview fits its panel width by default and no longer replaces the block list on desktop. | Preview text is readable without zooming at 1366×800. |
 | 2.7 | Plain-language labels (see NOTES "Wording"). | Owner approves the label list before it is applied. |
 
-**Status (branch `phase-2/adding-editing`, stacked on Phase 0):**
+**Status (merged, PRs #2 and #3):**
 
 - 2.1 done. "+" between rows (it shows on hover on desktop and is always
   shown on phones) and the "+ Add Event" button open the list and insert. A
@@ -120,8 +120,7 @@ name; three events fill a desktop screen; phone layout is clipped.
   Seen: no sideways scrolling at 375 px.
 - 2.6 done. Desktop has a Preview button that opens a wide panel; the
   sidebar is the block list only. Seen: page shown at about 1.5×, readable.
-- 2.7 **applied on its own branch, `phase-2.7/labels` (stacked on Phase 4),
-  so the owner approves by merging it** (or drops the branch). Uses the list
+- 2.7 done — **the owner approved the labels by merging PR #7.** Uses the list
   in NOTES "Wording", with one change: the ceremony names keep the
   "Ceremony: …" form, because colour, tier and sidebar grouping read the part
   before ": ". Old files map to the new names on load (tested). Seen: a
@@ -147,7 +146,7 @@ Needs 0.1 first, and decision **D2**.
 | 3.2 | Feed those answers to the existing `generateTimeline` with defaults for the rest; pin the ceremony. Add a test with the minimal answer set. | Test passes; generated rows are in order with the ceremony at the entered time. |
 | 3.3 | Keep a "Start with a blank timeline" link. | Blank start still works. |
 
-**Status (branch `phase-3/quick-start`, stacked on Phase 1).** D2 taken as
+**Status (merged, PR #5).** D2 taken as
 recommended: quick start only; the wizard code stays in place, switched off.
 
 - 3.1 done — `src/screens/QuickStartScreen.jsx`, opened by "Create New
@@ -181,7 +180,7 @@ Needs decision **D3** (where the data lives) before any work.
 | 4.4 | Guard against overwriting: each save carries a version number; if the server has a newer one, the app asks the person to reload. Show "last edited by … at …". | Two browsers editing the same timeline never silently lose a change. |
 | 4.5 | Keep file export as a backup, and change "Send to Media Potion" to send the link. | Export still downloads; the email contains the link. |
 
-**Status (branch `phase-4/sharing`, stacked on Phase 3).** D3 taken as
+**Status (merged, PR #6).** D3 taken as
 recommended: `hostinger/timeline-api.php` (PHP + MySQL via PDO; tables made
 on first use), secret links, no logins. **Off until it is set up:** the app
 shares only when built with `REACT_APP_TIMELINE_API` set to that file's URL,
@@ -219,8 +218,8 @@ stand-in with the same requests and responses.
 
 | # | Question | Recommendation |
 |---|---|---|
-| D1 | Two shooters often cover bride and groom at the same time. How should parallel events appear in a one-after-another timeline? | Let a pinned row overlap its neighbours without warning when it is marked "at the same time as the previous event"; decide the exact control with a mock-up before building 1.1. **Taken as recommended (Phase 1 branch) — owner to confirm.** |
-| D2 | Bring back the full 7-step wizard, or only the short quick-start? | Short quick-start only. Leave the old wizard code in place, switched off, until Phase 3 proves out. **Taken as recommended (Phase 3 branch) — owner to confirm.** |
-| D3 | Where do shared timelines live? | A small PHP + MySQL service on the existing Hostinger account, with secret links and no logins. Alternative: a hosted database service (for example Supabase) if live co-editing is wanted later. **Taken as recommended (Phase 4 branch) — owner to confirm.** |
+| D1 | Two shooters often cover bride and groom at the same time. How should parallel events appear in a one-after-another timeline? | Let a pinned row overlap its neighbours without warning when it is marked "at the same time as the previous event"; decide the exact control with a mock-up before building 1.1. **Taken as recommended; merged by the owner (PR #4).** |
+| D2 | Bring back the full 7-step wizard, or only the short quick-start? | Short quick-start only. Leave the old wizard code in place, switched off, until Phase 3 proves out. **Taken as recommended; merged by the owner (PR #5).** |
+| D3 | Where do shared timelines live? | A small PHP + MySQL service on the existing Hostinger account, with secret links and no logins. Alternative: a hosted database service (for example Supabase) if live co-editing is wanted later. **Taken as recommended; merged by the owner (PR #6).** |
 | D4 | The repo has both `package-lock.json` and `pnpm-lock.yaml`. Which package manager? | npm — the launcher script already uses it. **Taken (Phase 0).** |
-| D5 | How is the live site deployed, and at what address? | Unknown — see NOTES "Unknowns". Needed before anything ships. |
+| D5 | How is the live site deployed, and at what address? | Unknown — see NOTES "Unknowns". Pull requests trigger previews in five Vercel projects, so the live app may be on Vercel. Needed before sharing is switched on. |
