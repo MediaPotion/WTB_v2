@@ -761,7 +761,8 @@ function TimelinePreview({ rows, bride, groom, date, photoStartHour, photoStartM
     return () => obs.disconnect();
   }, []);
 
-  const baseScale = Math.max(0.2, (panelW - 32) / PW);
+  // contentRect already excludes the container's padding.
+  const baseScale = Math.max(0.2, panelW / PW);
   const sc = baseScale * userZoom;
   const pages = layoutPreviewPages(rows);
 

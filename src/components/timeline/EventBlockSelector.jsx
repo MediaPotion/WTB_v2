@@ -3,16 +3,22 @@ import { EVENT_BLOCKS } from "../../constants/events";
 import { getEventColor } from "../../constants/colors";
 import { formatTime, parseTimeInput, snapMinuteToFive, MINUTE_OPTIONS_5 } from "../../lib/time";
 
-function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, currentTime }) {
+// mode "insert": the chosen event becomes a new row; "change": it replaces the row's event.
+function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, currentTime, currentDuration, mode = "change" }) {
   const [customEvent, setCustomEvent] = useState(currentEvent || "");
   const [customDuration, setCustomDuration] = useState("30");
   const [timeHour, setTimeHour] = useState("12");
   const [timeMinute, setTimeMinute] = useState("00");
   const [timePeriod, setTimePeriod] = useState("PM");
+  // Only send a start time when the person actually set one here, so picking
+  // an event never moves a row by itself.
+  const [timeTouched, setTimeTouched] = useState(false);
 
   useEffect(() => {
     if (isVisible) {
       setCustomEvent(currentEvent || "");
+      setCustomDuration(String(currentDuration > 0 ? currentDuration : 30));
+      setTimeTouched(false);
       if (currentTime) {
         const timeFormatted = formatTime(currentTime);
         setTimeHour(timeFormatted.hour);
@@ -20,18 +26,20 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
         setTimePeriod(timeFormatted.period);
       }
     }
-  }, [isVisible, currentEvent, currentTime]);
+  }, [isVisible, currentEvent, currentTime, currentDuration]);
+
+  const chosenTime = () =>
+    timeTouched ? { time: parseTimeInput(timeHour, timeMinute, timePeriod) } : {};
 
   const isValidDuration =
     /\d+/.test(customDuration) && parseInt(customDuration, 10) > 0;
 
   const handleCustomEventSubmit = () => {
     if (!customEvent.trim() || !isValidDuration) return;
-    const newTime = parseTimeInput(timeHour, timeMinute, timePeriod);
     onSelect({
       event: customEvent.trim(),
       duration: parseInt(customDuration, 10),
-      time: newTime,
+      ...chosenTime(),
     });
   };
 
@@ -81,7 +89,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
             padding: "16px 20px",
           }}
         >
-          <h3 style={{ margin: 0, color: "var(--wtb-text)", fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400 }}>Select or Create Event</h3>
+          <h3 style={{ margin: 0, color: "var(--wtb-text)", fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400 }}>{mode === "insert" ? "Add Event" : "Change Event"}</h3>
           <button
             onClick={onClose}
             style={{
@@ -139,8 +147,8 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
               }}
             />
           </div>
-          <div style={{ display: "flex", gap: 20, marginBottom: 10 }}>
-            <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px 20px", marginBottom: 10 }}>
+            <div style={{ flex: "1 1 auto" }}>
               <label
                 style={{
                   display: "block",
@@ -157,7 +165,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <select
                   value={timeHour}
-                  onChange={(e) => setTimeHour(e.target.value)}
+                  onChange={(e) => { setTimeHour(e.target.value); setTimeTouched(true); }}
                   style={{
                     width: 64,
                     height: 32,
@@ -178,7 +186,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                 <span style={{ fontSize: 16, color: "var(--wtb-text)" }}>:</span>
                 <select
                   value={timeMinute}
-                  onChange={(e) => setTimeMinute(e.target.value)}
+                  onChange={(e) => { setTimeMinute(e.target.value); setTimeTouched(true); }}
                   style={{
                     width: 64,
                     height: 32,
@@ -198,7 +206,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                 </select>
                 <select
                   value={timePeriod}
-                  onChange={(e) => setTimePeriod(e.target.value)}
+                  onChange={(e) => { setTimePeriod(e.target.value); setTimeTouched(true); }}
                   style={{
                     width: 70,
                     height: 32,
@@ -301,8 +309,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
           <button
             type="button"
             onClick={() => {
-              const newTime = parseTimeInput(timeHour, timeMinute, timePeriod);
-              onSelect({ type: "location", event: "", duration: 15, time: newTime });
+              onSelect({ type: "location", event: "", duration: 15, ...chosenTime() });
             }}
             style={{
               width: "100%",
@@ -346,8 +353,7 @@ function EventBlockSelector({ isVisible, onSelect, onClose, currentEvent, curren
                 <button
                   key={block}
                   onClick={() => {
-                    const newTime = parseTimeInput(timeHour, timeMinute, timePeriod);
-                    onSelect({ event: label, duration, time: newTime });
+                    onSelect({ event: label, duration, ...chosenTime() });
                   }}
                   style={{ width: "100%", padding: 12, margin: "4px 0", backgroundColor: "var(--wtb-surface)", border: `2px solid ${getEventColor(label)}`, borderRadius: 8, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14, fontWeight: 500, color: "var(--wtb-text)" }}
                 >

@@ -13,6 +13,7 @@ import {
 } from "../constants/wizard";
 import { DEFAULT_ROW_TIER_FIELDS } from "../constants/tiers";
 import { getDefaultTierForEvent } from "../lib/rowTier";
+import { insertTimeAt, insertRowAt, resolveBlockDrop } from "../lib/rowInsert";
 import { defaultIsOutdoorForEvent } from "../constants/colors";
 import { formatTime, parseTimeInput, computeProjectMediaCoverage, TimelineCoverageCounter, useMediaQuery } from "../lib/time";
 import {
@@ -119,6 +120,9 @@ export default function MobileApp() {
   const mainScrollRef = useRef(null);
   const [showEventSelector, setShowEventSelector] = useState(false);
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
+  const [insertIndex, setInsertIndex] = useState(null); // event list opened from "+": insert here
+  const [deleteToast, setDeleteToast] = useState(null); // { label, rowsBefore }
+  const [showPreview, setShowPreview] = useState(false); // desktop preview panel
   const [isDirty, setIsDirty] = useState(false);
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
   const [showLogisticsModal, setShowLogisticsModal] = useState(false);
@@ -582,13 +586,20 @@ export default function MobileApp() {
     }
   };
 
+  // Delete at once; a message offers Undo for a few seconds.
   const handleDelete = (displayIndex) => {
     const row = rows[displayIndex];
+    if (!row) return;
     const userRowIndex = userRows.findIndex((u) => u.id === row.id);
     if (userRowIndex === -1) return;
 
     const newUserRows = userRows.filter((_, idx) => idx !== userRowIndex);
     saveToHistory(newUserRows);
+    const name = String(row.event || "").trim();
+    setDeleteToast({
+      label: name ? `Deleted “${name}”` : row.type === "location" ? "Deleted location" : "Deleted event",
+      rowsBefore: userRows,
+    });
   };
 
   // Cascade times based on the visual (array index) order of rows, using the
@@ -714,126 +725,91 @@ export default function MobileApp() {
     saveToHistory(newUserRows);
   };
 
+  // "Change" on a row: pick a different event for that row.
   const handleEventClick = (index) => {
+    setInsertIndex(null);
     setSelectedRowIndex(index);
     setShowEventSelector(true);
   };
 
+  const closeEventSelector = () => {
+    setShowEventSelector(false);
+    setSelectedRowIndex(null);
+    setInsertIndex(null);
+  };
+
+  // Fields that come from a chosen event block (sidebar or event list).
+  const eventFieldsFrom = (eventData) => {
+    if (eventData.type === "location") {
+      return {
+        type: "location",
+        event: eventData.event ?? "",
+        duration: eventData.duration ?? 15,
+        address: eventData.address ?? "",
+        color: "",
+      };
+    }
+    const outdoorDefault = defaultIsOutdoorForEvent(eventData.event);
+    return {
+      type: "event",
+      event: eventData.event,
+      duration: eventData.duration,
+      tier: getDefaultTierForEvent(eventData.event),
+      flexibilityMinutes: 0,
+      ...(outdoorDefault !== undefined ? { isOutdoor: outdoorDefault } : {}),
+    };
+  };
+
+  // Insert a new row holding `eventData` at display position `index`.
+  // Existing rows are never changed.
+  const insertEventAt = (index, eventData) => {
+    if (!eventData) return;
+    const fields = eventFieldsFrom(eventData);
+    const time =
+      eventData.time !== undefined ? eventData.time : insertTimeAt(rows, index, fields.duration);
+    const newRow = {
+      id: nextId,
+      location: "",
+      notes: "",
+      address: "",
+      isOutdoor: false,
+      photo: photoEnabled,
+      video: videoEnabled,
+      isTimeLocked: false,
+      ...DEFAULT_ROW_TIER_FIELDS,
+      ...fields,
+      time,
+    };
+    setNextId(nextId + 1);
+    saveToHistory(insertRowAt(userRows, rows, index, newRow));
+  };
+
   // Handle selecting an event from the EventBlockSelector
   const handleEventSelect = (eventData) => {
-    if (selectedRowIndex !== null && eventData) {
+    if (insertIndex !== null && eventData) {
+      insertEventAt(insertIndex, eventData);
+    } else if (selectedRowIndex !== null && eventData) {
       const displayRow = rows[selectedRowIndex];
       const userRowIndex = userRows.findIndex((u) => u.id === displayRow.id);
       if (userRowIndex !== -1) {
         const newUserRows = [...userRows];
-        if (eventData.type === "location") {
-          newUserRows[userRowIndex] = {
-            ...newUserRows[userRowIndex],
-            type: "location",
-            event: eventData.event ?? "",
-            duration: eventData.duration ?? 15,
-            address: eventData.address ?? "",
-            color: "",
-            ...(eventData.time !== undefined ? { time: eventData.time } : {}),
-          };
-        } else {
-          const outdoorDefault = defaultIsOutdoorForEvent(eventData.event);
-          newUserRows[userRowIndex] = {
-            ...newUserRows[userRowIndex],
-            type: "event",
-            event: eventData.event,
-            duration: eventData.duration,
-            ...(eventData.time !== undefined ? { time: eventData.time } : {}),
-            ...(outdoorDefault !== undefined ? { isOutdoor: outdoorDefault } : {}),
-          };
-        }
-
+        newUserRows[userRowIndex] = {
+          ...newUserRows[userRowIndex],
+          ...eventFieldsFrom(eventData),
+          ...(eventData.time !== undefined ? { time: eventData.time } : {}),
+        };
         saveToHistory(newUserRows);
       }
     }
+    closeEventSelector();
+  };
 
-    // Close the selector and reset the selection
-    setShowEventSelector(false);
+  // "+" between rows (and the Add Event button): open the event list; the
+  // chosen event is inserted at this spot.
+  const addRowAtIndex = (index) => {
     setSelectedRowIndex(null);
-  };
-
-  const handleEventBlur = (displayIndex) => {
-    const isBottom = displayIndex === rows.length - 1;
-    const hasEvent = rows[displayIndex]?.event?.trim() !== "";
-    if (isBottom && hasEvent) addRow();
-  };
-
-  // Add a new row at a specific display index
-  const addRowAtIndex = (insertIndex) => {
-    
-    // Determine the intended time for the new row based on display order
-    let newTime;
-    if (insertIndex === 0) {
-      newTime = Math.max(0, (rows[0]?.time || 12 * 60) - 30);
-    } else if (insertIndex >= rows.length) {
-      const lastRow = rows[rows.length - 1];
-      newTime = lastRow ? lastRow.time + lastRow.duration : 12 * 60;
-    } else {
-      const prevRow = rows[insertIndex - 1];
-      const nextRow = rows[insertIndex];
-      // Insert between prevRow and nextRow - calculate time between them
-      const prevEndTime = prevRow.time + prevRow.duration;
-      const nextStartTime = nextRow.time;
-      
-      // If there's a gap, place it at the previous row's end time
-      // If there's no gap (overlapping), place it between the times
-      if (prevEndTime <= nextStartTime) {
-        newTime = prevEndTime;
-      } else {
-        // If overlapping, place it halfway between prev start and next start
-        newTime = Math.floor((prevRow.time + nextStartTime) / 2);
-      }
-    }
-
-    const aboveRow = insertIndex > 0 ? rows[insertIndex - 1] : null;
-
-    const newRow = {
-      id: nextId,
-      location: "",
-      time: newTime,
-      event: "",
-      duration: aboveRow ? aboveRow.duration : 30,
-      isOutdoor: false,
-      photo: photoEnabled,
-      video: videoEnabled,
-      notes: "",
-      isTimeLocked: false,
-      type: "event",
-      address: "",
-      ...DEFAULT_ROW_TIER_FIELDS,
-    };
-
-    // Insert the new row at the correct position based on time order
-    const newUserRows = [...userRows];
-    
-    // Find the correct insertion point in userRows based on time and display order
-    let insertPosition = newUserRows.length; // Default to end
-    
-    // We need to insert based on the intended display position, not just time
-    // Find the row that corresponds to rows[insertIndex] (the row we want to insert before)
-    if (insertIndex < rows.length) {
-      const targetRow = rows[insertIndex]; // The row we want to insert before
-      // Find this row in userRows
-      for (let i = 0; i < newUserRows.length; i++) {
-        if (newUserRows[i].id === targetRow.id) {
-          insertPosition = i;
-          break;
-        }
-      }
-    }
-    
-    
-    // Insert the new row at the calculated position
-    newUserRows.splice(insertPosition, 0, newRow);
-
-
-    setNextId(nextId + 1);
-    saveToHistory(newUserRows);
+    setInsertIndex(index);
+    setShowEventSelector(true);
   };
 
   // Append a new row at the end of the list
@@ -850,53 +826,13 @@ export default function MobileApp() {
     setUserRows((prev) => prev.map((r) => ({ ...r, video: checked })));
   };
 
-  // Handle drops from the sidebar onto a specific row (by display index)
+  // Fill an empty row with a sidebar block (by display index)
   const handleDropEventBlockToRow = (eventData, displayIndex) => {
     if (!eventData || typeof eventData.duration !== "number") return;
-
-    // Translate display index (from rows) to actual userRows index using id mapping
     const displayRow = rows[displayIndex];
     if (!displayRow) return;
-    const userRowIndex = userRows.findIndex((u) => u.id === displayRow.id);
-    if (userRowIndex === -1) return;
-
-    const outdoorDefault = defaultIsOutdoorForEvent(eventData.event);
-    const updatedFields = eventData.type === "location"
-      ? { type: "location", event: eventData.event || "", duration: eventData.duration, address: eventData.address || "", color: "" }
-      : {
-          type: "event",
-          event: eventData.event,
-          duration: eventData.duration,
-          tier: getDefaultTierForEvent(eventData.event),
-          flexibilityMinutes: 0,
-          ...(outdoorDefault !== undefined ? { isOutdoor: outdoorDefault } : {}),
-        };
-
-    const newUserRows = userRows.map((r, i) => i === userRowIndex ? { ...r, ...updatedFields } : r);
-    const targetRow = newUserRows[userRowIndex];
-
-    // If dropped on the last visible row, append a fresh empty row
-    const droppedOnLastVisible = displayIndex === rows.length - 1;
-    if (droppedOnLastVisible) {
-      newUserRows.push({
-        id: nextId,
-        location: "",
-        time: targetRow.time + targetRow.duration,
-        event: "",
-        duration: 30,
-        isOutdoor: false,
-        photo: photoEnabled,
-        video: videoEnabled,
-        notes: "",
-        isTimeLocked: false,
-        type: "event",
-        address: "",
-        ...DEFAULT_ROW_TIER_FIELDS,
-      });
-      setNextId(nextId + 1);
-    }
-
-    saveToHistory(newUserRows);
+    const fields = eventFieldsFrom(eventData);
+    saveToHistory(userRows.map((r) => (r.id === displayRow.id ? { ...r, ...fields } : r)));
   };
 
   const reorderRowAtIndex = (sourceRowId, insertIndex) => {
@@ -914,11 +850,9 @@ export default function MobileApp() {
 
   const handleTimelineDragComplete = ({ activeId, overId, activeData }) => {
     if (activeData?.type === "sidebar-block") {
-      if (overId.startsWith("row-")) {
-        const rowId = Number(overId.replace("row-", ""));
-        const displayIndex = rows.findIndex((r) => r.id === rowId);
-        if (displayIndex >= 0) handleDropEventBlockToRow(activeData.payload, displayIndex);
-      }
+      const drop = resolveBlockDrop(rows, overId);
+      if (drop?.mode === "fill") handleDropEventBlockToRow(activeData.payload, drop.index);
+      else if (drop?.mode === "insert") insertEventAt(drop.index, activeData.payload);
       return;
     }
 
@@ -1183,6 +1117,30 @@ export default function MobileApp() {
       setUserRows(nextState);
       setRedoStack(newRedoStack);
     }
+  };
+
+  // The delete message's Undo only applies while the delete is still the
+  // latest change; any other change (or a few seconds) dismisses it.
+  const deleteIsLatest =
+    !!deleteToast && history.length > 0 && history[history.length - 1] === deleteToast.rowsBefore;
+  useEffect(() => {
+    if (deleteToast && !deleteIsLatest) setDeleteToast(null);
+  }, [deleteToast, deleteIsLatest]);
+  useEffect(() => {
+    if (!deleteToast) return undefined;
+    const timer = setTimeout(() => setDeleteToast(null), 6000);
+    return () => clearTimeout(timer);
+  }, [deleteToast]);
+  useEffect(() => {
+    if (!showPreview) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") setShowPreview(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [showPreview]);
+
+  const undoDelete = () => {
+    if (deleteIsLatest) undo();
+    setDeleteToast(null);
   };
 
   const handleTimeSet = (displayIndex, time) => {
@@ -1745,19 +1703,19 @@ export default function MobileApp() {
             {/* Names & date (+ mobile gear top-right) */}
             {!isDesktop ? (
               <div className="wtb-mobile-header-top">
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: "clamp(18px, 5vw, 26px)", fontWeight: 300, color: "var(--wtb-text)", lineHeight: 1.2, fontFamily: "'Cormorant Garamond', serif" }}>
+                <div style={{ textAlign: "left", minWidth: 0 }}>
+                  <div style={{ fontSize: 20, fontWeight: 300, color: "var(--wtb-text)", lineHeight: 1.2, fontFamily: "'Cormorant Garamond', serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {bride || groom ? [bride, groom].filter(Boolean).join(" & ") : "Wedding Timeline Builder"}
                   </div>
-                  {date && (
-                    <div style={{ fontSize: 14, color: "var(--wtb-text-muted)", marginTop: 2, fontFamily: "'Jost', sans-serif", fontWeight: 200 }}>
-                      {new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
-                    </div>
-                  )}
-                  <TimelineCoverageCounter
-                    photoCoverage={mediaCoverage.photo}
-                    videoCoverage={mediaCoverage.video}
-                  />
+                  <div style={{ fontSize: 12, color: "var(--wtb-text-muted)", marginTop: 1, fontFamily: "'Jost', sans-serif", fontWeight: 300, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {date && new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
+                    {date && (mediaCoverage.photo || mediaCoverage.video) && " · "}
+                    <TimelineCoverageCounter
+                      compact
+                      photoCoverage={mediaCoverage.photo}
+                      videoCoverage={mediaCoverage.video}
+                    />
+                  </div>
                 </div>
                 <div className="wtb-mobile-header-actions" ref={mobileGearMenuRef}>
                   <ThemeToggle theme={theme} onToggle={toggleTheme} inline />
@@ -2000,6 +1958,13 @@ export default function MobileApp() {
                 >
                   Print
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPreview(true)}
+                  style={{ padding: "6px 14px", background: "transparent", color: "var(--wtb-text)", border: "1px solid var(--wtb-border)", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 300, fontFamily: "'Jost', sans-serif" }}
+                >
+                  Preview
+                </button>
                 <div ref={isDesktop ? exportMenuRef : null} style={{ position: "relative" }}>
                   <button
                     onClick={() => withSendReminder(() => setShowExportMenu(v => !v))}
@@ -2091,11 +2056,12 @@ export default function MobileApp() {
           <div
             style={{
               background: "var(--wtb-bg)",
-              padding: 15,
+              padding: isDesktop ? "10px 15px 15px" : "6px 4px 12px",
               borderRadius: 8,
               border: "1px solid var(--wtb-surface-raised)",
             }}
           >
+            {isDesktop && (
             <h2
               style={{
                 textAlign: "center",
@@ -2110,6 +2076,7 @@ export default function MobileApp() {
             >
               Timeline Events
             </h2>
+            )}
 
             <div style={{ width: "100%" }}>
               {/* Top drop zone (before first row) */}
@@ -2128,7 +2095,6 @@ export default function MobileApp() {
                     onMoveDown={handleMoveDown}
                     isFirst={index === 0}
                     isLast={index === rows.length - 1}
-                    onEventBlur={handleEventBlur}
                     photoEnabledGlobal={photoEnabled}
                     videoEnabledGlobal={videoEnabled}
                     onTimeSet={(h, m, p) =>
@@ -2154,7 +2120,7 @@ export default function MobileApp() {
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                marginTop: 15,
+                marginTop: 10,
               }}
             >
               <button
@@ -2211,15 +2177,18 @@ export default function MobileApp() {
           <EventBlockSelector
             isVisible={showEventSelector}
             onSelect={handleEventSelect}
-            onClose={() => {
-              setShowEventSelector(false);
-              setSelectedRowIndex(null);
-            }}
+            onClose={closeEventSelector}
+            mode={insertIndex !== null ? "insert" : "change"}
             currentEvent={
               selectedRowIndex !== null ? rows[selectedRowIndex]?.event : ""
             }
             currentTime={
-              selectedRowIndex !== null ? rows[selectedRowIndex]?.time : undefined
+              insertIndex !== null
+                ? insertTimeAt(rows, insertIndex, 30)
+                : selectedRowIndex !== null ? rows[selectedRowIndex]?.time : undefined
+            }
+            currentDuration={
+              selectedRowIndex !== null ? rows[selectedRowIndex]?.duration : undefined
             }
           />
           )}
@@ -2227,29 +2196,54 @@ export default function MobileApp() {
 
         {/* Sidebar: event blocks + preview (desktop only; mobile uses tap-to-select modal) */}
         {isDesktop && (
-          <EventSidebar
-            rows={rows}
-            bride={bride}
-            groom={groom}
-            date={date}
-            photoStartHour={photoStartHour}
-            photoStartMinute={photoStartMinute}
-            photoStartPeriod={photoStartPeriod}
-            photoEndHour={photoEndHour}
-            photoEndMinute={photoEndMinute}
-            photoEndPeriod={photoEndPeriod}
-            videoStartHour={videoStartHour}
-            videoStartMinute={videoStartMinute}
-            videoStartPeriod={videoStartPeriod}
-            videoEndHour={videoEndHour}
-            videoEndMinute={videoEndMinute}
-            videoEndPeriod={videoEndPeriod}
-            photoEnabled={photoEnabled}
-            videoEnabled={videoEnabled}
-          />
+          <EventSidebar />
         )}
       </div>
           </TimelineDndProvider>
+
+          {/* Desktop preview: its own wide panel, so the block list stays put */}
+          {isDesktop && showPreview && (
+            <div
+              className="wtb-preview-overlay"
+              onClick={(e) => { if (e.target === e.currentTarget) setShowPreview(false); }}
+            >
+              <div className="wtb-preview-dialog" role="dialog" aria-modal="true" aria-label="Timeline preview">
+                <div className="wtb-preview-dialog-head">
+                  <h2>Preview</h2>
+                  <button type="button" onClick={() => setShowPreview(false)} aria-label="Close preview">✕</button>
+                </div>
+                <div className="wtb-preview-dialog-body">
+                  <TimelinePreview
+                    rows={rows}
+                    bride={bride}
+                    groom={groom}
+                    date={date}
+                    photoStartHour={photoStartHour}
+                    photoStartMinute={photoStartMinute}
+                    photoStartPeriod={photoStartPeriod}
+                    photoEndHour={photoEndHour}
+                    photoEndMinute={photoEndMinute}
+                    photoEndPeriod={photoEndPeriod}
+                    videoStartHour={videoStartHour}
+                    videoStartMinute={videoStartMinute}
+                    videoStartPeriod={videoStartPeriod}
+                    videoEndHour={videoEndHour}
+                    videoEndMinute={videoEndMinute}
+                    videoEndPeriod={videoEndPeriod}
+                    photoEnabled={photoEnabled}
+                    videoEnabled={videoEnabled}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {deleteToast && (
+            <div className={`wtb-toast${!isDesktop && mobileMainTab === "timeline" ? " wtb-toast--above-dock" : ""}`} role="status">
+              <span>{deleteToast.label}</span>
+              <button type="button" onClick={undoDelete}>Undo</button>
+            </div>
+          )}
 
           {/* Project Settings Modal */}
           {showSendReminder && (
@@ -2409,6 +2403,14 @@ export default function MobileApp() {
                 }}
               >
                 <span style={{ fontSize: 15, lineHeight: 1 }}>↻</span> Redo
+              </button>
+              <button
+                type="button"
+                className="wtb-mobile-save"
+                onClick={saveProject}
+                title="Save a copy of this timeline to your device"
+              >
+                Save
               </button>
             </div>
           )}
