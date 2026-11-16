@@ -49,7 +49,7 @@ function WelcomeScreen({ showAutosaveBanner, restoreAutosave, clearAutosave, onC
                 opacity: 0.92,
               }}
             >
-              Set up your project, then build your timeline in the editor.
+              Answer a few quick questions and get a draft of your whole day.
             </span>
           </button>
 

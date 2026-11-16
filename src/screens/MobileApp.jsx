@@ -34,6 +34,8 @@ import { TimelineDndProvider } from "../components/timeline/TimelineDnd";
 import { EventBlockSelector } from "../components/timeline/EventBlockSelector";
 import { EventSidebar } from "../components/sidebar/EventSidebar";
 import { WelcomeScreen } from "./WelcomeScreen";
+import { QuickStartScreen } from "./QuickStartScreen";
+import { generateQuickStartRows, quickStartProjectSettings } from "../lib/quickStart";
 import { renderWizard } from "./WizardScreen";
 import { WizardLogisticsCheck } from "../components/wizard/WizardLogisticsCheck";
 import { LogisticsCheckButton } from "../components/timeline/LogisticsCheckButton";
@@ -808,7 +810,36 @@ export default function MobileApp() {
     resetTimelineState({ emptyRows: true });
     setShowUnsavedConfirm(false);
     setVersionNotice(null);
-    setScreen("settings");
+    setScreen("quickstart");
+  };
+
+  // Quick start (Phase 3): answers → project settings + a full-day draft.
+  const buildFromQuickStart = (answers) => {
+    const settings = quickStartProjectSettings(answers);
+    setBride(settings.bride);
+    setGroom(settings.groom);
+    setDate(settings.date);
+    setPhotoStartHour(settings.photoStartHour);
+    setPhotoStartMinute(settings.photoStartMinute);
+    setPhotoStartPeriod(settings.photoStartPeriod);
+    setPhotoEndHour(settings.photoEndHour);
+    setPhotoEndMinute(settings.photoEndMinute);
+    setPhotoEndPeriod(settings.photoEndPeriod);
+    setVideoStartHour(settings.videoStartHour);
+    setVideoStartMinute(settings.videoStartMinute);
+    setVideoStartPeriod(settings.videoStartPeriod);
+    setVideoEndHour(settings.videoEndHour);
+    setVideoEndMinute(settings.videoEndMinute);
+    setVideoEndPeriod(settings.videoEndPeriod);
+    setPhotoEnabled(true);
+    setVideoEnabled(true);
+    const draft = generateQuickStartRows(answers);
+    setUserRows(draft);
+    setNextId(Math.max(0, ...draft.map((r) => r.id)) + 1);
+    setHistory([]);
+    setRedoStack([]);
+    setScreen("timeline");
+    if (mainScrollRef.current) mainScrollRef.current.scrollTop = 0;
   };
 
   const buildCoverageStartRowsForProject = () => {
@@ -1541,6 +1572,12 @@ export default function MobileApp() {
           clearAutosave={clearAutosave}
           onCreateNewTimeline={startManualTimeline}
           loadProject={loadProject}
+        />
+      ) : screen === "quickstart" ? (
+        <QuickStartScreen
+          onBuild={buildFromQuickStart}
+          onBlank={() => setScreen("settings")}
+          onBack={() => setScreen("welcome")}
         />
       ) : screen === "wizard" && WIZARD_ENABLED ? (
         /* ============ WIZARD SCREEN (dev only when WIZARD_ENABLED) ============ */

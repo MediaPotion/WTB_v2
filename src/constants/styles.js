@@ -617,6 +617,34 @@ const MOBILE_TWEAKS = `
   .wtb-row-notice--overrun { color: #e05252; background: rgba(204,34,34,0.10); }
   .wtb-row-notice--free { color: var(--wtb-text-muted); }
 
+  /* Quick start (Phase 3) */
+  .wtb-qs { max-width: 620px; margin: 0 auto; padding: 24px 16px 48px; font-family: 'Jost', sans-serif; }
+  .wtb-qs h1 { margin: 8px 0 6px; text-align: center; font-size: clamp(26px, 6vw, 34px); font-weight: 300; color: var(--wtb-text); font-family: 'Cormorant Garamond', serif; }
+  .wtb-qs-lead { margin: 0 auto 18px; max-width: 520px; text-align: center; font-size: 14px; line-height: 1.5; color: var(--wtb-text-muted); }
+  .wtb-qs-card { background: var(--wtb-surface); border: 1px solid var(--wtb-surface-raised); border-radius: 10px; padding: 8px 18px 18px; }
+  .wtb-qs-row { display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-bottom: 1px solid var(--wtb-border-subtle); }
+  .wtb-qs-label { font-size: 14px; color: var(--wtb-text); }
+  .wtb-qs-label em { font-style: normal; color: var(--wtb-text-muted); font-size: 12px; }
+  .wtb-qs input, .wtb-qs select { font-size: 16px; padding: 6px 8px; border-radius: 4px; }
+  .wtb-qs input[type="date"] { max-width: 220px; }
+  .wtb-qs-names { display: flex; align-items: center; gap: 8px; color: var(--wtb-text-muted); }
+  .wtb-qs-names input { flex: 1; min-width: 0; }
+  .wtb-qs-time { display: inline-flex; align-items: center; gap: 4px; color: var(--wtb-text); }
+  .wtb-qs-coverage { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 14px; color: var(--wtb-text-muted); }
+  .wtb-qs-choice { display: flex; flex-wrap: wrap; gap: 8px; }
+  .wtb-qs-choice button {
+    padding: 8px 14px; min-height: 40px; font-size: 14px; font-family: 'Jost', sans-serif;
+    border: 1px solid var(--wtb-border); border-radius: 20px; background: transparent; color: var(--wtb-text); cursor: pointer;
+  }
+  .wtb-qs-choice button.is-on { background: var(--wtb-accent); border-color: var(--wtb-accent); color: var(--wtb-on-accent); }
+  .wtb-qs-build {
+    display: block; width: 100%; margin-top: 18px; padding: 14px 20px; border: none; border-radius: 8px;
+    background: var(--wtb-accent); color: var(--wtb-on-accent); font-size: 17px; font-weight: 300;
+    font-family: 'Jost', sans-serif; letter-spacing: 0.04em; cursor: pointer;
+  }
+  .wtb-qs-alt { display: flex; justify-content: center; flex-wrap: wrap; gap: 18px; margin-top: 16px; }
+  .wtb-qs-alt button { background: none; border: none; color: var(--wtb-accent); font-size: 14px; font-family: 'Jost', sans-serif; text-decoration: underline; cursor: pointer; }
+
   /* Desktop preview panel */
   .wtb-preview-overlay {
     position: fixed;

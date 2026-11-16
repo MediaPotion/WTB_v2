@@ -27,8 +27,9 @@ arithmetic to the client, and nothing is shared.
   2026-07-17 app code. D4 was taken as recommended: npm only.
 - **Phase 1 is on `phase-1/timing`, built on top of Phase 2**, with D1 taken
   as recommended (the owner asked for everything to be built; confirm D1).
-- **Phases 3 and 4 have not started** — each waits on a decision (D2, D3).
-  0.2's origin list waits on D5; 2.7 waits on approval of the proposed labels
+- **Phase 3 is on `phase-3/quick-start`, built on top of Phase 1**, with D2
+  taken as recommended (confirm D2).
+- **Phase 4 has not started** — it waits on D3. 0.2's origin list waits on D5; 2.7 waits on approval of the proposed labels
   in NOTES "Wording".
 - **Dependencies are installed** (`node_modules`, via `npm ci`, Node 18).
 - **It runs:** `npm start` serves the app; `npm run build` succeeds.

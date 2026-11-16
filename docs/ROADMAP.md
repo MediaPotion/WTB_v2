@@ -141,6 +141,23 @@ Needs 0.1 first, and decision **D2**.
 | 3.2 | Feed those answers to the existing `generateTimeline` with defaults for the rest; pin the ceremony. Add a test with the minimal answer set. | Test passes; generated rows are in order with the ceremony at the entered time. |
 | 3.3 | Keep a "Start with a blank timeline" link. | Blank start still works. |
 
+**Status (branch `phase-3/quick-start`, stacked on Phase 1).** D2 taken as
+recommended: quick start only; the wizard code stays in place, switched off.
+
+- 3.1 done — `src/screens/QuickStartScreen.jsx`, opened by "Create New
+  Timeline". Seven questions, all pre-filled (names and date optional), so a
+  draft needs 0–6 inputs. Seen: changing only the ceremony time (2 inputs)
+  and clicking "Build my draft timeline" gave a 30-event day.
+- 3.2 done — `src/lib/quickStart.js` feeds `generateTimeline` with defaults
+  (cocktail hour 60 min, 20 min between venues, 5 family groups, usual
+  reception events), then runs the version-2 migration so rows are in order
+  and the ceremony is pinned. 7 tests. The coverage start is NOT passed to
+  the generator: given one, the generator slides the whole day, ceremony
+  included, to start at it (see NOTES). A pinned "Coverage Start" row is
+  added instead.
+- 3.3 done — "Start with a blank timeline instead" opens the old project
+  settings screen; seen working.
+
 ---
 
 ## Phase 4 — Sharing and collaboration
@@ -173,7 +190,7 @@ Needs decision **D3** (where the data lives) before any work.
 | # | Question | Recommendation |
 |---|---|---|
 | D1 | Two shooters often cover bride and groom at the same time. How should parallel events appear in a one-after-another timeline? | Let a pinned row overlap its neighbours without warning when it is marked "at the same time as the previous event"; decide the exact control with a mock-up before building 1.1. **Taken as recommended (Phase 1 branch) — owner to confirm.** |
-| D2 | Bring back the full 7-step wizard, or only the short quick-start? | Short quick-start only. Leave the old wizard code in place, switched off, until Phase 3 proves out. |
+| D2 | Bring back the full 7-step wizard, or only the short quick-start? | Short quick-start only. Leave the old wizard code in place, switched off, until Phase 3 proves out. **Taken as recommended (Phase 3 branch) — owner to confirm.** |
 | D3 | Where do shared timelines live? | A small PHP + MySQL service on the existing Hostinger account, with secret links and no logins. Alternative: a hosted database service (for example Supabase) if live co-editing is wanted later. |
 | D4 | The repo has both `package-lock.json` and `pnpm-lock.yaml`. Which package manager? | npm — the launcher script already uses it. **Taken (Phase 0).** |
 | D5 | How is the live site deployed, and at what address? | Unknown — see NOTES "Unknowns". Needed before anything ships. |

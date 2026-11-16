@@ -33,6 +33,7 @@ Create React App, React 18, plain JavaScript, `@dnd-kit` for drag and drop,
 | `src/hooks/useProjectStorage.js` | Save to file, load from file, autosave to the browser. |
 | `src/lib/exportPdf.js`, `exportTxt.js` | PDF / print / preview and text export. |
 | `src/lib/sendToMediaPotion.js` + `hostinger/send-timeline.php` | Emails the PDF and JSON to the studio. |
+| `src/screens/QuickStartScreen.jsx`, `src/lib/quickStart.js` | Phase 3 quick start: one screen of pre-filled questions → `generateTimeline` with defaults → a version-3 draft. Tested. |
 | `src/lib/flow.js` | The timing model: `flowTimes` (row order → start times, honouring pins and "same time as above") and `pinnedNotices` (overrun / free minutes before pinned rows). Tested. |
 | `src/lib/projectMigration.js` | Version 2 → 3 save-file migration (sort once, pin rows that don't follow on). Tested. |
 | `src/lib/generateTimeline.js` | Builds a full day from wizard answers (694 lines). Currently crashes — see below. |
@@ -76,6 +77,7 @@ version 3), color, tier, flexibilityMinutes
 | 12 | Delete starts a 2-second countdown that cannot be cancelled (Undo works afterwards). **Fixed in Phase 2.** | read | `TimelineRow.jsx:375-383` |
 | 17 | Picking any event in the list also set the row's start time from the dialog, rounded to 5 minutes, so a 12:22 row moved to 12:20. Phase 2 sends a time only when it is changed in the dialog. | read | `EventBlockSelector.jsx` (before Phase 2) |
 | 18 | Typing a name in the last row, or dropping a block on it, added an empty row below. Phase 2 removes this; rows are added with "+" instead. | read | `MobileApp.jsx` `handleEventBlur` (before Phase 2) |
+| 20 | Given a coverage start, `generateTimeline` slides every block (ceremony included) earlier so the first block starts at it — the ceremony no longer matches the time entered. The quick start avoids it by not passing a coverage start. | test run | `generateTimeline.js` "coverageStartTargets" |
 | 19 | The preview's fit-to-width subtracted the panel padding twice, so pages were drawn narrower than the panel. Fixed in Phase 2. | read | `exportPdf.js` `TimelinePreview` |
 | 13 | No sharing: Save downloads a `.json`; others must load that file. | seen | `useProjectStorage.js` |
 | 14 | Draft generator throws `ReferenceError: photoCoverageHours is not defined`; 2 of 7 tests fail because of it. **Fixed in Phase 0.** | test run | `generateTimeline.js:653-654` |
